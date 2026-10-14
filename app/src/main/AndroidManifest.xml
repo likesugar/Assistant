@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.ziyuan.Assistant">
+
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+
+        <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <application
+        android:usesCleartextTraffic="true"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:theme="@style/AppTheme"
+        android:allowBackup="true">
+
+        <receiver android:name=".ScheduleReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
+        </receiver>
+        <service android:name=".TapperService"
+            android:exported="false"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService"/>
+            </intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/tapper_config"/>
+        </service>
+        <service android:name=".DownloadService" android:exported="false" android:foregroundServiceType="dataSync"/>
+        <service android:name=".DynaService" android:exported="false" android:foregroundServiceType="dataSync"/>
+        <activity android:name=".CalendarActivity" android:exported="false"/>
+        <activity android:name=".RecordActivity" android:exported="false"/>
+        <activity android:name=".VideoDlActivity" android:exported="false" android:configChanges="orientation|screenSize"/>
+        <activity android:name=".XhsActivity" android:exported="false" android:configChanges="orientation|screenSize"/>
+        <activity android:name=".XhsSettingsActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".ShortcutActivity" android:exported="false"/>
+        <activity android:name=".MedPlanActivity" android:exported="false"/>
+        <activity android:name=".SpiderActivity" android:exported="false" android:configChanges="orientation|screenSize|keyboardHidden"/>
+        <activity android:name=".ChatActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".TapperActivity" android:exported="false"/>
+        <activity android:name=".MetronomeActivity" android:exported="false"/>
+        <service android:name=".MetronomeService" android:exported="false" android:foregroundServiceType="mediaPlayback"/>
+        <activity android:name=".PanViewerActivity" android:exported="false" android:configChanges="orientation|screenSize|keyboardHidden"/>
+        <activity android:name=".PanApiActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".DynaActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".EntertainmentActivity" android:exported="false"/>
+        <activity android:name=".AiChatActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
+        <receiver android:name=".MedPlanActivity$MedPlanReceiver" android:exported="false"/>
+        <receiver android:name=".MedPlanActivity$MedConfirmReceiver" android:exported="false"/>
+        <activity android:name=".Web2ApkActivity" android:exported="false" android:configChanges="orientation|screenSize|keyboardHidden"/>
+        <activity android:name=".SettingsActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".LoginWebActivity" android:exported="false" android:configChanges="orientation|screenSize|keyboardHidden" android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".ShortcutEditActivity" android:exported="false"/>
+        <activity android:name=".AppPickerActivity" android:exported="false"/>
+        <activity android:name=".NativePlayerActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"/>
+
+        <activity android:name=".BiliLoginActivity" android:exported="false"/>
+        <activity android:name=".SniffActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden">
+            <intent-filter android:label="@string/app_name">
+                <action android:name="android.intent.action.SEND"/>
+                <action android:name="android.intent.action.SEND_MULTIPLE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="text/plain"/>
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".HomeActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <service android:name=".LanShareService" android:stopWithTask="true"/>
+        <service android:name=".MedWatchService" android:exported="false" android:foregroundServiceType="dataSync"/>
+        <service android:name=".DlKeepService" android:exported="false" android:stopWithTask="false"/>
+        <provider android:name="androidx.core.content.FileProvider" android:authorities="com.ziyuan.Assistant.fp" android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/provider_paths" />
+        </provider>
+        </application>
+</manifest>

@@ -1,0 +1,83 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>梅花易数 | Plum Blossom Divination</title>
+    <script src="tailwind.js"></script>
+    
+    
+    
+    <style>
+      :root {
+        --color-ink: #2C2C2C;       /* 墨色稍淡，不那么死黑 */
+        --color-cinnabar: #8E3528;  /* 朱砂红 */
+        --color-gold: #BFA070;      /* 泥金 */
+        --color-paper: #F7F5F0;     /* 宣纸白 */
+        --color-paper-dark: #EBE8E1;
+        --shadow-elevation: 0 10px 40px -10px rgba(44, 44, 44, 0.08);
+      }
+      body {
+        font-family: 'Noto Serif SC', serif;
+        background-color: var(--color-paper);
+        color: var(--color-ink);
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      .font-art {
+        font-family: 'Ma Shan Zheng', cursive;
+      }
+      
+      /* Subtle Grain Texture */
+      .bg-texture {
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+      }
+
+      /* Vertical Text Utility */
+      .writing-vertical {
+        writing-mode: vertical-rl;
+        text-orientation: upright;
+        letter-spacing: 0.3em;
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(191, 160, 112, 0.3);
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(142, 53, 40, 0.5);
+      }
+
+      /* Animations */
+      @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-5px); }
+        100% { transform: translateY(0px); }
+      }
+      .animate-float {
+        animation: float 4s ease-in-out infinite;
+      }
+      
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+      }
+    </style>
+  <link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="bundle.js"></script>
+  </body>
+</html>

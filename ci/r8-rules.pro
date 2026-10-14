@@ -1,0 +1,60 @@
+-keep class com.ziyuan.Assistant.** { *; }
+-keep class com.yausername.** { *; }
+-keep class com.arthenica.ffmpegkit.** { *; }
+-keep class tv.danmaku.** { *; }
+-keep class android.support.** { *; }
+-dontwarn org.slf4j.**
+-dontwarn javax.**
+-dontwarn com.google.**
+-dontwarn kotlin.**
+-dontwarn org.apache.commons.logging.**
+-dontwarn org.w3c.dom.**
+-dontwarn com.arthenica.**
+-dontwarn com.yausername.**
+-dontwarn androidx.annotation.**
+-dontwarn androidx.core.**
+-dontwarn androidx.versionedparcelable.**
+-dontwarn android.support.****
+-keepattributes Signature,InnerClasses,EnclosingMethod,*Annotation*
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+-keep class androidx.core.content.FileProvider { *; }
+-keep class androidx.core.content.** { *; }
+-dontoptimize
+-keep class org.apache.commons.compress.** { *; }
+-dontwarn org.tukaani.**
+-dontwarn org.objectweb.asm.**
+-dontwarn java.awt.**
+-dontwarn javax.imageio.**
+-dontwarn org.brotli.**
+-dontwarn org.objectweb.asm.**
+-dontwarn java.awt.**
+-dontwarn javax.imageio.**
+-dontwarn com.github.luben.zstd.**
+-dontwarn org.jetbrains.annotations.**
+-keep class androidx.viewpager.widget.** { *; }
+-keep class com.necer.** { *; }
+-dontwarn androidx.vectordrawable.**
+-dontwarn androidx.interpolator.**
+-dontwarn androidx.cursoradapter.**
+-dontwarn androidx.arch.core.**
+-dontwarn androidx.collection.**
+-dontwarn androidx.lifecycle.**
+-dontwarn androidx.savedstate.**
+-dontwarn androidx.activity.**
+-dontwarn androidx.drawerlayout.**
+-dontwarn androidx.coordinatorlayout.**
+-dontwarn androidx.appcompat.resources.**
+-dontwarn androidx.appcompat.widget.**
+-keep class com.android.apksig.** { *; }
+-dontwarn com.android.apksig.**
+-keep class com.android.apksig.** { *; }
+-dontwarn com.android.apksig.**
+-keep class org.bouncycastle.** { *; }
+-dontwarn org.bouncycastle.**
+-keep class com.android.apksig.internal.** { *; }
+-keep class net.sourceforge.pinyin4j.** { *; }
+-keep class com.hp.hpl.sparta.** { *; }
+-dontwarn com.hp.hpl.sparta.**

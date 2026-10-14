@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowFullscreen">true</item>
+        <!-- 去掉系统启动屏观感: 透明图标+同底色背景, 冷启动直出界面 -->
+        <item name="android:windowSplashScreenBackground">@color/bg</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_transparent</item>
+        <item name="android:windowSplashScreenAnimationDuration">0</item>
+        <item name="android:windowSplashScreenBehavior">icon_preferred</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:colorAccent">@color/blue2</item>
+        <item name="colorPrimary">@color/blue2</item>
+        <item name="colorSecondary">@color/blue2</item>
+        <item name="android:colorControlHighlight">#22315CDE</item>
+    </style>
+</resources>

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/metroRoot"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:scrollbars="none">
+    <LinearLayout
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:paddingLeft="20dp" android:paddingRight="20dp" android:paddingBottom="40dp">
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:orientation="horizontal">
+            <TextView android:id="@+id/metroBack" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="← 返回" android:textSize="16sp" android:tag="accent"/>
+            <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1"/>
+            <TextView android:id="@+id/metroMenu" android:layout_width="40dp" android:layout_height="40dp"
+                android:gravity="center" android:text="⠿" android:textSize="20sp" android:tag="title"/>
+        </LinearLayout>
+
+        <LinearLayout android:tag="card" android:id="@+id/metroCardBpm"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:background="@drawable/bg_card_md3"
+            android:padding="20dp" android:layout_marginTop="10dp" android:gravity="center_horizontal">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="BPM" android:textSize="13sp" android:tag="sub"/>
+            <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="10dp">
+                <TextView android:id="@+id/btnBpmDown" android:layout_width="56dp" android:layout_height="56dp"
+                    android:gravity="center" android:text="−" android:textSize="28sp" android:textStyle="bold" android:tag="icon"
+                    android:background="@drawable/bg_btn_md3"/>
+                <TextView android:id="@+id/tvBpm" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="120" android:textSize="52sp" android:textStyle="bold"
+                    android:paddingLeft="26dp" android:paddingRight="26dp" android:tag="title"/>
+                <TextView android:id="@+id/btnBpmUp" android:layout_width="56dp" android:layout_height="56dp"
+                    android:gravity="center" android:text="＋" android:textSize="24sp" android:textStyle="bold" android:tag="icon"
+                    android:background="@drawable/bg_btn_md3"/>
+            </LinearLayout>
+            <SeekBar android:id="@+id/sbBpm" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:max="313" android:progress="110" android:layout_marginTop="14dp"/>
+        </LinearLayout>
+
+        <LinearLayout android:tag="card" android:id="@+id/metroCardDots"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:background="@drawable/bg_card_md3"
+            android:padding="20dp" android:layout_marginTop="14dp">
+            <LinearLayout android:id="@+id/dotsRow" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:gravity="center"/>
+        </LinearLayout>
+
+        <LinearLayout android:tag="card" android:id="@+id/metroCardNotes"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:background="@drawable/bg_card_md3"
+            android:padding="20dp" android:layout_marginTop="14dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="每小节拍数" android:textSize="15sp" android:textStyle="bold" android:tag="title"/>
+            <LinearLayout android:id="@+id/notesRow" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:layout_marginTop="12dp"/>
+        </LinearLayout>
+
+        <LinearLayout android:tag="card" android:id="@+id/metroCardAudio"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:background="@drawable/bg_card_md3"
+            android:padding="20dp" android:layout_marginTop="14dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="音色" android:textSize="15sp" android:textStyle="bold" android:tag="title"/>
+            <LinearLayout android:id="@+id/audioRow" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:layout_marginTop="12dp"/>
+        </LinearLayout>
+
+        <TextView android:id="@+id/btnPlay"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:gravity="center" android:text="▶ 开始打拍" android:textSize="17sp" android:textStyle="bold"
+            android:background="@drawable/bg_btn_md3" android:layout_marginTop="20dp" android:tag="accent"/>
+    </LinearLayout>
+</ScrollView>
