@@ -88,7 +88,7 @@ public class TianyiController {
                     if (engine != null) engine.pause(); // 先停节拍
                     if (stageOn) {
                         playVoice("jieshu", "训练完成啦！天依觉得你好棒，记得拉伸放松哦～");
-                        h.postDelayed(this::hardStop, 4500); // 语音播完再收尾
+                        h.postDelayed(() -> hardStop(), 4500); // 语音播完再收尾
                     } else hardStop();
                     return;
                 }
