@@ -30,7 +30,6 @@ public class MetronomeActivity extends Activity {
     private final List<TextView> noteChips = new ArrayList<>();
     private MetroAudioManager audioManager;
 
-    private static final String[] BG_NAMES = {"雨声", "海浪", "白噪音", "森林", "篝火"};
     private File bgDir;
     private final List<File> bgFiles = new ArrayList<>();
     private MediaPlayer bgPlayer;
@@ -232,7 +231,7 @@ public class MetronomeActivity extends Activity {
             .setTitle("节拍器")
             .setItems(items.toArray(new String[0]), (d, w) -> {
                 if (w == 0) showAudioPicker();
-                else if (w == 1) downloadBg();
+                else if (w == 1) showDownloadDialog();
                 else if (w == 2) { keepScreen = !keepScreen; applyKeepScreen(); }
                 else if (w == 3) { booster = !booster; push(playing); }
                 else showTimerPicker();
@@ -312,30 +311,48 @@ public class MetronomeActivity extends Activity {
         }
     }
 
-    private void downloadBg() {
+    private void showDownloadDialog() {
+        final android.widget.EditText et = new android.widget.EditText(this);
+        et.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
+        et.setHint("粘贴音频下载地址 (http...mp3/wav/ogg/m4a)");
+        et.setTextSize(14);
+        int pd = dp(20);
+        android.widget.FrameLayout wrap = new android.widget.FrameLayout(this);
+        wrap.setPadding(pd, dp(10), pd, 0);
+        wrap.addView(et);
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("下载背景音")
+            .setView(wrap)
+            .setPositiveButton("下载", (d, w) -> {
+                String url = et.getText().toString().trim();
+                if (url.startsWith("http")) downloadBg(url);
+                else Toast.makeText(this, "地址无效", Toast.LENGTH_SHORT).show();
+            })
+            .setNegativeButton("取消", null)
+            .show();
+    }
+
+    private void downloadBg(String url) {
         if (bgDownloading) return;
         bgDownloading = true;
-        Toast.makeText(this, "开始下载背景音...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "开始下载...", Toast.LENGTH_SHORT).show();
         bgDir = new File(getFilesDir(), "bg_sounds");
         if (!bgDir.exists()) bgDir.mkdirs();
+        String clean = url.split("#")[0].split("\\?")[0];
+        String name = clean.substring(clean.lastIndexOf('/') + 1);
+        try { name = java.net.URLDecoder.decode(name, "UTF-8"); } catch (Throwable ignored) {}
+        if (name.isEmpty()) name = "背景音";
+        final File out = new File(bgDir, name);
         new Thread(() -> {
-            int ok = 0;
-            for (String name : BG_NAMES) {
-                File out = new File(bgDir, name + ".wav");
-                if (out.exists() && out.length() > 1024) { ok++; continue; }
-                if (fetch(BG_URL_PROXY + name + ".wav", out) || fetch(BG_URL_DIRECT + name + ".wav", out)) ok++;
-            }
-            final int n = ok;
+            boolean ok = fetch(url, out);
             runOnUiThread(() -> {
                 bgDownloading = false;
                 refreshBgList();
-                Toast.makeText(this, n >= BG_NAMES.length ? "背景音已就绪 (" + n + "个)" : "下载完成 " + n + "/" + BG_NAMES.length, Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, ok ? "已加入背景音: " + name : "下载失败, 检查地址或网络", Toast.LENGTH_SHORT).show();
             });
         }, "bg-dl").start();
     }
 
-    private static final String BG_URL_PROXY = "https://gh-proxy.com/https://raw.githubusercontent.com/likesugar/Assistant/main/bg/";
-    private static final String BG_URL_DIRECT = "https://raw.githubusercontent.com/likesugar/Assistant/main/bg/";
 
     private boolean fetch(String url, File out) {
         try {
