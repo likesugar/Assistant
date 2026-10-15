@@ -22,9 +22,13 @@ public class GpsManager {
 
     private final LocationListener ll = new LocationListener() {
         @Override public void onLocationChanged(Location loc) {
-            if (last != null) {
-                float d = last.distanceTo(loc);
-                if (d < 50 && Math.abs(loc.getSpeed() - last.getSpeed()) < 20) distKm += d / 1000.0;
+            if (last != null && loc.getAccuracy() < 30 && last.getAccuracy() < 30) {
+                float sp = loc.getSpeed();
+                if (sp > 1.0f) {
+                    float dt = Math.max(0.5f, Math.min(5f, (loc.getTime() - last.getTime()) / 1000f));
+                    float d = Math.min(last.distanceTo(loc), sp * dt);
+                    distKm += d / 1000.0;
+                }
             }
             gotFix = true;
             last = loc;
