@@ -12,6 +12,8 @@ public class StepCadenceManager {
     private boolean active = false;
     private float base = -1;          // 开机累计步基线
     private boolean useDetector = false;
+    private final long[] win = new long[120]; // 最近120个步点时间戳
+    private int winTail = 0;
     public float steps = 0;           // 本次运动步数
     public float cadence = 0;         // 当前步频 步/分钟
     private long lastStepTime = 0;
@@ -19,19 +21,27 @@ public class StepCadenceManager {
     private final SensorEventListener sel = new SensorEventListener() {
         @Override public void onSensorChanged(SensorEvent e) {
             if (e.sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
-                // 每次事件=1步
+                // 每次事件=1步, 记时间戳, 用滑动窗口算步频
                 long t = System.currentTimeMillis();
                 float delta = e.values.length > 0 && e.values[0] > 0 ? e.values[0] : 1;
+                for (int i = 0; i < (int) delta; i++) {
+                    if (winTail < win.length) { win[winTail++] = t; }
+                    else { System.arraycopy(win, 1, win, 0, winTail - 1); win[winTail - 1] = t; }
+                }
                 steps += delta;
-                if (lastStepTime > 0) {
-                    float dtMin = (t - lastStepTime) / 60000f;
-                    if (dtMin > 0.005f) {
-                        float inst = delta / dtMin;
-                        inst = Math.max(60f, Math.min(240f, inst));
-                        cadence = cadence <= 0 ? inst : cadence * 0.7f + inst * 0.3f;
+                lastStepTime = t;
+                // 窗口: 最近30秒, 至少5个样本才算
+                long cutoff = t - 30000;
+                int first = 0;
+                while (first < winTail && win[first] < cutoff) first++;
+                if (winTail - first >= 5) {
+                    double spanMin = (win[winTail - 1] - win[first]) / 60000.0;
+                    if (spanMin > 0.02) {
+                        float c = (float) ((winTail - first - 1) / spanMin);
+                        c = Math.max(40f, Math.min(240f, c));
+                        cadence = cadence <= 0 ? c : cadence * 0.5f + c * 0.5f;
                     }
                 }
-                lastStepTime = t;
                 return;
             }
             if (e.sensor.getType() != Sensor.TYPE_STEP_COUNTER) return;
@@ -41,15 +51,26 @@ public class StepCadenceManager {
             if (now < steps) { base = total; now = 0; }
             float delta = now - steps;
             long t = System.currentTimeMillis();
-            if (delta > 0 && lastStepTime > 0) {
-                float dtMin = (t - lastStepTime) / 60000f;
-                if (dtMin > 0.005f) {
-                    float inst = delta / dtMin;
-                    inst = Math.max(60f, Math.min(240f, inst));
-                    cadence = cadence <= 0 ? inst : cadence * 0.7f + inst * 0.3f;
+            if (delta > 0) {
+                // 计数器模式: 同样用窗口(每步时间≈现在, 一次补 delta 步)
+                long t = System.currentTimeMillis();
+                for (int i = 0; i < (int) delta; i++) {
+                    if (winTail < win.length) { win[winTail++] = t - (long) ((delta - i) * 300); }
+                    else { System.arraycopy(win, 1, win, 0, winTail - 1); win[winTail - 1] = t - (long) ((delta - i) * 300); }
                 }
+                long cutoff = t - 30000;
+                int first = 0;
+                while (first < winTail && win[first] < cutoff) first++;
+                if (winTail - first >= 5) {
+                    double spanMin = (win[winTail - 1] - win[first]) / 60000.0;
+                    if (spanMin > 0.02) {
+                        float c = (float) ((winTail - first - 1) / spanMin);
+                        c = Math.max(40f, Math.min(240f, c));
+                        cadence = cadence <= 0 ? c : cadence * 0.5f + c * 0.5f;
+                    }
+                }
+                lastStepTime = t;
             }
-            if (delta > 0) lastStepTime = t;
             steps = now;
         }
         @Override public void onAccuracyChanged(Sensor s, int a) {}
@@ -72,7 +93,7 @@ public class StepCadenceManager {
 
     public void stop() {
         if (sm != null) { try { sm.unregisterListener(sel); } catch (Throwable ignored) {} }
-        sm = null; active = false; base = -1; steps = 0; cadence = 0; lastStepTime = 0;
+        sm = null; active = false; base = -1; steps = 0; cadence = 0; lastStepTime = 0; winTail = 0;
     }
 
     /** 死推: 用当前步频和估计步幅算这段步数对应的米数 */
