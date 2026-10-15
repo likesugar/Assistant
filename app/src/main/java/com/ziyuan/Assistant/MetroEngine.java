@@ -38,7 +38,7 @@ public class MetroEngine extends Thread {
                 .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
                 .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
                 .build(),
-            buf, AudioTrack.MODE_STREAM, AudioTrack.AUDIO_SESSION_ID_GENERATE);
+            buf, AudioTrack.MODE_STREAM);
     }
 
     private static byte[] soundBooster(byte[] origin) {
