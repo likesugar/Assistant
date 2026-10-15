@@ -94,8 +94,8 @@ public class TianyiController {
                 // 死推: GPS 超 4 秒没新位置时, 用步数×步幅顶上
                 long sinceGps = System.currentTimeMillis() - gpsMgr.lastGpsTime;
                 float stride = 0.7f;
-                if (lastPace > 0 && stepMgr != null && stepMgr.cadence > 120) {
-                    stride = Math.max(0.5f, Math.min(1.2f, (float) (1000.0 / lastPace) / (stepMgr.cadence / 60f)));
+                if (gpsMgr.lastPace > 0 && stepMgr != null && stepMgr.cadence > 120) {
+                    stride = Math.max(0.5f, Math.min(1.2f, (float) (1000.0 / gpsMgr.lastPace) / (stepMgr.cadence / 60f)));
                 }
                 if (gpsMgr.gotFix && sinceGps > 4000 && stepMgr != null) {
                     gpsMgr.drKm += stepMgr.deadReckonMeters(stride, 1000) / 1000.0;
