@@ -43,6 +43,15 @@
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
                     android:orientation="vertical" android:gravity="center">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="节奏" android:textSize="15sp" android:textStyle="bold" android:tag="title"/>
+                    <EditText android:id="@+id/tvBpm" android:layout_width="52dp" android:layout_height="40dp"
+                        android:gravity="center" android:layout_marginTop="10dp" android:text="80" android:textSize="18sp" android:textStyle="bold" android:tag="title"
+                        android:inputType="number" android:imeOptions="actionDone"
+                        android:background="@drawable/bg_btn_md3"/>
+                </LinearLayout>
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:orientation="vertical" android:gravity="center">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="小节" android:textSize="15sp" android:textStyle="bold" android:tag="title"/>
                     <EditText android:id="@+id/tvSub" android:layout_width="52dp" android:layout_height="40dp"
                         android:gravity="center" android:layout_marginTop="10dp" android:text="1" android:textSize="18sp" android:textStyle="bold" android:tag="title"
@@ -51,34 +60,16 @@
             </LinearLayout>
         </LinearLayout>
 
-                <LinearLayout android:tag="card" android:id="@+id/metroCardBpm"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="vertical" android:background="@drawable/bg_card_md3"
-            android:padding="20dp" android:layout_marginTop="14dp">
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:gravity="center_vertical">
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-                    android:text="每分钟节奏" android:textSize="15sp" android:textStyle="bold" android:tag="title"/>
-                <TextView android:id="@+id/tvMarking" android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="行板" android:textSize="13sp" android:tag="sub" android:paddingRight="12dp"/>
-                <TextView android:id="@+id/tvBpm" android:layout_width="52dp" android:layout_height="40dp"
-                    android:gravity="center" android:text="80" android:textSize="18sp" android:textStyle="bold" android:tag="title"
-                    android:background="@drawable/bg_btn_md3"/>
-            </LinearLayout>
-            <SeekBar android:id="@+id/sbBpm" android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:max="222" android:progress="50" android:layout_marginTop="14dp"/>
-        </LinearLayout>
-
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
             android:orientation="horizontal" android:gravity="center" android:layout_marginTop="20dp">
             <TextView android:id="@+id/btnBpmDown" android:layout_width="64dp" android:layout_height="64dp"
                 android:gravity="center" android:text="−" android:textSize="30sp" android:textStyle="bold" android:tag="icon"
                 android:background="@drawable/bg_btn_md3"/>
             <TextView android:id="@+id/btnAudio" android:layout_width="64dp" android:layout_height="64dp"
                 android:gravity="center" android:text="♪" android:textSize="26sp" android:textStyle="bold" android:tag="icon"
-                android:background="@drawable/bg_btn_md3" android:layout_marginLeft="18dp" android:layout_marginRight="18dp"/>
+                android:background="@drawable/bg_btn_md3" android:layout_marginLeft="24dp" android:layout_marginRight="24dp"/>
             <TextView android:id="@+id/btnBpmUp" android:layout_width="64dp" android:layout_height="64dp"
-                android:gravity="center" android:text="＋" android:textSize="26sp" android:textStyle="bold" android:tag="icon"
+                android:gravity="center" android:text="＋" android:textSize="30sp" android:textStyle="bold" android:tag="icon"
                 android:background="@drawable/bg_btn_md3"/>
         </LinearLayout>
 

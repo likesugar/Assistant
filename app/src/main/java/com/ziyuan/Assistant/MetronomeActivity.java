@@ -82,11 +82,6 @@ public class MetronomeActivity extends Activity {
         findViewById(R.id.btnBpmUp).setOnClickListener(v -> setBpm(bpm + 1));
         bindRepeat(findViewById(R.id.btnBpmDown), -1);
         bindRepeat(findViewById(R.id.btnBpmUp), 1);
-        ((SeekBar) findViewById(R.id.sbBpm)).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            public void onProgressChanged(SeekBar sb, int p, boolean f) { if (f) setBpm(p + MetroConstant.MinBPM); }
-            public void onStartTrackingTouch(SeekBar sb) {}
-            public void onStopTrackingTouch(SeekBar sb) {}
-        });
         btnPlay.setOnClickListener(v -> togglePlay());
         ((SeekBar) findViewById(R.id.sbBgVol)).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             public void onProgressChanged(SeekBar sb, int p, boolean f) {
@@ -100,13 +95,7 @@ public class MetronomeActivity extends Activity {
         findViewById(R.id.btnAudio).setOnClickListener(v -> showAudioPicker());
         bindNumEdit((android.widget.EditText) findViewById(R.id.tvBeats), notes, 1, 8, this::setNotes);
         bindNumEdit((android.widget.EditText) findViewById(R.id.tvSub), sub, 1, 4, this::setSub);
-        SeekBar sbT = (SeekBar) findViewById(R.id.sbBpm);
-        sbT.setMax(222); sbT.setProgress(bpm - 30);
-        sbT.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            public void onProgressChanged(SeekBar sb, int p, boolean f) { if (f) setBpm(p + 30); }
-            public void onStartTrackingTouch(SeekBar sb) {}
-            public void onStopTrackingTouch(SeekBar sb) {}
-        });
+        bindNumEdit((android.widget.EditText) findViewById(R.id.tvBpm), bpm, 30, 252, this::setBpm);
         refreshTop();
         buildDots();
         buildBgList();
@@ -119,7 +108,6 @@ public class MetronomeActivity extends Activity {
         ((TextView) findViewById(R.id.tvBpm)).setText(String.valueOf(bpm));
         ((TextView) findViewById(R.id.tvBeats)).setText(String.valueOf(notes));
         ((TextView) findViewById(R.id.tvSub)).setText(String.valueOf(sub));
-        ((TextView) findViewById(R.id.tvMarking)).setText(marking(bpm));
     }
 
     private String marking(int t) {
