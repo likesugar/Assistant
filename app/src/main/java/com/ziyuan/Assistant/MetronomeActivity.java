@@ -92,6 +92,8 @@ public class MetronomeActivity extends Activity {
         bindNumEdit((android.widget.EditText) findViewById(R.id.tvBeats), notes, 1, 8, this::setNotes);
         bindNumEdit((android.widget.EditText) findViewById(R.id.tvSub), sub, 1, 4, this::setSub);
         bindNumEdit((android.widget.EditText) findViewById(R.id.tvBpm), bpm, 30, 252, this::setBpm);
+        if (checkSelfPermission("android.permission.ACCESS_FINE_LOCATION") != 0)
+            requestPermissions(new String[]{"android.permission.ACCESS_FINE_LOCATION"}, 2);
         findViewById(R.id.tvBpm).setOnClickListener(v -> {
             View row = findViewById(R.id.bpmPresets);
             row.setVisibility(row.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
@@ -276,16 +278,11 @@ public class MetronomeActivity extends Activity {
     private final android.content.BroadcastReceiver tianyiRx = new android.content.BroadcastReceiver() {
         @Override public void onReceive(android.content.Context c, Intent i) {
             if ("tianyi.hr".equals(i.getAction())) {
-                TextView hr = (TextView) findViewById(R.id.tvHr);
                 TextView pc = (TextView) findViewById(R.id.tvPace);
                 TextView ds = (TextView) findViewById(R.id.tvDist);
-                int b = i.getIntExtra("hr", 0);
-                hr.setText(b > 0 ? String.valueOf(b) : "--");
                 double pace = i.getDoubleExtra("pace", 0);
                 double dist = i.getDoubleExtra("dist", 0);
                 boolean fix = i.getBooleanExtra("gpsFix", false);
-                boolean conn = i.getBooleanExtra("hrConn", false);
-                ((TextView) ((ViewGroup) hr.getParent()).getChildAt(1)).setText(conn ? "心率·已连" : "心率·未连");
                 ((TextView) ((ViewGroup) pc.getParent()).getChildAt(1)).setText(fix ? "配速·已定位" : "配速·未定位");
                 if (pace > 0) {
                     int m = (int) (pace / 60), sec = (int) (pace % 60);

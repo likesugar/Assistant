@@ -34,36 +34,25 @@ public class TianyiController {
 
     private final Context ctx;
     private final MetroEngine engine;
-    private final boolean cheerOn, stageOn, followOn;
-    public HeartRateManager hrMgr;   // 由服务注入
-    public GpsManager gpsMgr;
-    public int age = 30;
+    private final boolean cheerOn, stageOn;
+    public GpsManager gpsMgr;   // 由服务注入
     private final Handler h = new Handler(Looper.getMainLooper());
     private MediaPlayer voice;
     private int stageIdx = 0, elapsed = 0, cheerIn = 0, nextCheer = 40;
     private boolean running = false;
 
-    private static final Object[][] FOLLOW = {
-        // {低%, 高%, bpm, 最短停留秒, voiceId, 文案}
-        {0, 60, 150, 120, "reshen",  "先慢慢跑哦，跟着天依的节奏，深呼吸～"},
-        {60, 70, 162, 180, "ranzhi", "进入燃脂区啦，保持这个节奏，脂肪在燃烧哦～"},
-        {70, 80, 172, 180, "maikaibu", "有氧区间，迈开步子，稳住呼吸和步频～"},
-        {80, 200, 182, 120, "chongci", "强度上来啦，跟着节拍全力以赴！"},
-    };
-    private int bandIdx = -1, bandDwell = 0;
-
-    public TianyiController(Context c, MetroEngine e, boolean cheer, boolean stage, boolean follow) {
-        ctx = c; engine = e; cheerOn = cheer; stageOn = stage; followOn = follow;
+    public TianyiController(Context c, MetroEngine e, boolean cheer, boolean stage) {
+        ctx = c; engine = e; cheerOn = cheer; stageOn = stage;
     }
 
     public void start() {
         stop();
-        if (!cheerOn && !stageOn && !followOn) return;
+        if (!cheerOn && !stageOn && gpsMgr == null) return;
         running = true;
         stageIdx = 0; elapsed = 0;
         if (stageOn) playVoice("zhunbei", "准备好啦～三、二、一，跟天依一起出发吧！");
         if (stageOn) engine.setBpm(STAGES[0].bpm0);
-        h.postDelayed(tick, stageOn || followOn ? 2600 : 3000);
+        h.postDelayed(tick, stageOn ? 2600 : 3000);
     }
 
     public void stop() {
@@ -94,36 +83,19 @@ public class TianyiController {
                 }
                 nextCheer = 35 + (int) (Math.random() * 21);
             }
-            if (followOn && hrMgr != null && hrMgr.lastHr > 0) {
-                // 跟随跑: 心率区间定步频, 区间内最短停留后切换
-                int maxHr = Math.max(120, 220 - age);
-                int pct = hrMgr.lastHr * 100 / maxHr;
-                int want = bandIdx < 0 ? 0 : bandIdx;
-                for (int i = 0; i < FOLLOW.length; i++) {
-                    if (pct >= (Integer) FOLLOW[i][0] && pct < (Integer) FOLLOW[i][1]) { want = i; break; }
-                }
-                if (want != bandIdx && bandDwell >= (bandIdx < 0 ? 0 : (Integer) FOLLOW[bandIdx][3])) {
-                    bandIdx = want; bandDwell = 0;
-                    playVoice((String) FOLLOW[bandIdx][4], (String) FOLLOW[bandIdx][5]);
-                    engine.setBpm((Integer) FOLLOW[bandIdx][2]);
-                } else if (bandIdx >= 0) {
-                    bandDwell++;
-                }
-            } else if (stageOn) {
+            if (stageOn) {
                 Stage cur = STAGES[stageIdx];
                 if (elapsed == 1) playVoice(cur.voice, cur.text);
                 float t = Math.min(1f, elapsed / (float) cur.dur);
                 engine.setBpm(Math.round(cur.bpm0 + (cur.bpm1 - cur.bpm0) * t));
             }
-            if (followOn && gpsMgr != null) {
-                // 广播运动数据给页面
+            if (gpsMgr != null) {
+                // 广播运动数据给页面 (不依赖跟随开关)
                 android.content.Intent st = new Intent("tianyi.hr");
                 st.setPackage(ctx.getPackageName());
-                st.putExtra("hr", hrMgr == null ? 0 : hrMgr.lastHr);
                 st.putExtra("dist", gpsMgr.distKm);
                 st.putExtra("pace", gpsMgr.lastPace);
                 st.putExtra("gpsFix", gpsMgr.gotFix);
-                st.putExtra("hrConn", hrMgr.isConnected());
                 ctx.sendBroadcast(st);
             }
             if (cheerOn && ++cheerIn >= nextCheer) {

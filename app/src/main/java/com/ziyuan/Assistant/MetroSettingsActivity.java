@@ -114,19 +114,13 @@ public class MetroSettingsActivity extends Activity {
         // ===== 洛天依 =====
         root.addView(sectionTitle("洛天依"));
         LinearLayout card3 = card();
-        card3.addView(choiceRow("连接设备", hrStatus(), v -> startActivity(new android.content.Intent(this, BleScanActivity.class))));
-        card3.addView(choiceRow("年龄", "用于算最大心率 (220-年龄), 当前 " + prefs.getInt("metroAge", 30) + " 岁", v -> showAgeDialog()));
+        card3.addView(choiceRow("马费通跑法", mafText(), v -> showMafDialog()));
         card3.addView(switchRow("随机鼓励语 + 字幕", "每 35~55 秒随机一句鼓励, 顶部同步字幕", prefs.getBoolean("metroTianyiCheer", true), (on) -> {
             prefs.edit().putBoolean("metroTianyiCheer", on).apply();
             MetronomeActivity.notifySettingChanged(this);
         }));
         card3.addView(switchRow("阶段提示 + 打拍自动变速", "热身→燃脂→冲刺→放松, BPM 随阶段渐变", prefs.getBoolean("metroTianyiStage", true), (on) -> {
             prefs.edit().putBoolean("metroTianyiStage", on).apply();
-            MetronomeActivity.notifySettingChanged(this);
-        }));
-        card3.addView(switchRow("心率跟随自动变速", "连手表/手环, 按心率区间自动调步频", prefs.getBoolean("metroTianyiFollow", false), (on) -> {
-            if (on) requestPerms();
-            prefs.edit().putBoolean("metroTianyiFollow", on).apply();
             MetronomeActivity.notifySettingChanged(this);
         }));
         root.addView(card3);
@@ -294,11 +288,40 @@ public class MetroSettingsActivity extends Activity {
         }, "bg-dl-set").start();
     }
 
-    private String hrStatus() {
-        HeartRateManager m = HeartRateManager.get(this);
-        String saved = prefs.getString("metroHrAddr", "");
-        if (m.isConnected()) return "已连接 (" + m.lastHr() + " bpm)";
-        return saved.isEmpty() ? "未连接" : "已保存设备";
+    private String mafText() {
+        int age = prefs.getInt("metroAge", 0);
+        return age > 0 ? "已算过: 年龄 " + age + ", MAF " + (180 - age) : "未输入年龄";
+    }
+
+    private void showMafDialog() {
+        final android.widget.EditText et = new android.widget.EditText(this);
+        et.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        int cur = prefs.getInt("metroAge", 0);
+        et.setHint("输入年龄");
+        if (cur > 0) et.setText(String.valueOf(cur));
+        et.setTextSize(16);
+        android.widget.FrameLayout wrap = new android.widget.FrameLayout(this);
+        int pd = (int) (getResources().getDisplayMetrics().density * 20);
+        wrap.setPadding(pd, pd / 2, pd, 0);
+        wrap.addView(et);
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("马费通跑法 (MAF 180-年龄)")
+            .setView(wrap)
+            .setPositiveButton("计算", (d, w) -> {
+                try {
+                    int age = Math.max(5, Math.min(100, Integer.parseInt(et.getText().toString().trim())));
+                    prefs.edit().putInt("metroAge", age).apply();
+                    int maf = 180 - age;
+                    new android.app.AlertDialog.Builder(this)
+                        .setTitle("你的 MAF 训练心率")
+                        .setMessage("年龄 " + age + " 岁\n\nMAF 心率 = 180 - " + age + " = " + maf + " bpm\n\n日常有氧跑不要超过 " + maf + "，热身阶段可以低 10 拍（" + (maf - 10) + " 左右）起步")
+                        .setPositiveButton("知道了", (d2, w2) -> recreate())
+                        .show();
+                    MetronomeActivity.notifySettingChanged(this);
+                } catch (Throwable ignored) {}
+            })
+            .setNegativeButton("取消", null)
+            .show();
     }
 
     private void showAgeDialog() {
