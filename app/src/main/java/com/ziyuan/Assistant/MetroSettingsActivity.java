@@ -93,10 +93,7 @@ public class MetroSettingsActivity extends Activity {
         audioKey = prefs.getString("metroAudio", MetroConstant.AudioDefault);
         mgr = new MetroAudioManager(this);
         card1.addView(choiceRow("音色", displayName(audioKey), v -> showAudioDialog()));
-        card1.addView(switchRow("洛天依陪跑", "阶段提示+随机鼓励+字幕, 打拍自动变速", prefs.getBoolean("metroTianyi", false), (on) -> {
-            prefs.edit().putBoolean("metroTianyi", on).apply();
-            MetronomeActivity.notifySettingChanged(this);
-        }));
+
         root.addView(card1);
 
         // ===== 我的 =====
@@ -113,6 +110,19 @@ public class MetroSettingsActivity extends Activity {
         }));
         card2.addView(choiceRow("定时器", timerMin > 0 ? timerMin + " 分钟后自动停止" : "不限制", v -> showTimerDialog()));
         root.addView(card2);
+
+        // ===== 洛天依 =====
+        root.addView(sectionTitle("洛天依"));
+        LinearLayout card3 = card();
+        card3.addView(switchRow("随机鼓励语 + 字幕", "每 35~55 秒随机一句鼓励, 顶部同步字幕", prefs.getBoolean("metroTianyiCheer", true), (on) -> {
+            prefs.edit().putBoolean("metroTianyiCheer", on).apply();
+            MetronomeActivity.notifySettingChanged(this);
+        }));
+        card3.addView(switchRow("阶段提示 + 打拍自动变速", "热身→燃脂→冲刺→放松, BPM 随阶段渐变", prefs.getBoolean("metroTianyiStage", true), (on) -> {
+            prefs.edit().putBoolean("metroTianyiStage", on).apply();
+            MetronomeActivity.notifySettingChanged(this);
+        }));
+        root.addView(card3);
 
         setContentView(root);
         applyTheme(root);

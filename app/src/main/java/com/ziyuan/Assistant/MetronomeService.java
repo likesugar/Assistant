@@ -129,7 +129,10 @@ public class MetronomeService extends Service {
         }
         engine.play();
         if (tianyiOn) {
-            if (tianyi == null || !tianyi.isRunning()) { tianyi = new TianyiController(this, engine); tianyi.start(); }
+            if (tianyi == null || !tianyi.isRunning()) { tianyi = new TianyiController(this, engine,
+                    getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroTianyiCheer", true),
+                    getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroTianyiStage", true));
+                tianyi.start(); }
         } else if (tianyi != null) { tianyi.stop(); tianyi = null; }
         final int timerMin = intent.getIntExtra(EXTRA_TIMER, 0);
         stopHandler.removeCallbacksAndMessages(null);

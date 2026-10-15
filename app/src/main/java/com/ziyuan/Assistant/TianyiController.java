@@ -34,20 +34,24 @@ public class TianyiController {
 
     private final Context ctx;
     private final MetroEngine engine;
+    private final boolean cheerOn, stageOn;
     private final Handler h = new Handler(Looper.getMainLooper());
     private MediaPlayer voice;
     private int stageIdx = 0, elapsed = 0, cheerIn = 0, nextCheer = 40;
     private boolean running = false;
 
-    public TianyiController(Context c, MetroEngine e) { ctx = c; engine = e; }
+    public TianyiController(Context c, MetroEngine e, boolean cheer, boolean stage) {
+        ctx = c; engine = e; cheerOn = cheer; stageOn = stage;
+    }
 
     public void start() {
         stop();
+        if (!cheerOn && !stageOn) return;
         running = true;
         stageIdx = 0; elapsed = 0;
-        playVoice("zhunbei", "准备好啦～三、二、一，跟天依一起出发吧！");
-        engine.setBpm(STAGES[0].bpm0);
-        h.postDelayed(tick, 2600); // 开场白后进热身
+        if (stageOn) playVoice("zhunbei", "准备好啦～三、二、一，跟天依一起出发吧！");
+        if (stageOn) engine.setBpm(STAGES[0].bpm0);
+        h.postDelayed(tick, stageOn ? 2600 : 3000);
     }
 
     public void stop() {
@@ -72,17 +76,19 @@ public class TianyiController {
                 stageIdx++;
                 elapsed = 0;
                 if (stageIdx >= STAGES.length) {
-                    playVoice("jieshu", "训练完成啦！天依觉得你好棒，记得拉伸放松哦～");
+                    if (stageOn) playVoice("jieshu", "训练完成啦！天依觉得你好棒，记得拉伸放松哦～");
                     stop();
                     return;
                 }
                 nextCheer = 35 + (int) (Math.random() * 21);
             }
             Stage cur = STAGES[stageIdx];
-            if (elapsed == 1) playVoice(cur.voice, cur.text);
-            float t = Math.min(1f, elapsed / (float) cur.dur);
-            engine.setBpm(Math.round(cur.bpm0 + (cur.bpm1 - cur.bpm0) * t));
-            if (++cheerIn >= nextCheer) {
+            if (elapsed == 1 && stageOn) playVoice(cur.voice, cur.text);
+            if (stageOn) {
+                float t = Math.min(1f, elapsed / (float) cur.dur);
+                engine.setBpm(Math.round(cur.bpm0 + (cur.bpm1 - cur.bpm0) * t));
+            }
+            if (cheerOn && ++cheerIn >= nextCheer) {
                 cheerIn = 0;
                 nextCheer = 35 + (int) (Math.random() * 21);
                 String[] c = CHEERS[(int) (Math.random() * CHEERS.length)];
