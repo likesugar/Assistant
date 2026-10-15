@@ -1,6 +1,5 @@
 package com.ziyuan.Assistant;
 
-import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioTrack;
 import android.os.Process;
@@ -29,16 +28,12 @@ public class MetroEngine extends Thread {
     private void prepareAudioTrack() {
         int buf = MetroConstant.SampleRate * 2 * 2; // 2s 字节缓冲
         audioTrack = new AudioTrack(
-            new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build(),
-            new AudioFormat.Builder()
-                .setSampleRate(MetroConstant.SampleRate)
-                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                .build(),
-            buf, AudioTrack.MODE_STREAM);
+            android.media.AudioManager.STREAM_MUSIC,
+            MetroConstant.SampleRate,
+            AudioFormat.CHANNEL_OUT_MONO,
+            AudioFormat.ENCODING_PCM_16BIT,
+            buf,
+            AudioTrack.MODE_STREAM);
     }
 
     private static byte[] soundBooster(byte[] origin) {
