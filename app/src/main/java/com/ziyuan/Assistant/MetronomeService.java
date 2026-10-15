@@ -36,6 +36,8 @@ public class MetronomeService extends Service {
         return (e != null && e.isPlaying()) ? e.currentTick(notes) : -1;
     }
     private static MetronomeService inst;
+    private TianyiController tianyi;
+    private boolean tianyiOn = false;
     private MetroAudioManager audioManager;
     private final android.os.Handler stopHandler = new android.os.Handler();
 
