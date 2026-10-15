@@ -43,7 +43,7 @@ public class GpsManager {
                 }
             }
             // 网络定位只补初始位置, 不参与配速/距离
-            if (listener != null) listener.onUpdate(sp, distKm, pace);
+            if (listener != null) listener.onUpdate(lastPace > 0 ? (float) (1000.0 / lastPace) : 0, distKm, lastPace);
         }
         @Override public void onStatusChanged(String p, int s, Bundle e) {}
         @Override public void onProviderEnabled(String p) {}
