@@ -342,13 +342,14 @@ public class MetronomeActivity extends Activity {
         String name = clean.substring(clean.lastIndexOf('/') + 1);
         try { name = java.net.URLDecoder.decode(name, "UTF-8"); } catch (Throwable ignored) {}
         if (name.isEmpty()) name = "背景音";
-        final File out = new File(bgDir, name);
+        final String fname = name;
+        final File out = new File(bgDir, fname);
         new Thread(() -> {
             boolean ok = fetch(url, out);
             runOnUiThread(() -> {
                 bgDownloading = false;
                 refreshBgList();
-                Toast.makeText(this, ok ? "已加入背景音: " + name : "下载失败, 检查地址或网络", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, ok ? "已加入背景音: " + fname : "下载失败, 检查地址或网络", Toast.LENGTH_SHORT).show();
             });
         }, "bg-dl").start();
     }
