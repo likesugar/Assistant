@@ -20,11 +20,11 @@ public class MetroEngine extends Thread {
     }
 
     public void setAudioData(MetroAudioData ad) { this.audioData = ad; this.changed = true; }
-    public void setBpm(int v) { bpm = v; changed = true; }
-    public void setNotes(int v) { notes = v; changed = true; }
-    public void setSubdiv(int v) { sub = Math.max(1, v); changed = true; }
-    public void setBooster(boolean v) { booster = v; changed = true; }
-    public void setAccentFirst(boolean v) { accentFirst = v; changed = true; }
+    public void setBpm(int v) { if (v != bpm) { bpm = v; changed = true; } }
+    public void setNotes(int v) { if (v != notes) { notes = v; changed = true; } }
+    public void setSubdiv(int v) { v = Math.max(1, v); if (v != sub) { sub = v; changed = true; } }
+    public void setBooster(boolean v) { if (v != booster) { booster = v; changed = true; } }
+    public void setAccentFirst(boolean v) { if (v != accentFirst) { accentFirst = v; changed = true; } }
 
     private void prepareAudioTrack() {
         int buf = MetroConstant.SampleRate * 2 * 2; // 2s 字节缓冲

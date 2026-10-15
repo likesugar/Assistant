@@ -46,6 +46,7 @@ public class TianyiController {
         running = true;
         stageIdx = 0; elapsed = 0;
         playVoice("zhunbei", "准备好啦～三、二、一，跟天依一起出发吧！");
+        engine.setBpm(STAGES[0].bpm0);
         h.postDelayed(tick, 2600); // 开场白后进热身
     }
 
@@ -58,7 +59,7 @@ public class TianyiController {
 
     public boolean isRunning() { return running; }
 
-    /** 暂停/继续 语音 */
+    /** 暂停语音 */
     public void onPaused() { if (running) playVoice("zanting", "运动暂停！休息一下再继续吧！"); }
     public void onResumed() { if (running) playVoice("kaishi", "继续跑！天依一直陪着你哦～"); }
 
@@ -75,10 +76,10 @@ public class TianyiController {
                     stop();
                     return;
                 }
-                playVoice(STAGES[stageIdx].voice, STAGES[stageIdx].text);
                 nextCheer = 35 + (int) (Math.random() * 21);
             }
             Stage cur = STAGES[stageIdx];
+            if (elapsed == 1) playVoice(cur.voice, cur.text);
             float t = Math.min(1f, elapsed / (float) cur.dur);
             engine.setBpm(Math.round(cur.bpm0 + (cur.bpm1 - cur.bpm0) * t));
             if (++cheerIn >= nextCheer) {
