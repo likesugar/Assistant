@@ -132,6 +132,18 @@ public class MetroSettingsActivity extends Activity {
         applyTheme(root);
     }
 
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            android.view.WindowInsetsController c = getWindow().getInsetsController();
+            if (c != null) {
+                c.hide(android.view.WindowInsets.Type.navigationBars());
+                c.setSystemBarsBehavior(android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            }
+        }
+    }
+
     private boolean dark() { return prefs.getBoolean("dark", false); }
     private boolean oled() { return prefs.getBoolean("oled", true); }
     private int color(int d, int l) { return dark() ? d : l; }
