@@ -288,7 +288,7 @@ public class MetronomeActivity extends Activity {
                     int m = (int) (pace / 60), sec = (int) (pace % 60);
                     pc.setText(m + "'" + String.format("%02d", sec) + "\"");
                 } else pc.setText("--'--\"");
-                ds.setText(String.format("%.2fkm", dist));
+                ds.setText(dist < 1.0 ? String.format("%.0fm", dist * 1000) : String.format("%.2fkm", dist));
                 return;
             }
             TextView tv = (TextView) findViewById(R.id.tvTianyi);
