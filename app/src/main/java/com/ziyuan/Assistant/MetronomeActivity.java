@@ -735,13 +735,13 @@ public class MetronomeActivity extends Activity {
         bNo.setTextColor(0xFFFF6A1E);
         bNo.setTextSize(17.5f);
         bNo.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        bNo.setGravity(View.CENTER);
+        bNo.setGravity(android.view.Gravity.CENTER);
         TextView bYes = new TextView(this);
         bYes.setText("确定");
         bYes.setTextColor(0xFFFF6A1E);
         bYes.setTextSize(17.5f);
         bYes.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        bYes.setGravity(View.CENTER);
+        bYes.setGravity(android.view.Gravity.CENTER);
         android.widget.LinearLayout.LayoutParams bp = new android.widget.LinearLayout.LayoutParams(0, -2, 1f);
         bp.setMargins(0, dp(10), 0, dp(10));
         row.addView(bNo, bp);
