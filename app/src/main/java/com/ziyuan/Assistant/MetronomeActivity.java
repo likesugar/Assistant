@@ -92,6 +92,10 @@ public class MetronomeActivity extends Activity {
         bindNumEdit((android.widget.EditText) findViewById(R.id.tvBeats), notes, 1, 8, this::setNotes);
         bindNumEdit((android.widget.EditText) findViewById(R.id.tvSub), sub, 1, 4, this::setSub);
         bindNumEdit((android.widget.EditText) findViewById(R.id.tvBpm), bpm, 30, 252, this::setBpm);
+        findViewById(R.id.tvBpm).setOnClickListener(v -> {
+            View row = findViewById(R.id.bpmPresets);
+            row.setVisibility(row.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
+        });
         refreshTop();
         buildDots();
         buildBgList();

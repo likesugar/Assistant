@@ -136,11 +136,23 @@ public class MetronomeService extends Service {
         }
         engine.play();
         if (tianyiOn) {
-            if (tianyi == null || !tianyi.isRunning()) { tianyi = new TianyiController(this, engine,
-                    getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroTianyiCheer", true),
-                    getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroTianyiStage", true));
-                tianyi.start(); }
-        } else if (tianyi != null) { tianyi.stop(); tianyi = null; }
+            if (tianyi == null || !tianyi.isRunning()) {
+                android.content.SharedPreferences tp = getSharedPreferences("settings", MODE_PRIVATE);
+                hrMgr = new HeartRateManager(this, null);
+                gpsMgr = new GpsManager(this, null);
+                hrMgr.start(); gpsMgr.start();
+                tianyi = new TianyiController(this, engine,
+                    tp.getBoolean("metroTianyiCheer", true),
+                    tp.getBoolean("metroTianyiStage", true), followOn);
+                tianyi.hrMgr = hrMgr; tianyi.gpsMgr = gpsMgr;
+                tianyi.age = tp.getInt("metroAge", 30);
+                tianyi.start();
+            }
+        } else if (tianyi != null) {
+            tianyi.stop(); tianyi = null;
+            if (hrMgr != null) { hrMgr.stop(); hrMgr = null; }
+            if (gpsMgr != null) { gpsMgr.stop(); gpsMgr = null; }
+        }
         final int timerMin = intent.getIntExtra(EXTRA_TIMER, 0);
         stopHandler.removeCallbacksAndMessages(null);
         if (timerMin > 0) {

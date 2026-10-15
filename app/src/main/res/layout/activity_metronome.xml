@@ -76,7 +76,7 @@
                         android:background="@drawable/bg_btn_md3"/>
                 </LinearLayout>
             </LinearLayout>
-            <LinearLayout android:id="@+id/bpmPresets" android:layout_width="match_parent" android:layout_height="wrap_content"
+            <LinearLayout android:id="@+id/bpmPresets" android:visibility="gone" android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="horizontal" android:layout_marginTop="16dp"/>
         </LinearLayout>
 
