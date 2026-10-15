@@ -436,7 +436,10 @@ public class MetronomeActivity extends Activity {
         }
         ScrollView sc = (ScrollView) findViewById(R.id.bgScroll);
         LinearLayout card = (LinearLayout) findViewById(R.id.metroCardBg);
-        card.setVisibility(bgFiles.isEmpty() ? View.GONE : View.VISIBLE);
+        card.setVisibility(View.VISIBLE);
+        findViewById(R.id.bgScroll).setVisibility(bgFiles.isEmpty() ? View.GONE : View.VISIBLE);
+        LinearLayout volRow = (LinearLayout) ((ViewGroup) findViewById(R.id.sbBgVol).getParent());
+        volRow.setVisibility(bgFiles.isEmpty() ? View.GONE : View.VISIBLE);
         if (bgFiles.size() > 4) {
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(4 * 46));
             sc.setLayoutParams(lp);
