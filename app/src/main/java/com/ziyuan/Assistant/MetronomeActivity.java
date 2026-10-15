@@ -683,7 +683,7 @@ public class MetronomeActivity extends Activity {
             requestPermissions(new String[]{"android.permission.ACTIVITY_RECOGNITION", P}, 3);
             return;
         }
-        if (checkSelfPermission(P) == 0) return;
+        if (checkSelfPermission(P) == 0) { ensureLocService(); return; }
         if (shouldShowRequestPermissionRationale(P)) {
             // 拒过一次: 再弹系统申请框
             requestPermissions(new String[]{P}, 2);
@@ -698,6 +698,71 @@ public class MetronomeActivity extends Activity {
                 .setNegativeButton("取消", null)
                 .show();
         }
+    }
+
+    /** 定位总开关没开: 按图1样式弹提醒 (深色圆角+橙色按钮) */
+    private void ensureLocService() {
+        android.location.LocationManager lm = (android.location.LocationManager) getSystemService(LOCATION_SERVICE);
+        boolean on = false;
+        try {
+            on = lm.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)
+              || lm.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER);
+        } catch (Throwable ignored) {}
+        if (on) return;
+        int pd = dp(24);
+        android.widget.LinearLayout box = new android.widget.LinearLayout(this);
+        box.setOrientation(android.widget.LinearLayout.VERTICAL);
+        box.setBackgroundResource(R.drawable.bg_dialog_dark_round);
+        box.setPadding(pd, dp(26), pd, dp(10));
+        TextView tvTitle = new TextView(this);
+        tvTitle.setText("提醒");
+        tvTitle.setTextColor(0xFFF2F2F2);
+        tvTitle.setTextSize(20);
+        tvTitle.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        box.addView(tvTitle);
+        TextView tvMsg = new TextView(this);
+        tvMsg.setText("该功能需使用定位服务，是否开启？");
+        tvMsg.setTextColor(0xFFC9C9C9);
+        tvMsg.setTextSize(16.5f);
+        tvMsg.setLineSpacing(dp(4), 1f);
+        android.widget.LinearLayout.LayoutParams mp = new android.widget.LinearLayout.LayoutParams(-1, -2);
+        mp.setMargins(0, dp(22), 0, dp(26));
+        box.addView(tvMsg, mp);
+        android.widget.LinearLayout row = new android.widget.LinearLayout(this);
+        row.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        TextView bNo = new TextView(this);
+        bNo.setText("取消");
+        bNo.setTextColor(0xFFFF6A1E);
+        bNo.setTextSize(17.5f);
+        bNo.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        bNo.setGravity(View.CENTER);
+        TextView bYes = new TextView(this);
+        bYes.setText("确定");
+        bYes.setTextColor(0xFFFF6A1E);
+        bYes.setTextSize(17.5f);
+        bYes.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        bYes.setGravity(View.CENTER);
+        android.widget.LinearLayout.LayoutParams bp = new android.widget.LinearLayout.LayoutParams(0, -2, 1f);
+        bp.setMargins(0, dp(10), 0, dp(10));
+        row.addView(bNo, bp);
+        View div = new View(this);
+        div.setBackgroundColor(0xFF4A4A4A);
+        row.addView(div, new android.widget.LinearLayout.LayoutParams(dp(1), -2));
+        row.addView(bYes, bp);
+        box.addView(row);
+        final android.app.Dialog dlg = new android.app.Dialog(this);
+        dlg.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        dlg.setContentView(box);
+        dlg.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(0));
+        android.view.WindowManager.LayoutParams wp = dlg.getWindow().getAttributes();
+        wp.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.82);
+        dlg.getWindow().setAttributes(wp);
+        bNo.setOnClickListener(v -> dlg.dismiss());
+        bYes.setOnClickListener(v -> {
+            dlg.dismiss();
+            try { startActivity(new android.content.Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)); } catch (Throwable ignored) {}
+        });
+        dlg.show();
     }
 
     private void hideNavBar() {
