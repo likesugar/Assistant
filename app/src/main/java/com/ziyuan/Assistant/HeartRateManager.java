@@ -40,7 +40,7 @@ public class HeartRateManager {
     private Listener listener;
     private BluetoothGatt gatt;
     private boolean scanning = false;
-    private int lastHr = 0;
+    public int lastHr = 0;
     private boolean hrSeen = false;
     public String connectedAddr = null;
 
@@ -68,6 +68,7 @@ public class HeartRateManager {
         scanning = true;
         try {
             ad.getBluetoothLeScanner().startScan(
+                Collections.<ScanFilter>emptyList(),
                 new ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build(), scanCb);
         } catch (Throwable ignored) { scanning = false; }
     }
