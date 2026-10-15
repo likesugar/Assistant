@@ -6,9 +6,9 @@ public class MetroConstant {
     public final static int MinBPM = 10;
     public final static int MaxBPM = 323;
     public final static String AudioDefault = "Default";
-    public final static String AudioBassDrum = "BassDrum";
     public final static String AudioClap = "Clap";
-    public final static String AudioClaves = "Claves";
-    public final static String AudioRimshot = "Rimshot";
-    public final static String AudioJog = "Jog";
+    public final static String AudioPluck = "Pluck";
+    public final static String AudioRisset = "Risset";
+    public final static String AudioSine = "Sine";
+    public final static String AudioSquare = "Square";
 }

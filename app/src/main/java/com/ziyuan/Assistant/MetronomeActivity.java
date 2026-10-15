@@ -154,11 +154,11 @@ public class MetronomeActivity extends Activity {
 
     private String displayName(String k) {
         if (MetroConstant.AudioDefault.equals(k)) return "默认";
-        if (MetroConstant.AudioBassDrum.equals(k)) return "底鼓";
         if (MetroConstant.AudioClap.equals(k)) return "拍手";
-        if (MetroConstant.AudioClaves.equals(k)) return "响棒";
-        if (MetroConstant.AudioRimshot.equals(k)) return "边击";
-        if (MetroConstant.AudioJog.equals(k)) return "慢跑";
+        if (MetroConstant.AudioPluck.equals(k)) return "弹拨";
+        if (MetroConstant.AudioRisset.equals(k)) return "鼓点";
+        if (MetroConstant.AudioSine.equals(k)) return "正弦";
+        if (MetroConstant.AudioSquare.equals(k)) return "方波";
         return k;
     }
 

@@ -22,12 +22,11 @@ public class MetroAudioManager {
     public MetroAudioManager(Context context) {
         mContext = context;
         putAudio(MetroConstant.AudioDefault, "audios/upbeat.wav", "audios/downbeat.wav");
-        putAudio(MetroConstant.AudioBassDrum, "audios/BassDrum1.wav", "audios/BassDrum2.wav");
         putAudio(MetroConstant.AudioClap, "audios/Clap1.wav", "audios/Clap2.wav");
-        putAudio(MetroConstant.AudioClaves, "audios/Claves1.wav", "audios/Claves2.wav");
-        putAudio(MetroConstant.AudioRimshot, "audios/Rimshot1.wav", "audios/Rimshot2.wav");
-        // 慢跑: 落脚=底鼓(低音"咚") 抬脚=边击(轻"哒"), 建议配 2 拍 + 165-180 BPM
-        putAudio(MetroConstant.AudioJog, "audios/Rimshot1.wav", "audios/BassDrum2.wav");
+        putAudio(MetroConstant.AudioPluck, "audios/Pluck1.wav", "audios/Pluck2.wav");
+        putAudio(MetroConstant.AudioRisset, "audios/Risset1.wav", "audios/Risset2.wav");
+        putAudio(MetroConstant.AudioSine, "audios/Sine1.wav", "audios/Sine2.wav");
+        putAudio(MetroConstant.AudioSquare, "audios/Square1.wav", "audios/Square2.wav");
     }
 
     private byte[] loadData(String path) throws IOException {
