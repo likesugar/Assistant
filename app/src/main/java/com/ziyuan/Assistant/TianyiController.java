@@ -47,6 +47,7 @@ public class TianyiController {
     }
 
     public Runnable introDone; // 开场语音播完后由外部执行(启动节拍)
+    private boolean introPlaying = false;
 
     public void start() {
         stop();
@@ -54,6 +55,7 @@ public class TianyiController {
         running = true;
         stageIdx = 0; elapsed = 0;
         if (stageOn) {
+            introPlaying = true;
             playVoice("zhunbei", "准备好啦～三、二、一，跟天依一起出发吧！");
             engine.setBpm(STAGES[0].bpm0);
             h.postDelayed(tick, 2600);
@@ -96,7 +98,7 @@ public class TianyiController {
             }
             if (stageOn) {
                 Stage cur = STAGES[stageIdx];
-                if (elapsed == 1) playVoice(cur.voice, cur.text);
+                if (elapsed == 1 && !introPlaying) playVoice(cur.voice, cur.text); // 开场语音没播完不抢话
                 float t = Math.min(1f, elapsed / (float) cur.dur);
                 engine.setBpm(Math.round(cur.bpm0 + (cur.bpm1 - cur.bpm0) * t));
             }
@@ -149,13 +151,23 @@ public class TianyiController {
             voice.prepare();
             final long durMs = voice.getDuration() + 400;
             voice.start();
-            if (id.equals("zhunbei") && introDone != null) {
-                final Runnable r = introDone; introDone = null;
-                voice.setOnCompletionListener(mp -> r.run());
-                h.postDelayed(() -> { if (r != null) r.run(); }, durMs > 500 ? durMs : 2600); // 兜底: 文件缺失也开工
+            if (id.equals("zhunbei")) {
+                final Runnable fire = () -> {
+                    boolean first = introPlaying; introPlaying = false;
+                    if (first) { // 开场结束: 先停旧语音再让节拍开工
+                        if (introDone != null) { Runnable r = introDone; introDone = null; r.run(); }
+                        else if (engine != null) engine.play();
+                    }
+                };
+                voice.setOnCompletionListener(mp -> fire.run());
+                h.postDelayed(fire, Math.max(2600, durMs)); // 兜底
             }
         } catch (Throwable ignored) {
-            if (id.equals("zhunbei") && introDone != null) { Runnable r = introDone; introDone = null; r.run(); }
+            if (id.equals("zhunbei") && introPlaying) {
+                introPlaying = false;
+                if (introDone != null) { Runnable r = introDone; introDone = null; r.run(); }
+                else if (engine != null) engine.play();
+            }
         }
     }
 

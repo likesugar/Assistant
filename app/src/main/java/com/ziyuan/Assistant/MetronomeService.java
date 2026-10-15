@@ -149,11 +149,11 @@ tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyi
                     tsp.getBoolean("metroTianyiCheer", true),
                     tsp.getBoolean("metroTianyiStage", true));
                 tianyi.gpsMgr = gpsMgr; tianyi.stepMgr = stepMgr;
-                tianyi.start();
                 if (tsp.getBoolean("metroTianyiStage", true)) {
                     tianyi.introDone = () -> { MetroEngine en = engine; if (en != null) en.play(); };
                     introPending = true; // 开场语音播完才响节拍
                 }
+                tianyi.start(); // introDone 必须在 start 前挂好(开场语音在 start 里播)
             }
         } else if (tianyi != null) {
             tianyi.stop(); tianyi = null;
