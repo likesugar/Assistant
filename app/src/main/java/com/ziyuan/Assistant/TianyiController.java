@@ -122,6 +122,8 @@ public class TianyiController {
                 st.putExtra("hr", hrMgr == null ? 0 : hrMgr.lastHr);
                 st.putExtra("dist", gpsMgr.distKm);
                 st.putExtra("pace", gpsMgr.lastPace);
+                st.putExtra("gpsFix", gpsMgr.gotFix);
+                st.putExtra("hrConn", hrMgr.isConnected());
                 ctx.sendBroadcast(st);
             }
             if (cheerOn && ++cheerIn >= nextCheer) {

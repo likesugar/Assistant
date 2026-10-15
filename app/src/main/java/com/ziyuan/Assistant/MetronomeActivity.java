@@ -269,6 +269,10 @@ public class MetronomeActivity extends Activity {
                 hr.setText(b > 0 ? String.valueOf(b) : "--");
                 double pace = i.getDoubleExtra("pace", 0);
                 double dist = i.getDoubleExtra("dist", 0);
+                boolean fix = i.getBooleanExtra("gpsFix", false);
+                boolean conn = i.getBooleanExtra("hrConn", false);
+                ((TextView) ((ViewGroup) hr.getParent()).getChildAt(1)).setText(conn ? "心率·已连" : "心率·未连");
+                ((TextView) ((ViewGroup) pc.getParent()).getChildAt(1)).setText(fix ? "配速·已定位" : "配速·未定位");
                 if (pace > 0) {
                     int m = (int) (pace / 60), sec = (int) (pace % 60);
                     pc.setText(m + "'" + String.format("%02d", sec) + "\"");

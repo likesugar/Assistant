@@ -16,6 +16,7 @@ public class GpsManager {
     private Location last;
     public double distKm = 0;
     public double lastPace = 0;
+    public volatile boolean gotFix = false;
 
     public GpsManager(Context c, Listener l) { ctx = c; listener = l; }
 
@@ -25,6 +26,7 @@ public class GpsManager {
                 float d = last.distanceTo(loc);
                 if (d < 50 && Math.abs(loc.getSpeed() - last.getSpeed()) < 20) distKm += d / 1000.0;
             }
+            gotFix = true;
             last = loc;
             float sp = loc.getSpeed();
             double pace = sp > 0.7 ? 1000.0 / sp : 0; // 秒/公里
