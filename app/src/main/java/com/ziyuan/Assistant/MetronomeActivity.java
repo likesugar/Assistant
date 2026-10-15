@@ -584,22 +584,7 @@ public class MetronomeActivity extends Activity {
             box.setColor(dk ? (oled() ? 0xFF16181D : 0xFF232B38) : 0xFFFFFFFF);
             tv.setBackground(box);
         }
-        int roundBtn = dk ? (oled() ? 0xFF16181D : 0xFF232B38) : 0xFFFFFFFF;
-        TextView play = (TextView) findViewById(R.id.btnPlay);
-        android.graphics.drawable.GradientDrawable pgd = new android.graphics.drawable.GradientDrawable();
-        pgd.setCornerRadius(dp(30));
-        pgd.setColor(dk ? (oled() ? 0xFF16181D : 0xFF232B38) : 0xFFFFFFFF);
-        play.setBackground(pgd);
-        play.setTextColor(color(0xFFE8C87A, 0xFF7C4DFF));
-        for (int id : new int[]{R.id.btnBpmDown, R.id.btnBpmUp, R.id.btnAudio}) {
-            TextView b = (TextView) findViewById(id);
-            b.setTextColor(title);
-            android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
-            gd.setCornerRadius(dp(22));
-            gd.setColor(roundBtn);
-            b.setBackground(gd);
-        }
-        android.widget.ImageView gear = (android.widget.ImageView) findViewById(R.id.metroMenu);
+                android.widget.ImageView gear = (android.widget.ImageView) findViewById(R.id.metroMenu);
         gear.setColorFilter(color(0xFFE8ECF4, 0xFF1F2329));
         for (int id : new int[]{R.id.btnPlay}) ((TextView) findViewById(id)).setTextColor(accent);
         for (View v : new View[]{findViewById(R.id.metroCardBeats), findViewById(R.id.metroCardBg)}) {
