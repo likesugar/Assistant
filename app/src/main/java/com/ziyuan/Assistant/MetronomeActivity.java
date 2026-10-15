@@ -98,20 +98,8 @@ public class MetronomeActivity extends Activity {
         ((SeekBar) findViewById(R.id.sbBgVol)).setProgress(bgVol);
 
         findViewById(R.id.btnAudio).setOnClickListener(v -> showAudioPicker());
-        SeekBar sbB = (SeekBar) findViewById(R.id.sbBeats);
-        sbB.setMax(7); sbB.setProgress(notes - 1);
-        sbB.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            public void onProgressChanged(SeekBar sb, int p, boolean f) { if (f) setNotes(p + 1); }
-            public void onStartTrackingTouch(SeekBar sb) {}
-            public void onStopTrackingTouch(SeekBar sb) {}
-        });
-        SeekBar sbS = (SeekBar) findViewById(R.id.sbSub);
-        sbS.setMax(3); sbS.setProgress(sub - 1);
-        sbS.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            public void onProgressChanged(SeekBar sb, int p, boolean f) { if (f) setSub(p + 1); }
-            public void onStartTrackingTouch(SeekBar sb) {}
-            public void onStopTrackingTouch(SeekBar sb) {}
-        });
+        bindNumEdit((android.widget.EditText) findViewById(R.id.tvBeats), notes, 1, 8, this::setNotes);
+        bindNumEdit((android.widget.EditText) findViewById(R.id.tvSub), sub, 1, 4, this::setSub);
         SeekBar sbT = (SeekBar) findViewById(R.id.sbBpm);
         sbT.setMax(222); sbT.setProgress(bpm - 30);
         sbT.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -143,6 +131,30 @@ public class MetronomeActivity extends Activity {
         if (t < 168) return "快板";
         if (t < 200) return "急板";
         return "最急板";
+    }
+
+    private interface NumApply { void apply(int v); }
+
+    private void bindNumEdit(final android.widget.EditText et, int init, final int min, final int max, final NumApply apply) {
+        et.setText(String.valueOf(init));
+        et.setFocusableInTouchMode(true);
+        et.setOnEditorActionListener((v, actionId, ev) -> {
+            commitNum(et, min, max, apply);
+            return true;
+        });
+        et.setOnFocusChangeListener((v, hasFocus) -> { if (!hasFocus) commitNum(et, min, max, apply); });
+    }
+
+    private void commitNum(android.widget.EditText et, int min, int max, NumApply apply) {
+        try {
+            int v = Integer.parseInt(et.getText().toString().trim());
+            if (v < min) v = min;
+            if (v > max) v = max;
+            apply.apply(v);
+            et.setText(String.valueOf(v));
+        } catch (Throwable ignored) {
+            et.setText(String.valueOf(min));
+        }
     }
 
     private void setSub(int v) {
@@ -185,8 +197,6 @@ public class MetronomeActivity extends Activity {
         bpm = Math.max(30, Math.min(252, v));
         getSharedPreferences("settings", MODE_PRIVATE).edit().putInt("metroBpm", bpm).apply();
         refreshTop();
-        SeekBar sb = (SeekBar) findViewById(R.id.sbBpm);
-        if (sb.getProgress() != bpm - 30) sb.setProgress(bpm - 30);
         push(playing);
     }
 

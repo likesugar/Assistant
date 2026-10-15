@@ -26,25 +26,24 @@
             android:orientation="vertical" android:background="@drawable/bg_card_md3"
             android:padding="20dp" android:layout_marginTop="10dp">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:gravity="center_vertical">
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-                    android:text="拍子" android:textSize="15sp" android:textStyle="bold" android:tag="title"/>
-                <TextView android:id="@+id/tvBeats" android:layout_width="52dp" android:layout_height="40dp"
-                    android:gravity="center" android:text="4" android:textSize="18sp" android:textStyle="bold" android:tag="title"
-                    android:background="@drawable/bg_btn_md3"/>
+                android:orientation="horizontal">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:orientation="vertical" android:gravity="center">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="拍子" android:textSize="15sp" android:textStyle="bold" android:tag="title"/>
+                    <EditText android:id="@+id/tvBeats" android:layout_width="52dp" android:layout_height="40dp"
+                        android:gravity="center" android:layout_marginTop="10dp" android:text="4" android:textSize="18sp" android:textStyle="bold" android:tag="title"
+                        android:background="@drawable/bg_btn_md3"/>
+                </LinearLayout>
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:orientation="vertical" android:gravity="center">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="小节" android:textSize="15sp" android:textStyle="bold" android:tag="title"/>
+                    <EditText android:id="@+id/tvSub" android:layout_width="52dp" android:layout_height="40dp"
+                        android:gravity="center" android:layout_marginTop="10dp" android:text="1" android:textSize="18sp" android:textStyle="bold" android:tag="title"
+                        android:background="@drawable/bg_btn_md3"/>
+                </LinearLayout>
             </LinearLayout>
-            <SeekBar android:id="@+id/sbBeats" android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:max="7" android:progress="3" android:layout_marginTop="14dp"/>
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="22dp">
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-                    android:text="小节" android:textSize="15sp" android:textStyle="bold" android:tag="title"/>
-                <TextView android:id="@+id/tvSub" android:layout_width="52dp" android:layout_height="40dp"
-                    android:gravity="center" android:text="1" android:textSize="18sp" android:textStyle="bold" android:tag="title"
-                    android:background="@drawable/bg_btn_md3"/>
-            </LinearLayout>
-            <SeekBar android:id="@+id/sbSub" android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:max="3" android:progress="0" android:layout_marginTop="14dp"/>
         </LinearLayout>
 
                 <LinearLayout android:tag="card" android:id="@+id/metroCardBpm"
