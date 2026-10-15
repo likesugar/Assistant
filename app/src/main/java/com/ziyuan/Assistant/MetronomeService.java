@@ -78,7 +78,8 @@ public class MetronomeService extends Service {
         if (audioKey == null) audioKey = MetroConstant.AudioDefault;
         boolean booster = intent.getBooleanExtra(EXTRA_BOOSTER, false);
         boolean accentFirst = intent.getBooleanExtra(EXTRA_ACCENT, false);
-        tianyiOn = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroTianyi", false);
+        android.content.SharedPreferences tp = getSharedPreferences("settings", MODE_PRIVATE);
+        tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyiStage", true);
         if (intent.getBooleanExtra("settings_changed", false)) {
             android.content.SharedPreferences p = getSharedPreferences("settings", MODE_PRIVATE);
             audioKey = p.getString("metroAudio", MetroConstant.AudioDefault);

@@ -55,7 +55,7 @@ public class MetroEngine extends Thread {
         byte[] r = new byte[origin.length];
         for (int i = 0; i < origin.length - 1; i += 2) {
             short s = (short) (((origin[i] & 0xFF) | (origin[i + 1] << 8)));
-            int v = (int) (s * 1.6f);
+            int v = (int) (s * 2.5f);
             if (v > 32767) v = 32767;
             if (v < -32768) v = -32768;
             r[i] = (byte) v;

@@ -296,12 +296,22 @@ public class MetronomeActivity extends Activity {
 
     // ---------- 背景音 ----------
 
+    private android.media.audiofx.LoudnessEnhancer bgBoostFx;
+
     private void setBgVol(int v) {
         bgVol = v;
         getSharedPreferences("settings", MODE_PRIVATE).edit().putInt("metroBgVol", v).apply();
         if (bgPlayer != null) {
-            float f = v / 100f;
+            float f = Math.min(1f, v / 100f);
             try { bgPlayer.setVolume(f, f); } catch (Throwable ignored) {}
+            try {
+                if (bgBoostFx != null) { bgBoostFx.release(); bgBoostFx = null; }
+                if (v > 100) {
+                    bgBoostFx = new android.media.audiofx.LoudnessEnhancer(bgPlayer.getAudioSessionId());
+                    bgBoostFx.setTargetGain((int) ((v - 100) / 100f * 6000)); // 最多 +6dB
+                    bgBoostFx.setEnabled(true);
+                }
+            } catch (Throwable ignored) {}
         }
     }
 
@@ -372,8 +382,9 @@ public class MetronomeActivity extends Activity {
             bgPlayer = new MediaPlayer();
             bgPlayer.setDataSource(f.getAbsolutePath());
             bgPlayer.setLooping(true);
-            float v = bgVol / 100f;
+            float v = Math.min(1f, bgVol / 100f);
             bgPlayer.setVolume(v, v);
+            setBgVol(bgVol);
             bgPlayer.prepare();
             bgPlayer.start();
             bgPlayingView = view;
@@ -576,6 +587,7 @@ public class MetronomeActivity extends Activity {
             btnPlay.setText(playing ? "■ 停止" : "▶ 开始打拍");
             if (playing) uiTick.post(tickRun); else { uiTick.removeCallbacks(tickRun); for (View d : dots) d.setBackgroundResource(R.drawable.bg_dot_off); }
         }
+        refreshBgList();
         applyKeepScreen();
     }
 
