@@ -17,24 +17,32 @@ public class GpsManager {
     public double distKm = 0;
     public double lastPace = 0;
     public volatile boolean gotFix = false;
+    private boolean lastWasGps = false;
 
     public GpsManager(Context c, Listener l) { ctx = c; listener = l; }
 
     private final LocationListener ll = new LocationListener() {
         @Override public void onLocationChanged(Location loc) {
-            if (last != null && loc.getAccuracy() < 30 && last.getAccuracy() < 30) {
+            boolean isGps = LocationManager.GPS_PROVIDER.equals(loc.getProvider());
+            if (isGps) {
+                if (last != null && loc.getAccuracy() < 30 && last.getAccuracy() < 30) {
+                    float sp = loc.getSpeed();
+                    if (sp > 1.0f && sp < 70f) {
+                        float dt = Math.max(0.5f, Math.min(5f, (loc.getTime() - last.getTime()) / 1000f));
+                        float d = Math.min(last.distanceTo(loc), sp * dt);
+                        distKm += d / 1000.0;
+                    }
+                }
+                gotFix = true;
+                last = loc;
                 float sp = loc.getSpeed();
-                if (sp > 1.0f) {
-                    float dt = Math.max(0.5f, Math.min(5f, (loc.getTime() - last.getTime()) / 1000f));
-                    float d = Math.min(last.distanceTo(loc), sp * dt);
-                    distKm += d / 1000.0;
+                double pace = sp > 0.7 ? 1000.0 / sp : 0; // 秒/公里
+                if (pace > 0) {
+                    // 指数平滑: 新值 40%, 旧值 60%, 消抖
+                    lastPace = lastPace <= 0 ? pace : lastPace * 0.6 + pace * 0.4;
                 }
             }
-            gotFix = true;
-            last = loc;
-            float sp = loc.getSpeed();
-            double pace = sp > 0.7 ? 1000.0 / sp : 0; // 秒/公里
-            lastPace = pace;
+            // 网络定位只补初始位置, 不参与配速/距离
             if (listener != null) listener.onUpdate(sp, distKm, pace);
         }
         @Override public void onStatusChanged(String p, int s, Bundle e) {}
