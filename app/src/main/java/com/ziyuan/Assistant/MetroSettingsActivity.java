@@ -115,6 +115,10 @@ public class MetroSettingsActivity extends Activity {
         root.addView(sectionTitle("洛天依"));
         LinearLayout card3 = card();
         card3.addView(choiceRow("马费通跑法", mafText(), v -> showMafDialog()));
+        card3.addView(switchRow("配速", "GPS 实时配速 + 距离 + 步频 + 死推", prefs.getBoolean("metroTianyiGps", true), (on) -> {
+            prefs.edit().putBoolean("metroTianyiGps", on).apply();
+            MetronomeActivity.notifySettingChanged(this);
+        }));
         card3.addView(switchRow("随机鼓励语 + 字幕", "每 35~55 秒随机一句鼓励, 顶部同步字幕", prefs.getBoolean("metroTianyiCheer", true), (on) -> {
             prefs.edit().putBoolean("metroTianyiCheer", on).apply();
             MetronomeActivity.notifySettingChanged(this);
