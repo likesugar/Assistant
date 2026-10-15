@@ -81,7 +81,7 @@ public class MetroSettingsActivity extends Activity {
         // ===== 节拍器 =====
         root.addView(sectionTitle("节拍器"));
         LinearLayout card1 = card();
-        card1.addView(switchRow("增强第一个拍子", "每小节第一拍额外加重", prefs.getBoolean("metroAccent", false), (v, on) -> {
+        card1.addView(switchRow("增强第一个拍子", "每小节第一拍额外加重", prefs.getBoolean("metroAccent", false), (on) -> {
             prefs.edit().putBoolean("metroAccent", on).apply();
             MetronomeActivity.notifySettingChanged(this);
         }));
@@ -93,11 +93,11 @@ public class MetroSettingsActivity extends Activity {
         // ===== 我的 =====
         root.addView(sectionTitle("我的"));
         LinearLayout card2 = card();
-        card2.addView(switchRow("屏幕常亮", "打拍时保持屏幕常亮", prefs.getBoolean("metroKeepScreen", false), (v, on) -> {
+        card2.addView(switchRow("屏幕常亮", "打拍时保持屏幕常亮", prefs.getBoolean("metroKeepScreen", false), (on) -> {
             prefs.edit().putBoolean("metroKeepScreen", on).apply();
             MetronomeActivity.notifySettingChanged(this);
         }));
-        card2.addView(switchRow("音量增强", "所有拍子加大音量", prefs.getBoolean("metroBooster", false), (v, on) -> {
+        card2.addView(switchRow("音量增强", "所有拍子加大音量", prefs.getBoolean("metroBooster", false), (on) -> {
             prefs.edit().putBoolean("metroBooster", on).apply();
             MetronomeActivity.notifySettingChanged(this);
         }));
