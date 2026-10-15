@@ -33,7 +33,7 @@ public class GpsManager {
             if (isGps) {
                 gotFix = true;
                 lastGpsTime = System.currentTimeMillis();
-                if (last != null && acc < 50 && last.getAccuracy() < 50) {
+                if (last != null && acc < 20 && last.getAccuracy() < 20) {
                     float dt = Math.max(0.5f, Math.min(5f, (loc.getTime() - last.getTime()) / 1000f));
                     float d = last.distanceTo(loc);
                     if (spd > 0.8f && spd < 70f) d = Math.min(d, spd * dt);
