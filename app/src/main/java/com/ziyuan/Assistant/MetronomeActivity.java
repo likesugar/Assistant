@@ -33,6 +33,7 @@ public class MetronomeActivity extends Activity {
     private File bgDir;
     private final List<File> bgFiles = new ArrayList<>();
     private MediaPlayer bgPlayer;
+    private File bgPlayingFile;
     private TextView bgPlayingView;
     private LinearLayout bgList;
     private TextView bgEmpty;
@@ -260,6 +261,12 @@ public class MetronomeActivity extends Activity {
         }
     }
 
+    private void deleteBg(File f) {
+        if (bgPlayer != null && bgPlayingFile != null && bgPlayingFile.equals(f)) stopBgPlay();
+        if (f.delete()) { refreshBgList(); Toast.makeText(this, "已删除: " + f.getName().replaceAll("\\.[^.]+$", ""), Toast.LENGTH_SHORT).show(); }
+        else Toast.makeText(this, "删除失败", Toast.LENGTH_SHORT).show();
+    }
+
     private void buildBgList() {
         bgDir = new File(getFilesDir(), "bg_sounds");
         if (!bgDir.exists()) bgDir.mkdirs();
@@ -281,12 +288,23 @@ public class MetronomeActivity extends Activity {
             t.setTextSize(15);
             t.setTextColor(color(0xFFE8ECF4, 0xFF1F2329));
             t.setPadding(dp(14), dp(10), dp(14), dp(10));
-            t.setBackgroundResource(R.drawable.bg_chip_off);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            lp.bottomMargin = dp(8);
-            t.setLayoutParams(lp);
             t.setOnClickListener(v -> toggleBgPlay(f, t));
-            bgList.addView(t);
+            t.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            TextView del = new TextView(this);
+            del.setText("🗑");
+            del.setTextSize(15);
+            del.setPadding(dp(12), dp(10), dp(6), dp(10));
+            del.setOnClickListener(v -> deleteBg(f));
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            row.setBackgroundResource(R.drawable.bg_chip_off);
+            LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            rlp.bottomMargin = dp(8);
+            row.setLayoutParams(rlp);
+            row.addView(t);
+            row.addView(del);
+            bgList.addView(row);
         }
         ScrollView sc = (ScrollView) findViewById(R.id.bgScroll);
         LinearLayout card = (LinearLayout) findViewById(R.id.metroCardBg);
@@ -300,11 +318,12 @@ public class MetronomeActivity extends Activity {
     }
 
     private void toggleBgPlay(File f, TextView view) {
-        if (bgPlayer != null && bgPlayingView == view) {
+        if (bgPlayer != null && (bgPlayingFile == f || f.equals(bgPlayingFile))) {
             stopBgPlay();
             return;
         }
         stopBgPlay();
+        bgPlayingFile = f;
         try {
             bgPlayer = new MediaPlayer();
             bgPlayer.setDataSource(f.getAbsolutePath());
