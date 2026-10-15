@@ -365,7 +365,12 @@ public class MetronomeActivity extends Activity {
         String clean = url.split("#")[0].split("\\?")[0];
         String name = clean.substring(clean.lastIndexOf('/') + 1);
         try { name = java.net.URLDecoder.decode(name, "UTF-8"); } catch (Throwable ignored) {}
-        if (name.isEmpty()) name = "背景音";
+        if (name.indexOf('\uFFFD') >= 0 || name.matches(".*%[0-9A-Fa-f]{2}.*")) {
+            // 解码乱码兜底: 用时间命名
+            name = "背景音_" + new java.text.SimpleDateFormat("HHmmss", java.util.Locale.CHINA).format(new java.util.Date());
+        }
+        name = name.replaceAll("[\\\\/:*?\"<>|]", "_").trim();
+        if (name.isEmpty()) name = "背景音_" + System.currentTimeMillis() % 100000;
         final String fname = name;
         final File out = new File(bgDir, fname);
         new Thread(() -> {

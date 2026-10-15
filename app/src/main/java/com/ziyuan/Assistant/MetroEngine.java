@@ -38,22 +38,25 @@ public class MetroEngine extends Thread {
         return target;
     }
 
+    private int unitFrames = 0; // 每拍帧数, currentBeat 与波形共用同一套对齐
+
     private void generateSection() {
         changed = false;
         if (audioData == null || !audioData.isLoaded()) return;
-        int total = (int) (MetroConstant.SampleRate * 2 * 60 * notes * 1f / bpm);
-        if (total % 2 > 0) total -= total % 2;
-        int unit = (int) (total * 1f / notes);
-        if (unit % 2 > 0) unit -= unit % 2;
+        // 先按帧算每拍长度, 再反推整段 => 每一拍严格等距, 不受浮点误差影响
+        int framesPerBar = MetroConstant.SampleRate * 60 / bpm; // 一小节帧数
+        unitFrames = framesPerBar / notes;
+        if (unitFrames < 1) unitFrames = 1;
+        int total = unitFrames * notes * 2; // 字节
         wave = new byte[total];
         Arrays.fill(wave, (byte) 0);
         // SimpleBeat: 第一拍=downbeat(重音), 其余=upbeat
         byte[] beat1 = audioData.getDownbeat();
         byte[] beat2 = audioData.getUpbeat();
         if (booster) { beat1 = soundBooster(beat1); beat2 = soundBooster(beat2); }
-        System.arraycopy(beat1, 0, wave, 0, Math.min(beat1.length, unit));
+        System.arraycopy(beat1, 0, wave, 0, Math.min(beat1.length, total));
         for (int i = 1; i < notes; i++) {
-            System.arraycopy(beat2, 0, wave, i * unit, Math.min(beat2.length, unit));
+            System.arraycopy(beat2, 0, wave, i * unitFrames * 2, Math.min(beat2.length, total - i * unitFrames * 2));
         }
     }
 
@@ -78,7 +81,18 @@ public class MetroEngine extends Thread {
         while (!quit) {
             if (playing) {
                 if (changed) generateSection();
-                if (wave != null && audioTrack != null) audioTrack.write(wave, 0, wave.length);
+                if (wave != null && audioTrack != null) {
+                    int chunk = MetroConstant.SampleRate / 2 * 2; // 0.25s, 块间检查 changed
+                    for (int off = 0; off < wave.length && playing && !quit; off += chunk) {
+                        if (changed) { // 拍数/BPM/音色变了: 丢弃旧队列从头同步
+                            audioTrack.pause(); audioTrack.flush();
+                            generateSection();
+                            audioTrack.play();
+                        }
+                        int n = Math.min(chunk, wave.length - off);
+                        audioTrack.write(wave, off, n);
+                    }
+                }
             } else {
                 try { Thread.sleep(10); } catch (InterruptedException ignored) {}
             }
@@ -87,10 +101,8 @@ public class MetroEngine extends Thread {
 
     /** 当前拍索引(按播放头位置推算), 未播放返回 -1 */
     public int currentBeat(int notes) {
-        if (audioTrack == null || wave == null || wave.length == 0) return -1;
+        if (audioTrack == null || wave == null || unitFrames <= 0) return -1;
         long head = audioTrack.getPlaybackHeadPosition();
-        int unitFrames = (wave.length / 2) / notes;
-        if (unitFrames <= 0) return -1;
         return (int) ((head / unitFrames) % notes);
     }
 
