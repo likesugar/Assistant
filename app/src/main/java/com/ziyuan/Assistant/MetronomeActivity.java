@@ -499,7 +499,6 @@ public class MetronomeActivity extends Activity {
         findViewById(R.id.metroCardBpm).setBackgroundResource(card);
         findViewById(R.id.metroCardBeats).setBackgroundResource(card);
         findViewById(R.id.metroCardBeats).setBackgroundResource(card);
-        findViewById(R.id.metroCardSub).setBackgroundResource(card);
         findViewById(R.id.metroCardBg).setBackgroundResource(card);
         findViewById(R.id.metroCardDots).setBackgroundResource(card);
         int title = color(0xFFE8ECF4, 0xFF1F2329);
@@ -531,7 +530,7 @@ public class MetronomeActivity extends Activity {
         android.widget.ImageView gear = (android.widget.ImageView) findViewById(R.id.metroMenu);
         gear.setColorFilter(color(0xFFE8ECF4, 0xFF1F2329));
         for (int id : new int[]{R.id.btnPlay}) ((TextView) findViewById(id)).setTextColor(accent);
-        for (View v : new View[]{findViewById(R.id.metroCardBpm), findViewById(R.id.metroCardBeats), findViewById(R.id.metroCardSub), findViewById(R.id.metroCardBg)}) {
+        for (View v : new View[]{findViewById(R.id.metroCardBpm), findViewById(R.id.metroCardBeats) , findViewById(R.id.metroCardBg)}) {
             ((ViewGroup) v).setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
         }
         scanTags(findViewById(R.id.metroRoot), title, sub);
