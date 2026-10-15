@@ -27,6 +27,7 @@ public class MetronomeActivity extends Activity {
     private String audioKey = MetroConstant.AudioDefault;
     private boolean booster = false, playing = false;
     private boolean accentFirst = false;
+    private int targetCad = 0;
     private TextView tvBpm, btnPlay;
     private MetroAudioManager audioManager;
 
@@ -268,6 +269,7 @@ public class MetronomeActivity extends Activity {
             android.content.SharedPreferences p = getSharedPreferences("settings", MODE_PRIVATE);
             booster = p.getBoolean("metroBooster", false);
             accentFirst = p.getBoolean("metroAccent", false);
+        targetCad = p.getInt("metroTargetCad", 0);
             audioKey = p.getString("metroAudio", MetroConstant.AudioDefault);
             if (i.getBooleanExtra("bg_refresh", false)) refreshBgList();
             if (playing) push(true);
@@ -289,11 +291,14 @@ public class MetronomeActivity extends Activity {
                 } else pc.setText("--'--\"");
                 ds.setText(dist < 1.0 ? String.format("%.0fm", dist * 1000) : String.format("%.2fkm", dist));
                 int cad = i.getIntExtra("cad", 0);
-                int tbpm = i.getIntExtra("bpm", 0);
                 TextView tvC = (TextView) findViewById(R.id.tvCad);
-                if (cad > 0) tvC.setText(Math.round(cad) + "/" + tbpm);
-                else if (tbpm > 0) tvC.setText("--/" + tbpm);
-                else tvC.setText("--");
+                int target = targetCad > 0 ? targetCad : i.getIntExtra("bpm", 0);
+                boolean editing = tvC instanceof android.widget.EditText && tvC.hasFocus();
+                if (!editing) {
+                    android.widget.EditText et = (android.widget.EditText) tvC;
+                    String want = (cad > 0 ? Math.round(cad) : "--") + "/" + target;
+                    if (!et.getText().toString().equals(want)) et.setText(want);
+                }
                 String cd = i.getStringExtra("cadDiag");
                 ((TextView) ((ViewGroup) tvC.getParent()).getChildAt(1)).setText("步频·" + (cd == null ? "?" : cd));
                 return;
@@ -659,6 +664,7 @@ public class MetronomeActivity extends Activity {
         keepScreen = p.getBoolean("metroKeepScreen", false);
         booster = p.getBoolean("metroBooster", false);
         accentFirst = p.getBoolean("metroAccent", false);
+        targetCad = p.getInt("metroTargetCad", 0);
         timerMin = p.getInt("metroTimer", 0);
         audioKey = p.getString("metroAudio", MetroConstant.AudioDefault);
         boolean svc = MetronomeService.isRunning();

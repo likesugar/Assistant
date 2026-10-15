@@ -53,7 +53,6 @@ public class StepCadenceManager {
             long t = System.currentTimeMillis();
             if (delta > 0) {
                 // 计数器模式: 同样用窗口(每步时间≈现在, 一次补 delta 步)
-                long t = System.currentTimeMillis();
                 for (int i = 0; i < (int) delta; i++) {
                     if (winTail < win.length) { win[winTail++] = t - (long) ((delta - i) * 300); }
                     else { System.arraycopy(win, 1, win, 0, winTail - 1); win[winTail - 1] = t - (long) ((delta - i) * 300); }
