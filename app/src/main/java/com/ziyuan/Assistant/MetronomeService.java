@@ -138,9 +138,11 @@ public class MetronomeService extends Service {
         if (tianyiOn) {
             if (tianyi == null || !tianyi.isRunning()) {
                 android.content.SharedPreferences tsp = getSharedPreferences("settings", MODE_PRIVATE);
-                hrMgr = new HeartRateManager(this, null);
+                hrMgr = HeartRateManager.get(this);
                 gpsMgr = new GpsManager(this, null);
-                hrMgr.start(); gpsMgr.start();
+                String saved = tp.getString("metroHrAddr", "");
+                if (saved.isEmpty()) hrMgr.startAutoScan(); else hrMgr.connect(saved);
+                gpsMgr.start();
                 tianyi = new TianyiController(this, engine,
                     tsp.getBoolean("metroTianyiCheer", true),
                     tsp.getBoolean("metroTianyiStage", true), followOn);
