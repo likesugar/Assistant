@@ -37,6 +37,7 @@ public class MetronomeActivity extends Activity {
     private LinearLayout bgList;
     private TextView bgEmpty;
     private boolean bgDownloading = false;
+    private int bgVol = 40;
 
     private int dp(int v) { return (int) (v * getResources().getDisplayMetrics().density); }
     private boolean dark() { return getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", false); }
@@ -68,6 +69,7 @@ public class MetronomeActivity extends Activity {
         bpm = getSharedPreferences("settings", MODE_PRIVATE).getInt("metroBpm", 120);
         notes = getSharedPreferences("settings", MODE_PRIVATE).getInt("metroNotes", 4);
         audioKey = getSharedPreferences("settings", MODE_PRIVATE).getString("metroAudio", MetroConstant.AudioDefault);
+        bgVol = getSharedPreferences("settings", MODE_PRIVATE).getInt("metroBgVol", 40);
         tvBpm = (TextView) findViewById(R.id.tvBpm);
         btnPlay = (TextView) findViewById(R.id.btnPlay);
         findViewById(R.id.metroBack).setOnClickListener(v -> finish());
@@ -83,6 +85,14 @@ public class MetronomeActivity extends Activity {
         });
         btnPlay.setOnClickListener(v -> togglePlay());
         buildChips();
+        ((SeekBar) findViewById(R.id.sbBgVol)).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            public void onProgressChanged(SeekBar sb, int p, boolean f) {
+                if (f) setBgVol(p);
+            }
+            public void onStartTrackingTouch(SeekBar sb) {}
+            public void onStopTrackingTouch(SeekBar sb) {}
+        });
+        ((SeekBar) findViewById(R.id.sbBgVol)).setProgress(bgVol);
         buildDots();
         buildBgList();
         themeAll();
@@ -241,6 +251,15 @@ public class MetronomeActivity extends Activity {
 
     // ---------- 背景音 ----------
 
+    private void setBgVol(int v) {
+        bgVol = v;
+        getSharedPreferences("settings", MODE_PRIVATE).edit().putInt("metroBgVol", v).apply();
+        if (bgPlayer != null) {
+            float f = v / 100f;
+            try { bgPlayer.setVolume(f, f); } catch (Throwable ignored) {}
+        }
+    }
+
     private void buildBgList() {
         bgDir = new File(getFilesDir(), "bg_sounds");
         if (!bgDir.exists()) bgDir.mkdirs();
@@ -260,6 +279,7 @@ public class MetronomeActivity extends Activity {
             String name = f.getName().replaceAll("\\.[^.]+$", "");
             t.setText("▷  " + name);
             t.setTextSize(15);
+            t.setTextColor(color(0xFFE8ECF4, 0xFF1F2329));
             t.setPadding(dp(14), dp(10), dp(14), dp(10));
             t.setBackgroundResource(R.drawable.bg_chip_off);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -289,10 +309,13 @@ public class MetronomeActivity extends Activity {
             bgPlayer = new MediaPlayer();
             bgPlayer.setDataSource(f.getAbsolutePath());
             bgPlayer.setLooping(true);
+            float v = bgVol / 100f;
+            bgPlayer.setVolume(v, v);
             bgPlayer.prepare();
             bgPlayer.start();
             bgPlayingView = view;
             view.setText("❚❚  " + f.getName().replaceAll("\\.[^.]+$", ""));
+            view.setTextColor(0xFFE8C87A);
             Toast.makeText(this, "背景音循环播放中, 再点停止", Toast.LENGTH_SHORT).show();
         } catch (Throwable e) {
             stopBgPlay();
@@ -307,6 +330,7 @@ public class MetronomeActivity extends Activity {
         }
         if (bgPlayingView != null) {
             bgPlayingView.setText("▷  " + bgPlayingView.getText().toString().replaceAll("^[^ ]+ +", ""));
+            bgPlayingView.setTextColor(color(0xFFE8ECF4, 0xFF1F2329));
             bgPlayingView = null;
         }
     }
