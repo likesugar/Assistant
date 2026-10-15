@@ -2,15 +2,23 @@ package com.ziyuan.Assistant;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /** 节拍器 (参考 SimpleBeat, 引擎=预生成波形+AudioTrack流式) */
@@ -20,8 +28,16 @@ public class MetronomeActivity extends Activity {
     private boolean booster = false, playing = false;
     private TextView tvBpm, btnPlay;
     private final List<TextView> noteChips = new ArrayList<>();
-    private final List<TextView> audioChips = new ArrayList<>();
     private MetroAudioManager audioManager;
+
+    private static final String[] BG_NAMES = {"雨声", "海浪", "白噪音", "森林", "篝火"};
+    private File bgDir;
+    private final List<File> bgFiles = new ArrayList<>();
+    private MediaPlayer bgPlayer;
+    private TextView bgPlayingView;
+    private LinearLayout bgList;
+    private TextView bgEmpty;
+    private boolean bgDownloading = false;
 
     private int dp(int v) { return (int) (v * getResources().getDisplayMetrics().density); }
     private boolean dark() { return getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", false); }
@@ -69,6 +85,7 @@ public class MetronomeActivity extends Activity {
         btnPlay.setOnClickListener(v -> togglePlay());
         buildChips();
         buildDots();
+        buildBgList();
         themeAll();
         tvBpm.setText(String.valueOf(bpm));
         uiTick.postDelayed(tickRun, 80);
@@ -76,7 +93,6 @@ public class MetronomeActivity extends Activity {
 
     private void buildChips() {
         LinearLayout notesRow = (LinearLayout) findViewById(R.id.notesRow);
-        LinearLayout audioRow = (LinearLayout) findViewById(R.id.audioRow);
         LinearLayout rowA = new LinearLayout(this), rowB = new LinearLayout(this);
         rowA.setOrientation(LinearLayout.HORIZONTAL); rowB.setOrientation(LinearLayout.HORIZONTAL);
         rowB.setPadding(0, dp(8), 0, 0);
@@ -92,20 +108,6 @@ public class MetronomeActivity extends Activity {
         }
         notesRow.setOrientation(LinearLayout.VERTICAL);
         notesRow.addView(rowA); notesRow.addView(rowB);
-        LinearLayout aRowA = new LinearLayout(this), aRowB = new LinearLayout(this);
-        aRowA.setOrientation(LinearLayout.HORIZONTAL); aRowB.setOrientation(LinearLayout.HORIZONTAL);
-        aRowB.setPadding(0, dp(8), 0, 0);
-        List<String> ks = audioManager.getAudioList();
-        for (int idx = 0; idx < ks.size(); idx++) {
-            String k = ks.get(idx);
-            TextView t = chip(displayName(k), 14);
-            t.setOnClickListener(v -> { audioKey = k; refreshChips(); push(false); });
-            (idx < 3 ? aRowA : aRowB).addView(t);
-            audioChips.add(t);
-            t.setTag(k);
-        }
-        audioRow.setOrientation(LinearLayout.VERTICAL);
-        audioRow.addView(aRowA); audioRow.addView(aRowB);
         refreshChips();
     }
 
@@ -121,7 +123,26 @@ public class MetronomeActivity extends Activity {
 
     private void refreshChips() {
         for (TextView t : noteChips) styleChip(t, ((Integer) t.getTag()) == notes);
-        for (TextView t : audioChips) styleChip(t, t.getTag().equals(audioKey));
+    }
+
+    private void showAudioPicker() {
+        final List<String> ks = audioManager.getAudioList();
+        String[] names = new String[ks.size()];
+        int cur = 0;
+        for (int i = 0; i < ks.size(); i++) {
+            names[i] = displayName(ks.get(i));
+            if (ks.get(i).equals(audioKey)) cur = i;
+        }
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("音色")
+            .setSingleChoiceItems(names, cur, (d, w) -> {
+                audioKey = ks.get(w);
+                getSharedPreferences("settings", MODE_PRIVATE).edit().putString("metroAudio", audioKey).apply();
+                push(playing);
+                d.dismiss();
+            })
+            .setNegativeButton("取消", null)
+            .show();
     }
 
     private void setBpm(int v) {
@@ -180,6 +201,7 @@ public class MetronomeActivity extends Activity {
 
     private void togglePlay() {
         playing = !playing;
+        findViewById(R.id.metroCardDots).setVisibility(playing ? View.VISIBLE : View.GONE);
         push(playing);
         applyKeepScreen();
         if (!playing) {
@@ -199,19 +221,137 @@ public class MetronomeActivity extends Activity {
     }
 
     private void showMenu() {
-        String[] items = {
+        List<String> items = new ArrayList<>(Arrays.asList(
+            "音色 (" + displayName(audioKey) + ")",
+            bgDownloading ? "下载背景音..." : "下载背景音",
             (keepScreen ? "关闭" : "打开") + "屏幕常亮",
             (booster ? "关闭" : "打开") + "音量增强",
             "设置定时器" + (timerMin > 0 ? " (" + timerMin + "分钟)" : "")
-        };
+        ));
         new android.app.AlertDialog.Builder(this)
             .setTitle("节拍器")
-            .setItems(items, (d, w) -> {
-                if (w == 0) { keepScreen = !keepScreen; applyKeepScreen(); }
-                else if (w == 1) { booster = !booster; push(playing); }
+            .setItems(items.toArray(new String[0]), (d, w) -> {
+                if (w == 0) showAudioPicker();
+                else if (w == 1) downloadBg();
+                else if (w == 2) { keepScreen = !keepScreen; applyKeepScreen(); }
+                else if (w == 3) { booster = !booster; push(playing); }
                 else showTimerPicker();
             })
             .show();
+    }
+
+    // ---------- 背景音 ----------
+
+    private void buildBgList() {
+        bgDir = new File(getFilesDir(), "bg_sounds");
+        if (!bgDir.exists()) bgDir.mkdirs();
+        bgList = (LinearLayout) findViewById(R.id.bgList);
+        bgEmpty = (TextView) findViewById(R.id.bgEmpty);
+        refreshBgList();
+    }
+
+    private void refreshBgList() {
+        bgFiles.clear();
+        File[] fs = bgDir.listFiles();
+        if (fs != null) { Arrays.sort(fs); for (File f : fs) if (f.length() > 1024) bgFiles.add(f); }
+        bgList.removeAllViews();
+        bgEmpty.setVisibility(bgFiles.isEmpty() ? View.VISIBLE : View.GONE);
+        for (final File f : bgFiles) {
+            TextView t = new TextView(this);
+            String name = f.getName().replaceAll("\\.[^.]+$", "");
+            t.setText("▷  " + name);
+            t.setTextSize(15);
+            t.setPadding(dp(14), dp(10), dp(14), dp(10));
+            t.setBackgroundResource(R.drawable.bg_chip_off);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            lp.bottomMargin = dp(8);
+            t.setLayoutParams(lp);
+            t.setOnClickListener(v -> toggleBgPlay(f, t));
+            bgList.addView(t);
+        }
+        ScrollView sc = (ScrollView) findViewById(R.id.bgScroll);
+        LinearLayout card = (LinearLayout) findViewById(R.id.metroCardBg);
+        card.setVisibility(bgFiles.isEmpty() ? View.GONE : View.VISIBLE);
+        if (bgFiles.size() > 4) {
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(4 * 46));
+            sc.setLayoutParams(lp);
+        } else {
+            sc.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
+    }
+
+    private void toggleBgPlay(File f, TextView view) {
+        if (bgPlayer != null && bgPlayingView == view) {
+            stopBgPlay();
+            return;
+        }
+        stopBgPlay();
+        try {
+            bgPlayer = new MediaPlayer();
+            bgPlayer.setDataSource(f.getAbsolutePath());
+            bgPlayer.setLooping(true);
+            bgPlayer.prepare();
+            bgPlayer.start();
+            bgPlayingView = view;
+            view.setText("❚❚  " + f.getName().replaceAll("\\.[^.]+$", ""));
+            Toast.makeText(this, "背景音循环播放中, 再点停止", Toast.LENGTH_SHORT).show();
+        } catch (Throwable e) {
+            stopBgPlay();
+            Toast.makeText(this, "播放失败", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void stopBgPlay() {
+        if (bgPlayer != null) {
+            try { bgPlayer.stop(); bgPlayer.release(); } catch (Throwable ignored) {}
+            bgPlayer = null;
+        }
+        if (bgPlayingView != null) {
+            bgPlayingView.setText("▷  " + bgPlayingView.getText().toString().replaceAll("^[^ ]+ +", ""));
+            bgPlayingView = null;
+        }
+    }
+
+    private void downloadBg() {
+        if (bgDownloading) return;
+        bgDownloading = true;
+        Toast.makeText(this, "开始下载背景音...", Toast.LENGTH_SHORT).show();
+        bgDir = new File(getFilesDir(), "bg_sounds");
+        if (!bgDir.exists()) bgDir.mkdirs();
+        new Thread(() -> {
+            int ok = 0;
+            for (String name : BG_NAMES) {
+                File out = new File(bgDir, name + ".wav");
+                if (out.exists() && out.length() > 1024) { ok++; continue; }
+                if (fetch(BG_URL_PROXY + name + ".wav", out) || fetch(BG_URL_DIRECT + name + ".wav", out)) ok++;
+            }
+            final int n = ok;
+            runOnUiThread(() -> {
+                bgDownloading = false;
+                refreshBgList();
+                Toast.makeText(this, n >= BG_NAMES.length ? "背景音已就绪 (" + n + "个)" : "下载完成 " + n + "/" + BG_NAMES.length, Toast.LENGTH_SHORT).show();
+            });
+        }, "bg-dl").start();
+    }
+
+    private static final String BG_URL_PROXY = "https://gh-proxy.com/https://raw.githubusercontent.com/likesugar/Assistant/main/bg/";
+    private static final String BG_URL_DIRECT = "https://raw.githubusercontent.com/likesugar/Assistant/main/bg/";
+
+    private boolean fetch(String url, File out) {
+        try {
+            HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+            c.setConnectTimeout(8000); c.setReadTimeout(20000);
+            c.setRequestProperty("User-Agent", "Mozilla/5.0");
+            if (c.getResponseCode() != 200) { c.disconnect(); return false; }
+            InputStream in = c.getInputStream();
+            FileOutputStream fo = new FileOutputStream(out);
+            byte[] b = new byte[16384]; int r;
+            while ((r = in.read(b)) > 0) fo.write(b, 0, r);
+            fo.close(); in.close(); c.disconnect();
+            return out.length() > 1024;
+        } catch (Throwable e) {
+            return false;
+        }
     }
 
     private int timerMin = 0;
@@ -253,14 +393,14 @@ public class MetronomeActivity extends Activity {
         int card = dk ? (oled() ? R.drawable.bg_card_oled : R.drawable.bg_card_md3_dark) : R.drawable.bg_card_md3;
         findViewById(R.id.metroCardBpm).setBackgroundResource(card);
         findViewById(R.id.metroCardNotes).setBackgroundResource(card);
-        findViewById(R.id.metroCardAudio).setBackgroundResource(card);
+        findViewById(R.id.metroCardBg).setBackgroundResource(card);
         findViewById(R.id.metroCardDots).setBackgroundResource(card);
         int title = color(0xFFE8ECF4, 0xFF1F2329);
         int sub = color(0xFF9AA3AE, 0xFF8A94A6);
         int accent = color(0xFFE8C87A, 0xFFB8860B);
         for (int id : new int[]{R.id.tvBpm}) ((TextView) findViewById(id)).setTextColor(title);
         for (int id : new int[]{R.id.metroBack, R.id.btnPlay}) ((TextView) findViewById(id)).setTextColor(accent);
-        for (View v : new View[]{findViewById(R.id.metroCardBpm), findViewById(R.id.metroCardNotes), findViewById(R.id.metroCardAudio)}) {
+        for (View v : new View[]{findViewById(R.id.metroCardBpm), findViewById(R.id.metroCardNotes), findViewById(R.id.metroCardBg)}) {
             ((ViewGroup) v).setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
         }
         scanTags(findViewById(R.id.metroRoot), title, sub);
@@ -293,8 +433,9 @@ public class MetronomeActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        // 页面关闭不打断: 服务继续后台打拍
+        // 页面关闭不打断: 服务继续后台打拍; 背景音跟随页面销毁
         cancelRepeat();
+        stopBgPlay();
         super.onDestroy();
     }
 }

@@ -37,7 +37,7 @@
                 android:max="313" android:progress="110" android:layout_marginTop="14dp"/>
         </LinearLayout>
 
-        <LinearLayout android:tag="card" android:id="@+id/metroCardDots"
+        <LinearLayout android:tag="card" android:id="@+id/metroCardDots" android:visibility="gone"
             android:layout_width="match_parent" android:layout_height="wrap_content"
             android:orientation="vertical" android:background="@drawable/bg_card_md3"
             android:padding="20dp" android:layout_marginTop="14dp">
@@ -55,19 +55,25 @@
                 android:orientation="horizontal" android:layout_marginTop="12dp"/>
         </LinearLayout>
 
-        <LinearLayout android:tag="card" android:id="@+id/metroCardAudio"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="vertical" android:background="@drawable/bg_card_md3"
-            android:padding="20dp" android:layout_marginTop="14dp">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="音色" android:textSize="15sp" android:textStyle="bold" android:tag="title"/>
-            <LinearLayout android:id="@+id/audioRow" android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="horizontal" android:layout_marginTop="12dp"/>
-        </LinearLayout>
 
         <TextView android:id="@+id/btnPlay"
             android:layout_width="match_parent" android:layout_height="56dp"
             android:gravity="center" android:text="▶ 开始打拍" android:textSize="17sp" android:textStyle="bold"
             android:background="@drawable/bg_btn_md3" android:layout_marginTop="20dp" android:tag="accent"/>
     </LinearLayout>
+
+        <LinearLayout android:tag="card" android:id="@+id/metroCardBg"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:background="@drawable/bg_card_md3"
+            android:padding="20dp" android:layout_marginTop="14dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="背景音" android:textSize="15sp" android:textStyle="bold" android:tag="title"/>
+            <ScrollView android:id="@+id/bgScroll" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:scrollbars="none" android:layout_marginTop="12dp">
+                <LinearLayout android:id="@+id/bgList" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical"/>
+            </ScrollView>
+            <TextView android:id="@+id/bgEmpty" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="暂无背景音, 点右上角菜单下载" android:textSize="13sp" android:tag="sub" android:layout_marginTop="4dp"/>
+        </LinearLayout>
 </ScrollView>
