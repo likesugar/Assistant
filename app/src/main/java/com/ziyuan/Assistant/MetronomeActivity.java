@@ -78,10 +78,7 @@ public class MetronomeActivity extends Activity {
         tvBpm = (TextView) findViewById(R.id.tvBpm);
         btnPlay = (TextView) findViewById(R.id.btnPlay);
         findViewById(R.id.metroMenu).setOnClickListener(v -> startActivity(new Intent(this, MetroSettingsActivity.class)));
-        findViewById(R.id.btnBpmDown).setOnClickListener(v -> setBpm(bpm - 1));
-        findViewById(R.id.btnBpmUp).setOnClickListener(v -> setBpm(bpm + 1));
-        bindRepeat(findViewById(R.id.btnBpmDown), -1);
-        bindRepeat(findViewById(R.id.btnBpmUp), 1);
+        buildBpmPresets();
         btnPlay.setOnClickListener(v -> togglePlay());
         ((SeekBar) findViewById(R.id.sbBgVol)).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             public void onProgressChanged(SeekBar sb, int p, boolean f) {
@@ -119,6 +116,60 @@ public class MetronomeActivity extends Activity {
         if (t < 168) return "快板";
         if (t < 200) return "急板";
         return "最急板";
+    }
+
+    private static final int[] PRESET_BPM = {150, 160, 170, 180, 190, 200};
+    private static final String[] PRESET_NAME = {"轻松", "慢跑", "节奏", "快跑", "冲刺", "间歇"};
+    private final List<TextView> presetChips = new ArrayList<>();
+
+    private void buildBpmPresets() {
+        LinearLayout row = (LinearLayout) findViewById(R.id.bpmPresets);
+        for (int i = 0; i < PRESET_BPM.length; i++) {
+            LinearLayout cell = new LinearLayout(this);
+            cell.setOrientation(LinearLayout.VERTICAL);
+            cell.setGravity(android.view.Gravity.CENTER);
+            LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+            int pad = dp(3);
+            clp.setMargins(pad, 0, pad, 0);
+            cell.setLayoutParams(clp);
+            TextView v = new TextView(this);
+            v.setText(String.valueOf(PRESET_BPM[i]));
+            v.setTextSize(15);
+            v.setGravity(android.view.Gravity.CENTER);
+            TextView n = new TextView(this);
+            n.setText(PRESET_NAME[i]);
+            n.setTextSize(12);
+            n.setGravity(android.view.Gravity.CENTER);
+            n.setTag("sub");
+            cell.addView(v);
+            cell.addView(n);
+            final int val = PRESET_BPM[i];
+            cell.setOnClickListener(vv -> setBpm(val));
+            row.addView(cell);
+            presetChips.add((TextView) cell.getTag() == null ? v : v);
+            cell.setTag(v);
+            presetChips.set(i, v);
+        }
+        refreshPresets();
+    }
+
+    private void refreshPresets() {
+        for (int i = 0; i < presetChips.size(); i++) {
+            View cell = ((View) presetChips.get(i)).getParent();
+            boolean sel = bpm == PRESET_BPM[i];
+            android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+            gd.setCornerRadius(dp(12));
+            if (sel) {
+                gd.setColor(0xFF1E4D3A);
+                presetChips.get(i).setTextColor(0xFF5FD08A);
+                ((TextView) ((ViewGroup) cell).getChildAt(1)).setTextColor(0xFF5FD08A);
+            } else {
+                gd.setColor(dark() ? (oled() ? 0xFF16181D : 0xFF232B38) : 0xFFFFFFFF);
+                presetChips.get(i).setTextColor(color(0xFFE8ECF4, 0xFF1F2329));
+                ((TextView) ((ViewGroup) cell).getChildAt(1)).setTextColor(color(0xFF9AA3B2, 0xFF6B7280));
+            }
+            cell.setBackground(gd);
+        }
     }
 
     private interface NumApply { void apply(int v); }
@@ -183,6 +234,7 @@ public class MetronomeActivity extends Activity {
 
     private void setBpm(int v) {
         bpm = Math.max(30, Math.min(252, v));
+        refreshPresets();
         getSharedPreferences("settings", MODE_PRIVATE).edit().putInt("metroBpm", bpm).apply();
         refreshTop();
         push(playing);

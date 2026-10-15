@@ -60,18 +60,6 @@
             </LinearLayout>
         </LinearLayout>
 
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="horizontal" android:gravity="center" android:layout_marginTop="20dp">
-            <TextView android:id="@+id/btnBpmDown" android:layout_width="64dp" android:layout_height="64dp"
-                android:gravity="center" android:text="−" android:textSize="30sp" android:textStyle="bold" android:tag="icon"
-                android:background="@drawable/bg_btn_md3"/>
-            <TextView android:id="@+id/btnAudio" android:layout_width="64dp" android:layout_height="64dp"
-                android:gravity="center" android:text="♪" android:textSize="26sp" android:textStyle="bold" android:tag="icon"
-                android:background="@drawable/bg_btn_md3" android:layout_marginLeft="24dp" android:layout_marginRight="24dp"/>
-            <TextView android:id="@+id/btnBpmUp" android:layout_width="64dp" android:layout_height="64dp"
-                android:gravity="center" android:text="＋" android:textSize="30sp" android:textStyle="bold" android:tag="icon"
-                android:background="@drawable/bg_btn_md3"/>
-        </LinearLayout>
 
         <TextView android:id="@+id/btnPlay"
             android:layout_width="match_parent" android:layout_height="56dp"
@@ -96,7 +84,7 @@
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:text="音量" android:textSize="13sp" android:tag="sub" android:paddingRight="8dp"/>
                 <SeekBar android:id="@+id/sbBgVol" android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:max="200" android:progress="40"/>
+                    android:layout_weight="1" android:max="130" android:progress="40"/>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
