@@ -1,6 +1,11 @@
 package com.ziyuan.Assistant;
 
 import android.app.Activity;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -93,6 +98,7 @@ public class MetroSettingsActivity extends Activity {
         // ===== 我的 =====
         root.addView(sectionTitle("我的"));
         LinearLayout card2 = card();
+        card2.addView(choiceRow("下载背景音", "粘贴音频地址, 存入节拍器背景音", v -> showDownloadDialog()));
         card2.addView(switchRow("屏幕常亮", "打拍时保持屏幕常亮", prefs.getBoolean("metroKeepScreen", false), (on) -> {
             prefs.edit().putBoolean("metroKeepScreen", on).apply();
             MetronomeActivity.notifySettingChanged(this);
@@ -203,6 +209,62 @@ public class MetroSettingsActivity extends Activity {
         row.addView(t2);
         row.setOnClickListener(cb);
         return row;
+    }
+
+    private void showDownloadDialog() {
+        final android.widget.EditText et = new android.widget.EditText(this);
+        et.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
+        et.setHint("粘贴音频下载地址 (http...mp3/wav/ogg/m4a)");
+        et.setTextSize(14);
+        android.widget.FrameLayout wrap = new android.widget.FrameLayout(this);
+        int pd = (int) (getResources().getDisplayMetrics().density * 20);
+        wrap.setPadding(pd, pd / 2, pd, 0);
+        wrap.addView(et);
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("下载背景音")
+            .setView(wrap)
+            .setPositiveButton("下载", (d, w) -> {
+                String url = et.getText().toString().trim();
+                if (url.startsWith("http")) downloadBg(url);
+                else Toast.makeText(this, "地址无效", Toast.LENGTH_SHORT).show();
+            })
+            .setNegativeButton("取消", null)
+            .show();
+    }
+
+    private void downloadBg(String url) {
+        Toast.makeText(this, "开始下载...", Toast.LENGTH_SHORT).show();
+        final File dir = new File(getFilesDir(), "bg_sounds");
+        if (!dir.exists()) dir.mkdirs();
+        String clean = url.split("#")[0].split("\\?")[0];
+        String name = clean.substring(clean.lastIndexOf('/') + 1);
+        try { name = java.net.URLDecoder.decode(name, "UTF-8"); } catch (Throwable ignored) {}
+        String stem = name.contains(".") ? name.substring(0, name.lastIndexOf('.')) : name;
+        if (stem.matches("[0-9a-fA-F]{16,}") || name.indexOf('\uFFFD') >= 0) {
+            name = "背景音_" + new java.text.SimpleDateFormat("HHmmss", java.util.Locale.CHINA).format(new java.util.Date());
+        }
+        name = name.replaceAll("[\\\\/:*?\"<>|]", "_").trim();
+        if (name.isEmpty()) name = "背景音_" + System.currentTimeMillis() % 100000;
+        final File out = new File(dir, name);
+        final String fname = name;
+        new Thread(() -> {
+            boolean ok = false;
+            try {
+                HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+                c.setConnectTimeout(8000); c.setReadTimeout(20000);
+                c.setRequestProperty("User-Agent", "Mozilla/5.0");
+                if (c.getResponseCode() == 200) {
+                    InputStream in = c.getInputStream();
+                    FileOutputStream fo = new FileOutputStream(out);
+                    byte[] b = new byte[16384]; int r;
+                    while ((r = in.read(b)) > 0) fo.write(b, 0, r);
+                    fo.close(); in.close(); c.disconnect();
+                    ok = out.length() > 1024;
+                }
+            } catch (Throwable ignored) {}
+            final boolean fok = ok;
+            runOnUiThread(() -> Toast.makeText(this, fok ? "已加入背景音: " + fname : "下载失败, 检查地址或网络", Toast.LENGTH_SHORT).show());
+        }, "bg-dl-set").start();
     }
 
     private void showTimerDialog() {

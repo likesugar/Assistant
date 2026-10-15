@@ -77,7 +77,6 @@ public class MetronomeActivity extends Activity {
         accentFirst = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroAccent", false);
         tvBpm = (TextView) findViewById(R.id.tvBpm);
         btnPlay = (TextView) findViewById(R.id.btnPlay);
-        findViewById(R.id.metroBack).setOnClickListener(v -> finish());
         findViewById(R.id.metroMenu).setOnClickListener(v -> startActivity(new Intent(this, MetroSettingsActivity.class)));
         findViewById(R.id.btnBpmDown).setOnClickListener(v -> setBpm(bpm - 1));
         findViewById(R.id.btnBpmUp).setOnClickListener(v -> setBpm(bpm + 1));
@@ -499,16 +498,39 @@ public class MetronomeActivity extends Activity {
         int card = dk ? (oled() ? R.drawable.bg_card_oled : R.drawable.bg_card_md3_dark) : R.drawable.bg_card_md3;
         findViewById(R.id.metroCardBpm).setBackgroundResource(card);
         findViewById(R.id.metroCardBeats).setBackgroundResource(card);
+        findViewById(R.id.metroCardBeats).setBackgroundResource(card);
         findViewById(R.id.metroCardSub).setBackgroundResource(card);
         findViewById(R.id.metroCardBg).setBackgroundResource(card);
         findViewById(R.id.metroCardDots).setBackgroundResource(card);
         int title = color(0xFFE8ECF4, 0xFF1F2329);
         int sub = color(0xFF9AA3AE, 0xFF8A94A6);
         int accent = color(0xFFE8C87A, 0xFFB8860B);
-        for (int id : new int[]{R.id.tvBpm, R.id.tvBeats, R.id.tvSub}) ((TextView) findViewById(id)).setTextColor(title);
+        for (int id : new int[]{R.id.tvBpm, R.id.tvBeats, R.id.tvSub}) {
+            TextView tv = (TextView) findViewById(id);
+            tv.setTextColor(title);
+            android.graphics.drawable.GradientDrawable box = new android.graphics.drawable.GradientDrawable();
+            box.setCornerRadius(dp(20));
+            box.setColor(dk ? (oled() ? 0xFF16181D : 0xFF232B38) : 0xFFFFFFFF);
+            tv.setBackground(box);
+        }
+        int roundBtn = dk ? (oled() ? 0xFF16181D : 0xFF232B38) : 0xFFFFFFFF;
+        TextView play = (TextView) findViewById(R.id.btnPlay);
+        android.graphics.drawable.GradientDrawable pgd = new android.graphics.drawable.GradientDrawable();
+        pgd.setCornerRadius(dp(30));
+        pgd.setColor(dk ? (oled() ? 0xFF16181D : 0xFF232B38) : 0xFFFFFFFF);
+        play.setBackground(pgd);
+        play.setTextColor(color(0xFFE8C87A, 0xFF7C4DFF));
+        for (int id : new int[]{R.id.btnBpmDown, R.id.btnBpmUp, R.id.btnAudio}) {
+            TextView b = (TextView) findViewById(id);
+            b.setTextColor(title);
+            android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+            gd.setCornerRadius(dp(22));
+            gd.setColor(roundBtn);
+            b.setBackground(gd);
+        }
         android.widget.ImageView gear = (android.widget.ImageView) findViewById(R.id.metroMenu);
         gear.setColorFilter(color(0xFFE8ECF4, 0xFF1F2329));
-        for (int id : new int[]{R.id.metroBack, R.id.btnPlay}) ((TextView) findViewById(id)).setTextColor(accent);
+        for (int id : new int[]{R.id.btnPlay}) ((TextView) findViewById(id)).setTextColor(accent);
         for (View v : new View[]{findViewById(R.id.metroCardBpm), findViewById(R.id.metroCardBeats), findViewById(R.id.metroCardSub), findViewById(R.id.metroCardBg)}) {
             ((ViewGroup) v).setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
         }
