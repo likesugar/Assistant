@@ -140,6 +140,7 @@ public class MetroEngine extends Thread {
     public void play() { playing = true; if (audioTrack != null) audioTrack.play(); }
     public void pause() { playing = false; if (audioTrack != null) { audioTrack.pause(); audioTrack.flush(); } }
     public boolean isPlaying() { return playing; }
+    public int currentBpm() { return bpm; }
     public void close() {
         if (quit) return;
         playing = false;

@@ -18,6 +18,8 @@ public class GpsManager {
     public double lastPace = 0;
     public volatile boolean gotFix = false;
     private boolean lastWasGps = false;
+    public long lastGpsTime = 0;
+    public double drKm = 0; // 死推累计
 
     public GpsManager(Context c, Listener l) { ctx = c; listener = l; }
 

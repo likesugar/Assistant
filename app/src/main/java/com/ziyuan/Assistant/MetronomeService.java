@@ -39,6 +39,7 @@ public class MetronomeService extends Service {
     private TianyiController tianyi;
     private boolean tianyiOn = false;
     private GpsManager gpsMgr;
+    private StepCadenceManager stepMgr;
     private MetroAudioManager audioManager;
     private final android.os.Handler stopHandler = new android.os.Handler();
 
@@ -105,6 +106,7 @@ tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyi
             }
             if (tianyi != null) { tianyi.stop(); tianyi = null; }
             if (gpsMgr != null) { gpsMgr.stop(); gpsMgr = null; }
+        if (stepMgr != null) { stepMgr.stop(); stepMgr = null; }
             if (engine != null) engine.close();
             engine = null;
             stopForeground(STOP_FOREGROUND_REMOVE);
@@ -136,15 +138,19 @@ tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyi
                 android.content.SharedPreferences tsp = getSharedPreferences("settings", MODE_PRIVATE);
                 gpsMgr = new GpsManager(this, null);
                 gpsMgr.start();
+                stepMgr = new StepCadenceManager();
+                stepMgr.start(this);
                 tianyi = new TianyiController(this, engine,
                     tsp.getBoolean("metroTianyiCheer", true),
                     tsp.getBoolean("metroTianyiStage", true));
-                tianyi.gpsMgr = gpsMgr;
+                tianyi.gpsMgr = gpsMgr; tianyi.stepMgr = stepMgr;
                 tianyi.start();
             }
         } else if (tianyi != null) {
             tianyi.stop(); tianyi = null;
             if (gpsMgr != null) { gpsMgr.stop(); gpsMgr = null; }
+        if (stepMgr != null) { stepMgr.stop(); stepMgr = null; }
+            if (stepMgr != null) { stepMgr.stop(); stepMgr = null; }
         }
         final int timerMin = intent.getIntExtra(EXTRA_TIMER, 0);
         stopHandler.removeCallbacksAndMessages(null);
@@ -162,6 +168,7 @@ tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyi
     public void onDestroy() {
         if (tianyi != null) { tianyi.stop(); tianyi = null; }
         if (gpsMgr != null) { gpsMgr.stop(); gpsMgr = null; }
+        if (stepMgr != null) { stepMgr.stop(); stepMgr = null; }
         inst = null;
         if (engine != null) { engine.close(); engine = null; } super.onDestroy();
     }

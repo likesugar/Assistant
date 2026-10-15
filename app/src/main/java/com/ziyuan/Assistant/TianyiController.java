@@ -36,6 +36,7 @@ public class TianyiController {
     private final MetroEngine engine;
     private final boolean cheerOn, stageOn;
     public GpsManager gpsMgr;   // 由服务注入
+    public StepCadenceManager stepMgr;
     private final Handler h = new Handler(Looper.getMainLooper());
     private MediaPlayer voice;
     private int stageIdx = 0, elapsed = 0, cheerIn = 0, nextCheer = 40;
@@ -90,12 +91,24 @@ public class TianyiController {
                 engine.setBpm(Math.round(cur.bpm0 + (cur.bpm1 - cur.bpm0) * t));
             }
             if (gpsMgr != null) {
+                // 死推: GPS 超 4 秒没新位置时, 用步数×步幅顶上
+                long sinceGps = System.currentTimeMillis() - gpsMgr.lastGpsTime;
+                float stride = 0.7f;
+                if (lastPace > 0 && stepMgr != null && stepMgr.cadence > 120) {
+                    stride = Math.max(0.5f, Math.min(1.2f, (float) (1000.0 / lastPace) / (stepMgr.cadence / 60f)));
+                }
+                if (gpsMgr.gotFix && sinceGps > 4000 && stepMgr != null) {
+                    gpsMgr.drKm += stepMgr.deadReckonMeters(stride, 1000) / 1000.0;
+                }
                 // 广播运动数据给页面 (不依赖跟随开关)
                 android.content.Intent st = new Intent("tianyi.hr");
                 st.setPackage(ctx.getPackageName());
-                st.putExtra("dist", gpsMgr.distKm);
+                double total = gpsMgr.distKm + gpsMgr.drKm;
+                st.putExtra("dist", total);
                 st.putExtra("pace", gpsMgr.lastPace);
                 st.putExtra("gpsFix", gpsMgr.gotFix);
+                st.putExtra("cad", stepMgr == null ? 0 : stepMgr.cadence);
+                st.putExtra("bpm", engine == null ? 0 : engine.currentBpm());
                 ctx.sendBroadcast(st);
             }
             if (cheerOn && ++cheerIn >= nextCheer) {

@@ -289,6 +289,12 @@ public class MetronomeActivity extends Activity {
                     pc.setText(m + "'" + String.format("%02d", sec) + "\"");
                 } else pc.setText("--'--\"");
                 ds.setText(dist < 1.0 ? String.format("%.0fm", dist * 1000) : String.format("%.2fkm", dist));
+                int cad = i.getIntExtra("cad", 0);
+                int tbpm = i.getIntExtra("bpm", 0);
+                TextView tvC = (TextView) findViewById(R.id.tvCad);
+                if (cad > 0) tvC.setText(Math.round(cad) + "/" + tbpm);
+                else if (tbpm > 0) tvC.setText("--/" + tbpm);
+                else tvC.setText("--");
                 return;
             }
             TextView tv = (TextView) findViewById(R.id.tvTianyi);
