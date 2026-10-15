@@ -19,6 +19,7 @@ public class MetronomeService extends Service {
     public final static String EXTRA_AUDIO = "audio";
     public final static String EXTRA_BOOSTER = "booster";
     public final static String EXTRA_ACCENT = "accent_first";
+    public final static String EXTRA_SUB = "sub";
     public final static String EXTRA_TIMER = "timerMin";
     private final static String CH_ID = "metro_channel";
 
@@ -27,7 +28,7 @@ public class MetronomeService extends Service {
     /** 供 UI 轮询当前拍 (播放中) */
     public static int currentBeat(int notes) {
         MetroEngine e = engine;
-        return (e != null && e.isPlaying()) ? e.currentBeat(notes) : -1;
+        return (e != null && e.isPlaying()) ? e.currentTick(notes) : -1;
     }
     private MetroAudioManager audioManager;
     private final android.os.Handler stopHandler = new android.os.Handler();
@@ -68,6 +69,13 @@ public class MetronomeService extends Service {
         if (audioKey == null) audioKey = MetroConstant.AudioDefault;
         boolean booster = intent.getBooleanExtra(EXTRA_BOOSTER, false);
         boolean accentFirst = intent.getBooleanExtra(EXTRA_ACCENT, false);
+        if (intent.getBooleanExtra("settings_changed", false)) {
+            android.content.SharedPreferences p = getSharedPreferences("settings", MODE_PRIVATE);
+            audioKey = p.getString("metroAudio", MetroConstant.AudioDefault);
+            booster = p.getBoolean("metroBooster", false);
+            accentFirst = p.getBoolean("metroAccent", false);
+        }
+        int sub = intent.getIntExtra(EXTRA_SUB, 1);
         String text = bpm + " BPM · " + notes + "拍";
         if (ACTION_STOP.equals(action)) {
             if (engine != null) engine.close();
@@ -84,9 +92,9 @@ public class MetronomeService extends Service {
         try {
             if (ACTION_START.equals(action) || engine.isPlaying() == false) {
                 engine.setAudioData(audioManager.getAudio(audioKey));
-                engine.setBpm(bpm); engine.setNotes(notes); engine.setBooster(booster); engine.setAccentFirst(accentFirst);
+                engine.setBpm(bpm); engine.setNotes(notes); engine.setBooster(booster); engine.setAccentFirst(accentFirst); engine.setSubdiv(sub);
             } else {
-                engine.setBpm(bpm); engine.setNotes(notes); engine.setBooster(booster); engine.setAccentFirst(accentFirst);
+                engine.setBpm(bpm); engine.setNotes(notes); engine.setBooster(booster); engine.setAccentFirst(accentFirst); engine.setSubdiv(sub);
                 try { engine.setAudioData(audioManager.getAudio(audioKey)); } catch (Throwable ignored) {}
             }
         } catch (Throwable ignored) {}

@@ -23,12 +23,11 @@ import java.util.List;
 
 /** 节拍器 (参考 SimpleBeat, 引擎=预生成波形+AudioTrack流式) */
 public class MetronomeActivity extends Activity {
-    private int bpm = 120, notes = 4;
+    private int bpm = 80, notes = 4, sub = 1;
     private String audioKey = MetroConstant.AudioDefault;
     private boolean booster = false, playing = false;
     private boolean accentFirst = false;
     private TextView tvBpm, btnPlay;
-    private final List<TextView> noteChips = new ArrayList<>();
     private MetroAudioManager audioManager;
 
     private File bgDir;
@@ -71,12 +70,15 @@ public class MetronomeActivity extends Activity {
         bpm = getSharedPreferences("settings", MODE_PRIVATE).getInt("metroBpm", 120);
         notes = getSharedPreferences("settings", MODE_PRIVATE).getInt("metroNotes", 4);
         audioKey = getSharedPreferences("settings", MODE_PRIVATE).getString("metroAudio", MetroConstant.AudioDefault);
+        bpm = getSharedPreferences("settings", MODE_PRIVATE).getInt("metroBpm", 80);
+        notes = getSharedPreferences("settings", MODE_PRIVATE).getInt("metroNotes", 4);
+        sub = getSharedPreferences("settings", MODE_PRIVATE).getInt("metroSub", 1);
         bgVol = getSharedPreferences("settings", MODE_PRIVATE).getInt("metroBgVol", 40);
         accentFirst = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroAccent", false);
         tvBpm = (TextView) findViewById(R.id.tvBpm);
         btnPlay = (TextView) findViewById(R.id.btnPlay);
         findViewById(R.id.metroBack).setOnClickListener(v -> finish());
-        findViewById(R.id.metroMenu).setOnClickListener(v -> showMenu());
+        findViewById(R.id.metroMenu).setOnClickListener(v -> startActivity(new Intent(this, MetroSettingsActivity.class)));
         findViewById(R.id.btnBpmDown).setOnClickListener(v -> setBpm(bpm - 1));
         findViewById(R.id.btnBpmUp).setOnClickListener(v -> setBpm(bpm + 1));
         bindRepeat(findViewById(R.id.btnBpmDown), -1);
@@ -87,7 +89,6 @@ public class MetronomeActivity extends Activity {
             public void onStopTrackingTouch(SeekBar sb) {}
         });
         btnPlay.setOnClickListener(v -> togglePlay());
-        buildChips();
         ((SeekBar) findViewById(R.id.sbBgVol)).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             public void onProgressChanged(SeekBar sb, int p, boolean f) {
                 if (f) setBgVol(p);
@@ -96,6 +97,30 @@ public class MetronomeActivity extends Activity {
             public void onStopTrackingTouch(SeekBar sb) {}
         });
         ((SeekBar) findViewById(R.id.sbBgVol)).setProgress(bgVol);
+
+        findViewById(R.id.btnAudio).setOnClickListener(v -> showAudioPicker());
+        SeekBar sbB = (SeekBar) findViewById(R.id.sbBeats);
+        sbB.setMax(7); sbB.setProgress(notes - 1);
+        sbB.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            public void onProgressChanged(SeekBar sb, int p, boolean f) { if (f) setNotes(p + 1); }
+            public void onStartTrackingTouch(SeekBar sb) {}
+            public void onStopTrackingTouch(SeekBar sb) {}
+        });
+        SeekBar sbS = (SeekBar) findViewById(R.id.sbSub);
+        sbS.setMax(3); sbS.setProgress(sub - 1);
+        sbS.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            public void onProgressChanged(SeekBar sb, int p, boolean f) { if (f) setSub(p + 1); }
+            public void onStartTrackingTouch(SeekBar sb) {}
+            public void onStopTrackingTouch(SeekBar sb) {}
+        });
+        SeekBar sbT = (SeekBar) findViewById(R.id.sbBpm);
+        sbT.setMax(222); sbT.setProgress(bpm - 30);
+        sbT.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            public void onProgressChanged(SeekBar sb, int p, boolean f) { if (f) setBpm(p + 30); }
+            public void onStartTrackingTouch(SeekBar sb) {}
+            public void onStopTrackingTouch(SeekBar sb) {}
+        });
+        refreshTop();
         buildDots();
         buildBgList();
         themeAll();
@@ -103,24 +128,28 @@ public class MetronomeActivity extends Activity {
         uiTick.postDelayed(tickRun, 80);
     }
 
-    private void buildChips() {
-        LinearLayout notesRow = (LinearLayout) findViewById(R.id.notesRow);
-        LinearLayout rowA = new LinearLayout(this), rowB = new LinearLayout(this);
-        rowA.setOrientation(LinearLayout.HORIZONTAL); rowB.setOrientation(LinearLayout.HORIZONTAL);
-        rowB.setPadding(0, dp(8), 0, 0);
-        int[] nsA = {1, 2, 3, 4}, nsB = {5, 6, 7, 8, 9};
-        for (int[] grp : new int[][]{nsA, nsB}) {
-            for (int n : grp) {
-                TextView t = chip(String.valueOf(n), 14);
-                t.setOnClickListener(v -> { notes = n; refreshChips(); buildDots(); push(false); });
-                (grp == nsA ? rowA : rowB).addView(t);
-                noteChips.add(t);
-                t.setTag(n);
-            }
-        }
-        notesRow.setOrientation(LinearLayout.VERTICAL);
-        notesRow.addView(rowA); notesRow.addView(rowB);
-        refreshChips();
+    private void refreshTop() {
+        ((TextView) findViewById(R.id.tvBpm)).setText(String.valueOf(bpm));
+        ((TextView) findViewById(R.id.tvBeats)).setText(String.valueOf(notes));
+        ((TextView) findViewById(R.id.tvSub)).setText(String.valueOf(sub));
+        ((TextView) findViewById(R.id.tvMarking)).setText(marking(bpm));
+    }
+
+    private String marking(int t) {
+        if (t < 60) return "广板";
+        if (t < 66) return "小广板";
+        if (t < 76) return "柔板";
+        if (t < 108) return "行板";
+        if (t < 120) return "中板";
+        if (t < 168) return "快板";
+        if (t < 200) return "急板";
+        return "最急板";
+    }
+
+    private void setSub(int v) {
+        sub = Math.max(1, Math.min(4, v));
+        getSharedPreferences("settings", MODE_PRIVATE).edit().putInt("metroSub", sub).apply();
+        refreshTop(); buildDots(); push(playing);
     }
 
     private String displayName(String k) {
@@ -131,10 +160,6 @@ public class MetronomeActivity extends Activity {
         if (MetroConstant.AudioRimshot.equals(k)) return "边击";
         if (MetroConstant.AudioJog.equals(k)) return "慢跑";
         return k;
-    }
-
-    private void refreshChips() {
-        for (TextView t : noteChips) styleChip(t, ((Integer) t.getTag()) == notes);
     }
 
     private void showAudioPicker() {
@@ -158,14 +183,29 @@ public class MetronomeActivity extends Activity {
     }
 
     private void setBpm(int v) {
-        if (v < MetroConstant.MinBPM) v = MetroConstant.MinBPM;
-        if (v > MetroConstant.MaxBPM) v = MetroConstant.MaxBPM;
-        bpm = v;
-        tvBpm.setText(String.valueOf(bpm));
-        ((SeekBar) findViewById(R.id.sbBpm)).setProgress(bpm - MetroConstant.MinBPM);
-        push(false);
+        bpm = Math.max(30, Math.min(252, v));
+        getSharedPreferences("settings", MODE_PRIVATE).edit().putInt("metroBpm", bpm).apply();
+        refreshTop();
+        SeekBar sb = (SeekBar) findViewById(R.id.sbBpm);
+        if (sb.getProgress() != bpm - 30) sb.setProgress(bpm - 30);
+        push(playing);
     }
 
+    private void setNotes(int v) {
+        notes = Math.max(1, Math.min(8, v));
+        getSharedPreferences("settings", MODE_PRIVATE).edit().putInt("metroNotes", notes).apply();
+        refreshTop(); buildDots(); push(playing);
+    }
+
+    private final android.content.BroadcastReceiver settingsRx = new android.content.BroadcastReceiver() {
+        @Override public void onReceive(android.content.Context c, Intent i) {
+            android.content.SharedPreferences p = getSharedPreferences("settings", MODE_PRIVATE);
+            booster = p.getBoolean("metroBooster", false);
+            accentFirst = p.getBoolean("metroAccent", false);
+            audioKey = p.getString("metroAudio", MetroConstant.AudioDefault);
+            if (playing) push(true);
+        }
+    };
     private final android.os.Handler rpt = new android.os.Handler();
     private Runnable rptRun;
     private void bindRepeat(View v, int delta) {
@@ -185,7 +225,7 @@ public class MetronomeActivity extends Activity {
     private final Runnable tickRun = new Runnable() {
         @Override public void run() {
             if (playing) {
-                int b = MetronomeService.currentBeat(notes);
+                int b = MetronomeService.currentBeat(notes * sub);
                 for (int i = 0; i < dots.size(); i++) {
                     View d = dots.get(i);
                     if (i == b) d.setBackgroundResource(i == 0 ? R.drawable.bg_dot_red : R.drawable.bg_dot_green);
@@ -200,7 +240,8 @@ public class MetronomeActivity extends Activity {
         LinearLayout row = (LinearLayout) findViewById(R.id.dotsRow);
         row.removeAllViews();
         dots.clear();
-        for (int i = 0; i < notes; i++) {
+        int n = notes * sub;
+        for (int i = 0; i < n; i++) {
             View d = new View(this);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(16), dp(16));
             lp.rightMargin = dp(10);
@@ -233,25 +274,14 @@ public class MetronomeActivity extends Activity {
     }
 
     private void showMenu() {
-        List<String> items = new ArrayList<>(Arrays.asList(
-            "音色 (" + displayName(audioKey) + ")",
-            bgDownloading ? "下载背景音..." : "下载背景音",
-            (keepScreen ? "关闭" : "打开") + "屏幕常亮",
-            (booster ? "关闭" : "打开") + "音量增强",
-            (accentFirst ? "关闭" : "打开") + "增强第一个拍子",
-            "设置定时器" + (timerMin > 0 ? " (" + timerMin + "分钟)" : "")
-        ));
         new android.app.AlertDialog.Builder(this)
             .setTitle("节拍器")
-            .setItems(items.toArray(new String[0]), (d, w) -> {
-                if (w == 0) showAudioPicker();
-                else if (w == 1) showDownloadDialog();
-                else if (w == 2) { keepScreen = !keepScreen; applyKeepScreen(); }
-                else if (w == 3) { booster = !booster; push(playing); }
-                else if (w == 4) { accentFirst = !accentFirst; getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("metroAccent", accentFirst).apply(); push(playing); }
-                else showTimerPicker();
-            })
+            .setItems(new String[]{bgDownloading ? "下载背景音..." : "下载背景音"}, (d, w) -> showDownloadDialog())
             .show();
+    }
+
+    public static void notifySettingChanged(android.content.Context c) {
+        c.sendBroadcast(new Intent(MetronomeService.ACTION_UPDATE).setPackage(c.getPackageName()).putExtra("settings_changed", true));
     }
 
     // ---------- 背景音 ----------
@@ -457,6 +487,7 @@ public class MetronomeActivity extends Activity {
         it.putExtra(MetronomeService.EXTRA_AUDIO, audioKey);
         it.putExtra(MetronomeService.EXTRA_BOOSTER, booster);
         it.putExtra(MetronomeService.EXTRA_ACCENT, accentFirst);
+        it.putExtra(MetronomeService.EXTRA_SUB, sub);
         it.putExtra(MetronomeService.EXTRA_TIMER, timerMin);
         if (start) startForegroundService(it); else startService(it);
         btnPlay.setText(playing ? "■ 停止" : "▶ 开始打拍");
@@ -467,15 +498,19 @@ public class MetronomeActivity extends Activity {
         findViewById(R.id.metroRoot).setBackgroundColor(dk ? (oled() ? 0xFF000000 : 0xFF11151D) : 0xFFEEF4FF);
         int card = dk ? (oled() ? R.drawable.bg_card_oled : R.drawable.bg_card_md3_dark) : R.drawable.bg_card_md3;
         findViewById(R.id.metroCardBpm).setBackgroundResource(card);
+        findViewById(R.id.metroCardBeats).setBackgroundResource(card);
+        findViewById(R.id.metroCardSub).setBackgroundResource(card);
         findViewById(R.id.metroCardNotes).setBackgroundResource(card);
         findViewById(R.id.metroCardBg).setBackgroundResource(card);
         findViewById(R.id.metroCardDots).setBackgroundResource(card);
         int title = color(0xFFE8ECF4, 0xFF1F2329);
         int sub = color(0xFF9AA3AE, 0xFF8A94A6);
         int accent = color(0xFFE8C87A, 0xFFB8860B);
-        for (int id : new int[]{R.id.tvBpm}) ((TextView) findViewById(id)).setTextColor(title);
+        for (int id : new int[]{R.id.tvBpm, R.id.tvBeats, R.id.tvSub}) ((TextView) findViewById(id)).setTextColor(title);
+        android.widget.ImageView gear = (android.widget.ImageView) findViewById(R.id.metroMenu);
+        gear.setColorFilter(color(0xFFE8ECF4, 0xFF1F2329));
         for (int id : new int[]{R.id.metroBack, R.id.btnPlay}) ((TextView) findViewById(id)).setTextColor(accent);
-        for (View v : new View[]{findViewById(R.id.metroCardBpm), findViewById(R.id.metroCardNotes), findViewById(R.id.metroCardBg)}) {
+        for (View v : new View[]{findViewById(R.id.metroCardBpm), findViewById(R.id.metroCardBeats), findViewById(R.id.metroCardSub), findViewById(R.id.metroCardBg)}) {
             ((ViewGroup) v).setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
         }
         scanTags(findViewById(R.id.metroRoot), title, sub);
@@ -496,11 +531,19 @@ public class MetronomeActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        registerReceiver(settingsRx, new android.content.IntentFilter(MetronomeService.ACTION_UPDATE));
+        android.content.SharedPreferences p = getSharedPreferences("settings", MODE_PRIVATE);
+        keepScreen = p.getBoolean("metroKeepScreen", false);
+        booster = p.getBoolean("metroBooster", false);
+        accentFirst = p.getBoolean("metroAccent", false);
+        timerMin = p.getInt("metroTimer", 0);
+        audioKey = p.getString("metroAudio", MetroConstant.AudioDefault);
         applyKeepScreen();
     }
 
     @Override
     protected void onPause() {
+        try { unregisterReceiver(settingsRx); } catch (Throwable ignored) {}
         cancelRepeat();
         getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         super.onPause();

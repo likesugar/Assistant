@@ -48,6 +48,7 @@
         <activity android:name=".ChatActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".TapperActivity" android:exported="false"/>
         <activity android:name=".MetronomeActivity" android:exported="false"/>
+        <activity android:name=".MetroSettingsActivity" android:exported="false"/>
         <service android:name=".MetronomeService" android:exported="false" android:foregroundServiceType="mediaPlayback"/>
         <activity android:name=".PanViewerActivity" android:exported="false" android:configChanges="orientation|screenSize|keyboardHidden"/>
         <activity android:name=".PanApiActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>

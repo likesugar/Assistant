@@ -10,7 +10,7 @@ public class MetroEngine extends Thread {
 
     private AudioTrack audioTrack;
     private boolean playing = false, quit = false, changed = false, booster = false, accentFirst = false;
-    private int bpm = 120, notes = 4;
+    private int bpm = 120, notes = 4, sub = 1;
     private byte[] beat1, beat2; // downbeat / upbeat 样本(16bit)
     private MetroAudioData audioData;
 
@@ -22,6 +22,7 @@ public class MetroEngine extends Thread {
     public void setAudioData(MetroAudioData ad) { this.audioData = ad; this.changed = true; }
     public void setBpm(int v) { bpm = v; changed = true; }
     public void setNotes(int v) { notes = v; changed = true; }
+    public void setSubdiv(int v) { sub = Math.max(1, v); changed = true; }
     public void setBooster(boolean v) { booster = v; changed = true; }
     public void setAccentFirst(boolean v) { accentFirst = v; changed = true; }
 
@@ -78,11 +79,15 @@ public class MetroEngine extends Thread {
             if (playing && audioTrack != null) {
                 if (changed) { loadSamples(); changed = false; }
                 if (beat1 == null) { try { sleep(50); } catch (InterruptedException ignored) {} continue; }
-                // 一拍一个 period: 60s/bpm, 换算成字节
-                int periodFrames = MetroConstant.SampleRate * 60 / Math.max(1, bpm);
+                // 一个细分 tick 一个 period: 60s/bpm/sub, 换算成字节
+                int subN = Math.max(1, sub);
+                int periodFrames = MetroConstant.SampleRate * 60 / Math.max(1, bpm) / subN;
                 int periodBytes = periodFrames * 2;
-                // 1) 本拍声音: 第1拍=downbeat, 其余=upbeat
-                byte[] tick = (beatIndex % notes == 0) ? beat1 : beat2;
+                // 1) 本 tick 声音: 小节头=downbeat, 整拍=upbeat, 细分弱位=upbeat*0.6
+                byte[] tick;
+                if (tickIndex % notes == 0) tick = beat1;
+                else if (tickIndex % subN == 0) tick = beat2;
+                else tick = scale(beat2, 0.6f);
                 writeAll(tick, 0, Math.min(tick.length, periodBytes));
                 // 2) 静音填满 period, 小块写, 期间参数变化立即跳出
                 int filled = Math.min(tick.length, periodBytes);
@@ -93,7 +98,7 @@ public class MetroEngine extends Thread {
                     audioTrack.write(sil, 0, n);
                     filled += n;
                 }
-                beatIndex = (beatIndex + 1) % Math.max(1, notes);
+                tickIndex = (tickIndex + 1) % Math.max(1, notes * subN);
             } else {
                 try { sleep(10); } catch (InterruptedException ignored) {}
             }
@@ -101,7 +106,20 @@ public class MetroEngine extends Thread {
     }
 
     private static final byte[] SILENCE = new byte[SILENCE_CHUNK];
-    private int beatIndex = 0;
+    private int tickIndex = 0;
+
+    private static byte[] scale(byte[] b, float g) {
+        byte[] r = new byte[b.length];
+        for (int i = 0; i + 1 < b.length; i += 2) {
+            short sv = (short) ((b[i] & 0xFF) | (b[i + 1] << 8));
+            int v = (int) (sv * g);
+            if (v > 32767) v = 32767;
+            if (v < -32768) v = -32768;
+            r[i] = (byte) v;
+            r[i + 1] = (byte) (v >> 8);
+        }
+        return r;
+    }
 
     private void writeAll(byte[] b, int off, int len) {
         int w = 0;
@@ -111,10 +129,10 @@ public class MetroEngine extends Thread {
     }
 
     /** 当前拍索引(按播放头位置推算), 未播放返回 -1 */
-    public int currentBeat(int notes) {
+    @Deprecated public int currentBeat(int notes) { return currentTick(notes); }
         if (audioTrack == null || bpm <= 0) return -1;
         long head = audioTrack.getPlaybackHeadPosition();
-        int periodFrames = MetroConstant.SampleRate * 60 / bpm;
+        int periodFrames = MetroConstant.SampleRate * 60 / bpm / sub;
         if (periodFrames <= 0) return -1;
         return (int) ((head / periodFrames) % notes);
     }
