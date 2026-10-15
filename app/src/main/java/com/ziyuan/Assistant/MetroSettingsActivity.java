@@ -131,7 +131,10 @@ public class MetroSettingsActivity extends Activity {
         }));
         root.addView(card3);
 
-        setContentView(root);
+        android.widget.ScrollView sc = new android.widget.ScrollView(this);
+        sc.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        sc.addView(root, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        setContentView(sc);
         applyTheme(root);
     }
 
@@ -299,16 +302,25 @@ public class MetroSettingsActivity extends Activity {
     }
 
     private void showAgeDialog() {
-        final String[] opts = {"20 岁", "25 岁", "30 岁", "35 岁", "40 岁", "45 岁", "50 岁"};
-        final int[] ages = {20, 25, 30, 35, 40, 45, 50};
-        int cur = 0;
-        for (int i = 0; i < ages.length; i++) if (ages[i] == prefs.getInt("metroAge", 30)) cur = i;
+        final android.widget.EditText et = new android.widget.EditText(this);
+        et.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        et.setText(String.valueOf(prefs.getInt("metroAge", 30)));
+        et.setTextSize(16);
+        android.widget.FrameLayout wrap = new android.widget.FrameLayout(this);
+        int pd = (int) (getResources().getDisplayMetrics().density * 20);
+        wrap.setPadding(pd, pd / 2, pd, 0);
+        wrap.addView(et);
         new android.app.AlertDialog.Builder(this)
-            .setTitle("年龄")
-            .setSingleChoiceItems(opts, cur, (d, w) -> {
-                prefs.edit().putInt("metroAge", ages[w]).apply();
-                MetronomeActivity.notifySettingChanged(this);
-                d.dismiss(); recreate();
+            .setTitle("年龄 (5-100)")
+            .setView(wrap)
+            .setPositiveButton("确定", (d, w) -> {
+                try {
+                    int v = Integer.parseInt(et.getText().toString().trim());
+                    v = Math.max(5, Math.min(100, v));
+                    prefs.edit().putInt("metroAge", v).apply();
+                    MetronomeActivity.notifySettingChanged(this);
+                    recreate();
+                } catch (Throwable ignored) {}
             })
             .setNegativeButton("取消", null)
             .show();

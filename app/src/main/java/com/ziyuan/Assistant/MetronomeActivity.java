@@ -179,12 +179,26 @@ public class MetronomeActivity extends Activity {
 
     private void bindNumEdit(final android.widget.EditText et, int init, final int min, final int max, final NumApply apply) {
         et.setText(String.valueOf(init));
-        et.setFocusableInTouchMode(true);
+        et.setFocusableInTouchMode(false); // 一次点击即获得焦点进入编辑
+        et.setCursorVisible(false);
+        et.setOnClickListener(vv -> {
+            et.setFocusableInTouchMode(true);
+            et.requestFocus();
+            et.setCursorVisible(true);
+            android.view.inputmethod.InputMethodManager im = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            if (im != null) im.showSoftInput(et, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+        });
         et.setOnEditorActionListener((v, actionId, ev) -> {
             commitNum(et, min, max, apply);
             return true;
         });
-        et.setOnFocusChangeListener((v, hasFocus) -> { if (!hasFocus) commitNum(et, min, max, apply); });
+        et.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) {
+                commitNum(et, min, max, apply);
+                et.setFocusableInTouchMode(false);
+                et.setCursorVisible(false);
+            }
+        });
     }
 
     private void commitNum(android.widget.EditText et, int min, int max, NumApply apply) {
@@ -650,7 +664,22 @@ public class MetronomeActivity extends Activity {
             if (playing) uiTick.post(tickRun); else { uiTick.removeCallbacks(tickRun); for (View d : dots) d.setBackgroundResource(R.drawable.bg_dot_off); }
         }
         refreshBgList();
+        hideNavBar();
         applyKeepScreen();
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) hideNavBar();
+    }
+
+    private void hideNavBar() {
+        android.view.WindowInsetsController c = getWindow().getInsetsController();
+        if (c != null) {
+            c.hide(android.view.WindowInsets.Type.navigationBars());
+            c.setSystemBarsBehavior(android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+        }
     }
 
     @Override
