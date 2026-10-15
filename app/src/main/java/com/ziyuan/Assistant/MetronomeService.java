@@ -37,7 +37,9 @@ public class MetronomeService extends Service {
     }
     private static MetronomeService inst;
     private TianyiController tianyi;
-    private boolean tianyiOn = false;
+    private boolean tianyiOn = false, followOn = false;
+    private HeartRateManager hrMgr;
+    private GpsManager gpsMgr;
     private MetroAudioManager audioManager;
     private final android.os.Handler stopHandler = new android.os.Handler();
 
@@ -79,7 +81,9 @@ public class MetronomeService extends Service {
         boolean booster = intent.getBooleanExtra(EXTRA_BOOSTER, false);
         boolean accentFirst = intent.getBooleanExtra(EXTRA_ACCENT, false);
         android.content.SharedPreferences tp = getSharedPreferences("settings", MODE_PRIVATE);
-        tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyiStage", true);
+        tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyiStage", true)
+            || tp.getBoolean("metroTianyiFollow", false);
+        followOn = tp.getBoolean("metroTianyiFollow", false);
         if (intent.getBooleanExtra("settings_changed", false)) {
             android.content.SharedPreferences p = getSharedPreferences("settings", MODE_PRIVATE);
             audioKey = p.getString("metroAudio", MetroConstant.AudioDefault);
@@ -103,6 +107,8 @@ public class MetronomeService extends Service {
                 return START_NOT_STICKY;
             }
             if (tianyi != null) { tianyi.stop(); tianyi = null; }
+            if (hrMgr != null) { hrMgr.stop(); hrMgr = null; }
+            if (gpsMgr != null) { gpsMgr.stop(); gpsMgr = null; }
             if (engine != null) engine.close();
             engine = null;
             stopForeground(STOP_FOREGROUND_REMOVE);
@@ -150,6 +156,8 @@ public class MetronomeService extends Service {
     @Override
     public void onDestroy() {
         if (tianyi != null) { tianyi.stop(); tianyi = null; }
+        if (hrMgr != null) { hrMgr.stop(); hrMgr = null; }
+        if (gpsMgr != null) { gpsMgr.stop(); gpsMgr = null; }
         inst = null;
         if (engine != null) { engine.close(); engine = null; } super.onDestroy();
     }

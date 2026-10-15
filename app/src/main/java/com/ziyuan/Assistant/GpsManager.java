@@ -1,0 +1,53 @@
+package com.ziyuan.Assistant;
+
+import android.content.Context;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Bundle;
+
+/** GPS 实时配速 + 距离累计 (秒级定位) */
+public class GpsManager {
+    public interface Listener { void onUpdate(double speedMps, double distKm, double paceSecPerKm); }
+
+    private final Context ctx;
+    private final Listener listener;
+    private LocationManager lm;
+    private Location last;
+    public double distKm = 0;
+    public double lastPace = 0;
+
+    public GpsManager(Context c, Listener l) { ctx = c; listener = l; }
+
+    private final LocationListener ll = new LocationListener() {
+        @Override public void onLocationChanged(Location loc) {
+            if (last != null) {
+                float d = last.distanceTo(loc);
+                if (d < 50 && Math.abs(loc.getSpeed() - last.getSpeed()) < 20) distKm += d / 1000.0;
+            }
+            last = loc;
+            float sp = loc.getSpeed();
+            double pace = sp > 0.7 ? 1000.0 / sp : 0; // 秒/公里
+            lastPace = pace;
+            if (listener != null) listener.onUpdate(sp, distKm, pace);
+        }
+        @Override public void onStatusChanged(String p, int s, Bundle e) {}
+        @Override public void onProviderEnabled(String p) {}
+        @Override public void onProviderDisabled(String p) {}
+    };
+
+    public void start() {
+        try {
+            lm = (LocationManager) ctx.getSystemService(Context.LOCATION_SERVICE);
+            if (lm == null) return;
+            for (String p : new String[]{LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER}) {
+                try { if (lm.isProviderEnabled(p)) lm.requestLocationUpdates(p, 1000, 0, ll, ctx.getMainLooper()); } catch (Throwable ignored) {}
+            }
+        } catch (Throwable ignored) {}
+    }
+
+    public void stop() {
+        try { if (lm != null) lm.removeUpdates(ll); } catch (Throwable ignored) {}
+        lm = null; last = null;
+    }
+}

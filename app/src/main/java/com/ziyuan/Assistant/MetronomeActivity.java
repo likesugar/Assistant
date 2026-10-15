@@ -257,6 +257,21 @@ public class MetronomeActivity extends Activity {
     };
     private final android.content.BroadcastReceiver tianyiRx = new android.content.BroadcastReceiver() {
         @Override public void onReceive(android.content.Context c, Intent i) {
+            if ("tianyi.hr".equals(i.getAction())) {
+                TextView hr = (TextView) findViewById(R.id.tvHr);
+                TextView pc = (TextView) findViewById(R.id.tvPace);
+                TextView ds = (TextView) findViewById(R.id.tvDist);
+                int b = i.getIntExtra("hr", 0);
+                hr.setText(b > 0 ? String.valueOf(b) : "--");
+                double pace = i.getDoubleExtra("pace", 0);
+                double dist = i.getDoubleExtra("dist", 0);
+                if (pace > 0) {
+                    int m = (int) (pace / 60), sec = (int) (pace % 60);
+                    pc.setText(m + "'" + String.format("%02d", sec) + "\"");
+                } else pc.setText("--'--\"");
+                ds.setText(String.format("%.2fkm", dist));
+                return;
+            }
             TextView tv = (TextView) findViewById(R.id.tvTianyi);
             String t = i.getStringExtra("text");
             tv.setText(t == null || t.isEmpty() ? "" : "🎤 " + t);
@@ -610,6 +625,9 @@ public class MetronomeActivity extends Activity {
         super.onResume();
         registerReceiver(settingsRx, new android.content.IntentFilter(MetronomeService.ACTION_UPDATE));
         registerReceiver(tianyiRx, new android.content.IntentFilter("tianyi.sub"));
+        registerReceiver(tianyiRx, new android.content.IntentFilter("tianyi.hr"));
+        android.content.SharedPreferences pp = getSharedPreferences("settings", MODE_PRIVATE);
+        findViewById(R.id.sportCard).setVisibility(pp.getBoolean("metroTianyiFollow", false) ? View.VISIBLE : View.GONE);
         android.content.SharedPreferences p = getSharedPreferences("settings", MODE_PRIVATE);
         keepScreen = p.getBoolean("metroKeepScreen", false);
         booster = p.getBoolean("metroBooster", false);

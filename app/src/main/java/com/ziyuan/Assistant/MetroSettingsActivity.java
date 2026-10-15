@@ -122,6 +122,12 @@ public class MetroSettingsActivity extends Activity {
             prefs.edit().putBoolean("metroTianyiStage", on).apply();
             MetronomeActivity.notifySettingChanged(this);
         }));
+        card3.addView(switchRow("心率跟随自动变速", "连手表/手环, 按心率区间自动调步频", prefs.getBoolean("metroTianyiFollow", false), (on) -> {
+            if (on) requestPerms();
+            prefs.edit().putBoolean("metroTianyiFollow", on).apply();
+            MetronomeActivity.notifySettingChanged(this);
+        }));
+        card3.addView(choiceRow("年龄", "用于算最大心率 (220-年龄), 当前 " + prefs.getInt("metroAge", 30) + " 岁", v -> showAgeDialog()));
         root.addView(card3);
 
         setContentView(root);
@@ -282,6 +288,34 @@ public class MetroSettingsActivity extends Activity {
                 if (fok) MetronomeActivity.notifyBgRefresh(this);
             });
         }, "bg-dl-set").start();
+    }
+
+    private void showAgeDialog() {
+        final String[] opts = {"20 岁", "25 岁", "30 岁", "35 岁", "40 岁", "45 岁", "50 岁"};
+        final int[] ages = {20, 25, 30, 35, 40, 45, 50};
+        int cur = 0;
+        for (int i = 0; i < ages.length; i++) if (ages[i] == prefs.getInt("metroAge", 30)) cur = i;
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("年龄")
+            .setSingleChoiceItems(opts, cur, (d, w) -> {
+                prefs.edit().putInt("metroAge", ages[w]).apply();
+                MetronomeActivity.notifySettingChanged(this);
+                d.dismiss(); recreate();
+            })
+            .setNegativeButton("取消", null)
+            .show();
+    }
+
+    private void requestPerms() {
+        java.util.List<String> ps = new java.util.ArrayList<>();
+        if (android.os.Build.VERSION.SDK_INT >= 31) {
+            if (checkSelfPermission("android.permission.BLUETOOTH_SCAN") != 0) ps.add("android.permission.BLUETOOTH_SCAN");
+            if (checkSelfPermission("android.permission.BLUETOOTH_CONNECT") != 0) ps.add("android.permission.BLUETOOTH_CONNECT");
+        } else {
+            if (checkSelfPermission("android.permission.ACCESS_FINE_LOCATION") != 0) ps.add("android.permission.ACCESS_FINE_LOCATION");
+        }
+        if (checkSelfPermission("android.permission.ACCESS_FINE_LOCATION") != 0) ps.add("android.permission.ACCESS_FINE_LOCATION");
+        if (!ps.isEmpty()) requestPermissions(ps.toArray(new String[0]), 1);
     }
 
     private void showTimerDialog() {
