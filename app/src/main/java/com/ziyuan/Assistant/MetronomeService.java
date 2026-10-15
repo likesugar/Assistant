@@ -26,6 +26,11 @@ public class MetronomeService extends Service {
     private static MetroEngine engine;
 
     /** 供 UI 轮询当前拍 (播放中) */
+    public static boolean isRunning() {
+        MetronomeService sv = inst;
+        return sv != null && sv.engine != null && sv.engine.isPlaying();
+    }
+
     public static int currentBeat(int notes) {
         MetroEngine e = engine;
         return (e != null && e.isPlaying()) ? e.currentTick(notes) : -1;
@@ -36,6 +41,7 @@ public class MetronomeService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        inst = this;
         audioManager = new MetroAudioManager(this);
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= 26 && nm.getNotificationChannel(CH_ID) == null) {
@@ -69,6 +75,7 @@ public class MetronomeService extends Service {
         if (audioKey == null) audioKey = MetroConstant.AudioDefault;
         boolean booster = intent.getBooleanExtra(EXTRA_BOOSTER, false);
         boolean accentFirst = intent.getBooleanExtra(EXTRA_ACCENT, false);
+        tianyiOn = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroTianyi", false);
         if (intent.getBooleanExtra("settings_changed", false)) {
             android.content.SharedPreferences p = getSharedPreferences("settings", MODE_PRIVATE);
             audioKey = p.getString("metroAudio", MetroConstant.AudioDefault);
@@ -78,6 +85,20 @@ public class MetronomeService extends Service {
         int sub = intent.getIntExtra(EXTRA_SUB, 1);
         String text = bpm + " BPM · " + notes + "拍";
         if (ACTION_STOP.equals(action)) {
+            final TianyiController t = tianyi;
+            if (t != null && t.isRunning()) {
+                t.onPaused(); // 天依说"运动暂停"
+                final MetroEngine e = engine;
+                tianyi = null;
+                new android.os.Handler(getMainLooper()).postDelayed(() -> {
+                    t.stop();
+                    if (e != null) e.close();
+                    stopForeground(STOP_FOREGROUND_REMOVE);
+                    stopSelf();
+                }, 1800);
+                return START_NOT_STICKY;
+            }
+            if (tianyi != null) { tianyi.stop(); tianyi = null; }
             if (engine != null) engine.close();
             engine = null;
             stopForeground(STOP_FOREGROUND_REMOVE);
@@ -104,6 +125,9 @@ public class MetronomeService extends Service {
             startForeground(0x1, buildNote(text));
         }
         engine.play();
+        if (tianyiOn) {
+            if (tianyi == null || !tianyi.isRunning()) { tianyi = new TianyiController(this, engine); tianyi.start(); }
+        } else if (tianyi != null) { tianyi.stop(); tianyi = null; }
         final int timerMin = intent.getIntExtra(EXTRA_TIMER, 0);
         stopHandler.removeCallbacksAndMessages(null);
         if (timerMin > 0) {
@@ -117,7 +141,11 @@ public class MetronomeService extends Service {
     }
 
     @Override
-    public void onDestroy() { if (engine != null) { engine.close(); engine = null; } super.onDestroy(); }
+    public void onDestroy() {
+        if (tianyi != null) { tianyi.stop(); tianyi = null; }
+        inst = null;
+        if (engine != null) { engine.close(); engine = null; } super.onDestroy();
+    }
     @Override
     public IBinder onBind(Intent intent) { return null; }
 }

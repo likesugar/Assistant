@@ -93,6 +93,10 @@ public class MetroSettingsActivity extends Activity {
         audioKey = prefs.getString("metroAudio", MetroConstant.AudioDefault);
         mgr = new MetroAudioManager(this);
         card1.addView(choiceRow("音色", displayName(audioKey), v -> showAudioDialog()));
+        card1.addView(switchRow("洛天依陪跑", "阶段提示+随机鼓励+字幕, 打拍自动变速", prefs.getBoolean("metroTianyi", false), (on) -> {
+            prefs.edit().putBoolean("metroTianyi", on).apply();
+            MetronomeActivity.notifySettingChanged(this);
+        }));
         root.addView(card1);
 
         // ===== 我的 =====
@@ -263,7 +267,10 @@ public class MetroSettingsActivity extends Activity {
                 }
             } catch (Throwable ignored) {}
             final boolean fok = ok;
-            runOnUiThread(() -> Toast.makeText(this, fok ? "已加入背景音: " + fname : "下载失败, 检查地址或网络", Toast.LENGTH_SHORT).show());
+            runOnUiThread(() -> {
+                Toast.makeText(this, fok ? "已加入背景音: " + fname : "下载失败, 检查地址或网络", Toast.LENGTH_SHORT).show();
+                if (fok) MetronomeActivity.notifyBgRefresh(this);
+            });
         }, "bg-dl-set").start();
     }
 

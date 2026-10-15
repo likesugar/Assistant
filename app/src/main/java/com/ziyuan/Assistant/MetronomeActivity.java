@@ -212,7 +212,16 @@ public class MetronomeActivity extends Activity {
             booster = p.getBoolean("metroBooster", false);
             accentFirst = p.getBoolean("metroAccent", false);
             audioKey = p.getString("metroAudio", MetroConstant.AudioDefault);
+            if (i.getBooleanExtra("bg_refresh", false)) refreshBgList();
             if (playing) push(true);
+        }
+    };
+    private final android.content.BroadcastReceiver tianyiRx = new android.content.BroadcastReceiver() {
+        @Override public void onReceive(android.content.Context c, Intent i) {
+            TextView tv = (TextView) findViewById(R.id.tvTianyi);
+            String t = i.getStringExtra("text");
+            tv.setText(t == null || t.isEmpty() ? "" : "🎤 " + t);
+            tv.setVisibility(t == null || t.isEmpty() ? View.GONE : View.VISIBLE);
         }
     };
     private final android.os.Handler rpt = new android.os.Handler();
@@ -287,6 +296,10 @@ public class MetronomeActivity extends Activity {
             .setTitle("节拍器")
             .setItems(new String[]{bgDownloading ? "下载背景音..." : "下载背景音"}, (d, w) -> showDownloadDialog())
             .show();
+    }
+
+    public static void notifyBgRefresh(android.content.Context c) {
+        c.sendBroadcast(new Intent(MetronomeService.ACTION_UPDATE).setPackage(c.getPackageName()).putExtra("bg_refresh", true));
     }
 
     public static void notifySettingChanged(android.content.Context c) {
@@ -562,18 +575,27 @@ public class MetronomeActivity extends Activity {
     protected void onResume() {
         super.onResume();
         registerReceiver(settingsRx, new android.content.IntentFilter(MetronomeService.ACTION_UPDATE));
+        registerReceiver(tianyiRx, new android.content.IntentFilter("tianyi.sub"));
         android.content.SharedPreferences p = getSharedPreferences("settings", MODE_PRIVATE);
         keepScreen = p.getBoolean("metroKeepScreen", false);
         booster = p.getBoolean("metroBooster", false);
         accentFirst = p.getBoolean("metroAccent", false);
         timerMin = p.getInt("metroTimer", 0);
         audioKey = p.getString("metroAudio", MetroConstant.AudioDefault);
+        boolean svc = MetronomeService.isRunning();
+        if (svc != playing) {
+            playing = svc;
+            findViewById(R.id.metroCardDots).setVisibility(playing ? View.VISIBLE : View.GONE);
+            btnPlay.setText(playing ? "■ 停止" : "▶ 开始打拍");
+            if (playing) uiTick.post(tickRun); else { uiTick.removeCallbacks(tickRun); for (View d : dots) d.setBackgroundResource(R.drawable.bg_dot_off); }
+        }
         applyKeepScreen();
     }
 
     @Override
     protected void onPause() {
         try { unregisterReceiver(settingsRx); } catch (Throwable ignored) {}
+        try { unregisterReceiver(tianyiRx); } catch (Throwable ignored) {}
         cancelRepeat();
         getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         super.onPause();
