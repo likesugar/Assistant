@@ -46,14 +46,20 @@ public class TianyiController {
         ctx = c; engine = e; cheerOn = cheer; stageOn = stage;
     }
 
+    public Runnable introDone; // 开场语音播完后由外部执行(启动节拍)
+
     public void start() {
         stop();
         if (!cheerOn && !stageOn && gpsMgr == null) return;
         running = true;
         stageIdx = 0; elapsed = 0;
-        if (stageOn) playVoice("zhunbei", "准备好啦～三、二、一，跟天依一起出发吧！");
-        if (stageOn) engine.setBpm(STAGES[0].bpm0);
-        h.postDelayed(tick, stageOn ? 2600 : 3000);
+        if (stageOn) {
+            playVoice("zhunbei", "准备好啦～三、二、一，跟天依一起出发吧！");
+            engine.setBpm(STAGES[0].bpm0);
+            h.postDelayed(tick, 2600);
+        } else {
+            h.postDelayed(tick, 3000);
+        }
     }
 
     public void stop() {
@@ -78,8 +84,12 @@ public class TianyiController {
                 stageIdx++;
                 elapsed = 0;
                 if (stageIdx >= STAGES.length) {
-                    if (stageOn) playVoice("jieshu", "训练完成啦！天依觉得你好棒，记得拉伸放松哦～");
-                    stop();
+                    running = false;
+                    if (engine != null) engine.pause(); // 先停节拍
+                    if (stageOn) {
+                        playVoice("jieshu", "训练完成啦！天依觉得你好棒，记得拉伸放松哦～");
+                        h.postDelayed(this::hardStop, 4500); // 语音播完再收尾
+                    } else hardStop();
                     return;
                 }
                 nextCheer = 35 + (int) (Math.random() * 21);
@@ -123,6 +133,11 @@ public class TianyiController {
         }
     };
 
+    private void hardStop() {
+        voice = null;
+        stop();
+    }
+
     private void playVoice(String id, String text) {
         sub(text);
         try {
@@ -132,8 +147,16 @@ public class TianyiController {
             voice.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
             fd.close();
             voice.prepare();
+            final long durMs = voice.getDuration() + 400;
             voice.start();
-        } catch (Throwable ignored) {}
+            if (id.equals("zhunbei") && introDone != null) {
+                final Runnable r = introDone; introDone = null;
+                voice.setOnCompletionListener(mp -> r.run());
+                h.postDelayed(() -> { if (r != null) r.run(); }, durMs > 500 ? durMs : 2600); // 兜底: 文件缺失也开工
+            }
+        } catch (Throwable ignored) {
+            if (id.equals("zhunbei") && introDone != null) { Runnable r = introDone; introDone = null; r.run(); }
+        }
     }
 
     private void sub(String text) {

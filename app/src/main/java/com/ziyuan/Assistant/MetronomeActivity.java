@@ -283,8 +283,7 @@ public class MetronomeActivity extends Activity {
                 double pace = i.getDoubleExtra("pace", 0);
                 double dist = i.getDoubleExtra("dist", 0);
                 boolean fix = i.getBooleanExtra("gpsFix", false);
-                String diag = i.getStringExtra("diag");
-                ((TextView) ((ViewGroup) pc.getParent()).getChildAt(1)).setText(fix ? (diag == null ? "配速" : diag) : "配速·未定位");
+                ((TextView) ((ViewGroup) pc.getParent()).getChildAt(1)).setText("配速");
                 if (pace > 0) {
                     int m = (int) (pace / 60), sec = (int) (pace % 60);
                     pc.setText(m + "'" + String.format("%02d", sec) + "\"");
@@ -299,8 +298,7 @@ public class MetronomeActivity extends Activity {
                     String want = (cad > 0 ? Math.round(cad) : "--") + "/" + target;
                     if (!et.getText().toString().equals(want)) et.setText(want);
                 }
-                String cd = i.getStringExtra("cadDiag");
-                ((TextView) ((ViewGroup) tvC.getParent()).getChildAt(1)).setText("步频·" + (cd == null ? "?" : cd));
+                ((TextView) ((ViewGroup) tvC.getParent()).getChildAt(1)).setText("步频");
                 return;
             }
             TextView tv = (TextView) findViewById(R.id.tvTianyi);
@@ -415,8 +413,7 @@ public class MetronomeActivity extends Activity {
 
     private void deleteBg(File f) {
         if (bgPlayer != null && bgPlayingFile != null && bgPlayingFile.equals(f)) stopBgPlay();
-        if (f.delete()) { refreshBgList(); Toast.makeText(this, "已删除: " + f.getName().replaceAll("\\.[^.]+$", ""), Toast.LENGTH_SHORT).show(); }
-        else Toast.makeText(this, "删除失败", Toast.LENGTH_SHORT).show();
+        if (f.delete()) refreshBgList();
     }
 
     private void buildBgList() {
@@ -488,10 +485,8 @@ public class MetronomeActivity extends Activity {
             bgPlayingView = view;
             view.setText("❚❚  " + f.getName().replaceAll("\\.[^.]+$", ""));
             view.setTextColor(0xFFE8C87A);
-            Toast.makeText(this, "背景音循环播放中, 再点停止", Toast.LENGTH_SHORT).show();
         } catch (Throwable e) {
             stopBgPlay();
-            Toast.makeText(this, "播放失败", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -522,7 +517,6 @@ public class MetronomeActivity extends Activity {
             .setPositiveButton("下载", (d, w) -> {
                 String url = et.getText().toString().trim();
                 if (url.startsWith("http")) downloadBg(url);
-                else Toast.makeText(this, "地址无效", Toast.LENGTH_SHORT).show();
             })
             .setNegativeButton("取消", null)
             .show();
@@ -531,7 +525,6 @@ public class MetronomeActivity extends Activity {
     private void downloadBg(String url) {
         if (bgDownloading) return;
         bgDownloading = true;
-        Toast.makeText(this, "开始下载...", Toast.LENGTH_SHORT).show();
         bgDir = new File(getFilesDir(), "bg_sounds");
         if (!bgDir.exists()) bgDir.mkdirs();
         String clean = url.split("#")[0].split("\\?")[0];
@@ -554,7 +547,7 @@ public class MetronomeActivity extends Activity {
             runOnUiThread(() -> {
                 bgDownloading = false;
                 refreshBgList();
-                Toast.makeText(this, ok ? "已加入背景音: " + fname : "下载失败, 检查地址或网络", Toast.LENGTH_SHORT).show();
+                if (!ok) refreshBgList();
             });
         }, "bg-dl").start();
     }
@@ -590,7 +583,6 @@ public class MetronomeActivity extends Activity {
             .setPositiveButton("确定", (d, w) -> {
                 try { timerMin = Math.max(0, Integer.parseInt(et.getText().toString().trim())); } catch (Throwable ignored) {}
                 push(playing);
-                Toast.makeText(this, timerMin > 0 ? timerMin + " 分钟后自动停止" : "已取消定时", Toast.LENGTH_SHORT).show();
             })
             .setNegativeButton("取消", null)
             .show();

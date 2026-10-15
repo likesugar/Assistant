@@ -95,7 +95,8 @@ tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyi
         if (ACTION_STOP.equals(action)) {
             final TianyiController t = tianyi;
             if (t != null && t.isRunning()) {
-                t.onPaused(); // 天依说"运动暂停"
+                if (engine != null) engine.pause(); // 节拍先停
+                t.onPaused(); // 再播语音
                 final MetroEngine e = engine;
                 tianyi = null;
                 new android.os.Handler(getMainLooper()).postDelayed(() -> {
@@ -134,7 +135,7 @@ tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyi
         } else {
             startForeground(0x1, buildNote(text));
         }
-        engine.play();
+        boolean introPending = false;
         if (tianyiOn) {
             if (tianyi == null || !tianyi.isRunning()) {
                 android.content.SharedPreferences tsp = getSharedPreferences("settings", MODE_PRIVATE);
@@ -149,6 +150,10 @@ tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyi
                     tsp.getBoolean("metroTianyiStage", true));
                 tianyi.gpsMgr = gpsMgr; tianyi.stepMgr = stepMgr;
                 tianyi.start();
+                if (tsp.getBoolean("metroTianyiStage", true)) {
+                    tianyi.introDone = () -> { MetroEngine en = engine; if (en != null) en.play(); };
+                    introPending = true; // 开场语音播完才响节拍
+                }
             }
         } else if (tianyi != null) {
             tianyi.stop(); tianyi = null;
@@ -156,6 +161,7 @@ tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyi
         if (stepMgr != null) { stepMgr.stop(); stepMgr = null; }
             if (stepMgr != null) { stepMgr.stop(); stepMgr = null; }
         }
+        if (!introPending) engine.play();
         final int timerMin = intent.getIntExtra(EXTRA_TIMER, 0);
         stopHandler.removeCallbacksAndMessages(null);
         if (timerMin > 0) {
