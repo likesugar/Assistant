@@ -128,13 +128,13 @@ public class MetroEngine extends Thread {
         }
     }
 
-    /** 当前拍索引(按播放头位置推算), 未播放返回 -1 */
-    @Deprecated public int currentBeat(int notes) { return currentTick(notes); }
+    /** 当前 tick 索引(按播放头位置推算), 未播放返回 -1 */
+    public int currentTick(int ticks) {
         if (audioTrack == null || bpm <= 0) return -1;
         long head = audioTrack.getPlaybackHeadPosition();
-        int periodFrames = MetroConstant.SampleRate * 60 / bpm / sub;
+        int periodFrames = MetroConstant.SampleRate * 60 / Math.max(1, bpm) / Math.max(1, sub);
         if (periodFrames <= 0) return -1;
-        return (int) ((head / periodFrames) % notes);
+        return (int) ((head / periodFrames) % ticks);
     }
 
     public void play() { playing = true; if (audioTrack != null) audioTrack.play(); }
