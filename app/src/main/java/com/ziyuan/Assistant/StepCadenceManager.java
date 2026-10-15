@@ -76,6 +76,13 @@ public class StepCadenceManager {
     }
 
     /** 死推: 用当前步频和估计步幅算这段步数对应的米数 */
+    public String diag() {
+        if (sm == null) return "无服务";
+        if (!hasSensor) return "无传感器";
+        if (!active) return "未注册";
+        return "步数" + Math.round(steps) + (lastStepTime == 0 ? "·等步" : "·计时中");
+    }
+
     public float deadReckonMeters(float strideM, long sinceMs) {
         if (cadence <= 0 || lastStepTime == 0) return 0;
         float min = sinceMs / 60000f;

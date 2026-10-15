@@ -109,6 +109,7 @@ public class TianyiController {
                 st.putExtra("gpsFix", gpsMgr.gotFix);
                 st.putExtra("diag", gpsMgr.lastDiag);
                 st.putExtra("cad", stepMgr == null ? 0 : stepMgr.cadence);
+                st.putExtra("cadDiag", stepMgr == null ? "无服务" : stepMgr.diag());
                 st.putExtra("bpm", engine == null ? 0 : engine.currentBpm());
                 ctx.sendBroadcast(st);
             }

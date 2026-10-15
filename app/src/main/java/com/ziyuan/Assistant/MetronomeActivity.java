@@ -294,6 +294,8 @@ public class MetronomeActivity extends Activity {
                 if (cad > 0) tvC.setText(Math.round(cad) + "/" + tbpm);
                 else if (tbpm > 0) tvC.setText("--/" + tbpm);
                 else tvC.setText("--");
+                String cd = i.getStringExtra("cadDiag");
+                ((TextView) ((ViewGroup) tvC.getParent()).getChildAt(1)).setText("步频·" + (cd == null ? "?" : cd));
                 return;
             }
             TextView tv = (TextView) findViewById(R.id.tvTianyi);
