@@ -26,6 +26,7 @@ public class MetronomeActivity extends Activity {
     private int bpm = 120, notes = 4;
     private String audioKey = MetroConstant.AudioDefault;
     private boolean booster = false, playing = false;
+    private boolean accentFirst = false;
     private TextView tvBpm, btnPlay;
     private final List<TextView> noteChips = new ArrayList<>();
     private MetroAudioManager audioManager;
@@ -71,6 +72,7 @@ public class MetronomeActivity extends Activity {
         notes = getSharedPreferences("settings", MODE_PRIVATE).getInt("metroNotes", 4);
         audioKey = getSharedPreferences("settings", MODE_PRIVATE).getString("metroAudio", MetroConstant.AudioDefault);
         bgVol = getSharedPreferences("settings", MODE_PRIVATE).getInt("metroBgVol", 40);
+        accentFirst = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroAccent", false);
         tvBpm = (TextView) findViewById(R.id.tvBpm);
         btnPlay = (TextView) findViewById(R.id.btnPlay);
         findViewById(R.id.metroBack).setOnClickListener(v -> finish());
@@ -236,6 +238,7 @@ public class MetronomeActivity extends Activity {
             bgDownloading ? "下载背景音..." : "下载背景音",
             (keepScreen ? "关闭" : "打开") + "屏幕常亮",
             (booster ? "关闭" : "打开") + "音量增强",
+            (accentFirst ? "关闭" : "打开") + "增强第一个拍子",
             "设置定时器" + (timerMin > 0 ? " (" + timerMin + "分钟)" : "")
         ));
         new android.app.AlertDialog.Builder(this)
@@ -245,6 +248,7 @@ public class MetronomeActivity extends Activity {
                 else if (w == 1) showDownloadDialog();
                 else if (w == 2) { keepScreen = !keepScreen; applyKeepScreen(); }
                 else if (w == 3) { booster = !booster; push(playing); }
+                else if (w == 4) { accentFirst = !accentFirst; getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("metroAccent", accentFirst).apply(); push(playing); }
                 else showTimerPicker();
             })
             .show();
@@ -384,6 +388,10 @@ public class MetronomeActivity extends Activity {
         String clean = url.split("#")[0].split("\\?")[0];
         String name = clean.substring(clean.lastIndexOf('/') + 1);
         try { name = java.net.URLDecoder.decode(name, "UTF-8"); } catch (Throwable ignored) {}
+        String stem = name.contains(".") ? name.substring(0, name.lastIndexOf('.')) : name;
+        if (stem.matches("[0-9a-fA-F]{16,}")) {
+            name = "背景音_" + new java.text.SimpleDateFormat("HHmmss", java.util.Locale.CHINA).format(new java.util.Date());
+        }
         if (name.indexOf('\uFFFD') >= 0 || name.matches(".*%[0-9A-Fa-f]{2}.*")) {
             // 解码乱码兜底: 用时间命名
             name = "背景音_" + new java.text.SimpleDateFormat("HHmmss", java.util.Locale.CHINA).format(new java.util.Date());
@@ -448,6 +456,7 @@ public class MetronomeActivity extends Activity {
         it.putExtra(MetronomeService.EXTRA_NOTES, notes);
         it.putExtra(MetronomeService.EXTRA_AUDIO, audioKey);
         it.putExtra(MetronomeService.EXTRA_BOOSTER, booster);
+        it.putExtra(MetronomeService.EXTRA_ACCENT, accentFirst);
         it.putExtra(MetronomeService.EXTRA_TIMER, timerMin);
         if (start) startForegroundService(it); else startService(it);
         btnPlay.setText(playing ? "■ 停止" : "▶ 开始打拍");

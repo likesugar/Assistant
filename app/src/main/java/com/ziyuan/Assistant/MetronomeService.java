@@ -18,6 +18,7 @@ public class MetronomeService extends Service {
     public final static String EXTRA_NOTES = "notes";
     public final static String EXTRA_AUDIO = "audio";
     public final static String EXTRA_BOOSTER = "booster";
+    public final static String EXTRA_ACCENT = "accent_first";
     public final static String EXTRA_TIMER = "timerMin";
     private final static String CH_ID = "metro_channel";
 
@@ -66,6 +67,7 @@ public class MetronomeService extends Service {
         String audioKey = intent.getStringExtra(EXTRA_AUDIO);
         if (audioKey == null) audioKey = MetroConstant.AudioDefault;
         boolean booster = intent.getBooleanExtra(EXTRA_BOOSTER, false);
+        boolean accentFirst = intent.getBooleanExtra(EXTRA_ACCENT, false);
         String text = bpm + " BPM · " + notes + "拍";
         if (ACTION_STOP.equals(action)) {
             if (engine != null) engine.close();
@@ -82,9 +84,9 @@ public class MetronomeService extends Service {
         try {
             if (ACTION_START.equals(action) || engine.isPlaying() == false) {
                 engine.setAudioData(audioManager.getAudio(audioKey));
-                engine.setBpm(bpm); engine.setNotes(notes); engine.setBooster(booster);
+                engine.setBpm(bpm); engine.setNotes(notes); engine.setBooster(booster); engine.setAccentFirst(accentFirst);
             } else {
-                engine.setBpm(bpm); engine.setNotes(notes); engine.setBooster(booster);
+                engine.setBpm(bpm); engine.setNotes(notes); engine.setBooster(booster); engine.setAccentFirst(accentFirst);
                 try { engine.setAudioData(audioManager.getAudio(audioKey)); } catch (Throwable ignored) {}
             }
         } catch (Throwable ignored) {}

@@ -20,7 +20,7 @@
             android:orientation="vertical" android:background="@drawable/bg_card_md3"
             android:padding="20dp" android:layout_marginTop="10dp" android:gravity="center_horizontal">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="BPM" android:textSize="13sp" android:tag="sub"/>
+                android:text="拍子 (BPM)" android:textSize="13sp" android:tag="sub"/>
             <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="10dp">
                 <TextView android:id="@+id/btnBpmDown" android:layout_width="56dp" android:layout_height="56dp"
@@ -50,7 +50,7 @@
             android:orientation="vertical" android:background="@drawable/bg_card_md3"
             android:padding="20dp" android:layout_marginTop="14dp">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="每小节拍数" android:textSize="15sp" android:textStyle="bold" android:tag="title"/>
+                android:text="小节 (每小节拍数)" android:textSize="15sp" android:textStyle="bold" android:tag="title"/>
             <LinearLayout android:id="@+id/notesRow" android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="horizontal" android:layout_marginTop="12dp"/>
         </LinearLayout>
