@@ -20,31 +20,34 @@ public class GpsManager {
     private boolean lastWasGps = false;
     public long lastGpsTime = 0;
     public double drKm = 0; // 死推累计
+    public String lastDiag = "";
 
     public GpsManager(Context c, Listener l) { ctx = c; listener = l; }
 
     private final LocationListener ll = new LocationListener() {
         @Override public void onLocationChanged(Location loc) {
             boolean isGps = LocationManager.GPS_PROVIDER.equals(loc.getProvider());
+            String prov = loc.getProvider();
+            float acc = loc.getAccuracy();
+            float spd = loc.getSpeed();
             if (isGps) {
-                if (last != null && loc.getAccuracy() < 30 && last.getAccuracy() < 30) {
-                    float sp = loc.getSpeed();
-                    if (sp > 1.0f && sp < 70f) {
-                        float dt = Math.max(0.5f, Math.min(5f, (loc.getTime() - last.getTime()) / 1000f));
-                        float d = Math.min(last.distanceTo(loc), sp * dt);
-                        distKm += d / 1000.0;
-                    }
-                }
                 gotFix = true;
+                lastGpsTime = System.currentTimeMillis();
+                if (last != null && acc < 50 && last.getAccuracy() < 50) {
+                    float dt = Math.max(0.5f, Math.min(5f, (loc.getTime() - last.getTime()) / 1000f));
+                    float d = last.distanceTo(loc);
+                    if (spd > 0.8f && spd < 70f) d = Math.min(d, spd * dt);
+                    if (d < 100f) distKm += d / 1000.0;
+                }
                 last = loc;
-                float sp = loc.getSpeed();
-                double pace = sp > 0.7 ? 1000.0 / sp : 0; // 秒/公里
-                if (pace > 0) {
-                    // 指数平滑: 新值 40%, 旧值 60%, 消抖
+                if (spd > 0.7) {
+                    double pace = 1000.0 / spd;
                     lastPace = lastPace <= 0 ? pace : lastPace * 0.6 + pace * 0.4;
                 }
+            } else if (last == null) {
+                last = loc; // 只补初始位置
             }
-            // 网络定位只补初始位置, 不参与配速/距离
+            lastDiag = "prov=" + prov + " acc=" + (Math.round(acc)) + "m spd=" + String.format("%.1f", spd);
             if (listener != null) listener.onUpdate(lastPace > 0 ? (float) (1000.0 / lastPace) : 0, distKm, lastPace);
         }
         @Override public void onStatusChanged(String p, int s, Bundle e) {}

@@ -107,6 +107,7 @@ public class TianyiController {
                 st.putExtra("dist", total);
                 st.putExtra("pace", gpsMgr.lastPace);
                 st.putExtra("gpsFix", gpsMgr.gotFix);
+                st.putExtra("diag", gpsMgr.lastDiag);
                 st.putExtra("cad", stepMgr == null ? 0 : stepMgr.cadence);
                 st.putExtra("bpm", engine == null ? 0 : engine.currentBpm());
                 ctx.sendBroadcast(st);
