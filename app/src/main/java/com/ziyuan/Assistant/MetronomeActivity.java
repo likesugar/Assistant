@@ -679,6 +679,10 @@ public class MetronomeActivity extends Activity {
 
     private void ensureLocPerm() {
         String P = "android.permission.ACCESS_FINE_LOCATION";
+        if (android.os.Build.VERSION.SDK_INT >= 29 && checkSelfPermission("android.permission.ACTIVITY_RECOGNITION") != 0) {
+            requestPermissions(new String[]{"android.permission.ACTIVITY_RECOGNITION", P}, 3);
+            return;
+        }
         if (checkSelfPermission(P) == 0) return;
         if (shouldShowRequestPermissionRationale(P)) {
             // 拒过一次: 再弹系统申请框
