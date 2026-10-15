@@ -92,8 +92,6 @@ public class MetronomeActivity extends Activity {
         bindNumEdit((android.widget.EditText) findViewById(R.id.tvBeats), notes, 1, 8, this::setNotes);
         bindNumEdit((android.widget.EditText) findViewById(R.id.tvSub), sub, 1, 4, this::setSub);
         bindNumEdit((android.widget.EditText) findViewById(R.id.tvBpm), bpm, 30, 252, this::setBpm);
-        if (checkSelfPermission("android.permission.ACCESS_FINE_LOCATION") != 0)
-            requestPermissions(new String[]{"android.permission.ACCESS_FINE_LOCATION"}, 2);
         findViewById(R.id.tvBpm).setOnClickListener(v -> {
             View row = findViewById(R.id.bpmPresets);
             row.setVisibility(row.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
@@ -351,6 +349,7 @@ public class MetronomeActivity extends Activity {
     }
 
     private void togglePlay() {
+        ensureLocPerm();
         playing = !playing;
         findViewById(R.id.metroCardDots).setVisibility(playing ? View.VISIBLE : View.GONE);
         push(playing);
@@ -676,6 +675,25 @@ public class MetronomeActivity extends Activity {
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus) hideNavBar();
+    }
+
+    private void ensureLocPerm() {
+        String P = "android.permission.ACCESS_FINE_LOCATION";
+        if (checkSelfPermission(P) == 0) return;
+        if (shouldShowRequestPermissionRationale(P)) {
+            // 拒过一次: 再弹系统申请框
+            requestPermissions(new String[]{P}, 2);
+        } else {
+            // 永久拒绝(不再询问): 弹窗引导去应用设置页
+            new android.app.AlertDialog.Builder(this)
+                .setTitle("需要定位权限")
+                .setMessage("配速/距离/步频需要定位权限。\n\n点击去设置 → 权限 → 位置信息 → 允许")
+                .setPositiveButton("去设置", (d, w) -> startActivity(new android.content.Intent(
+                    android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    android.net.Uri.fromParts("package", getPackageName(), null))))
+                .setNegativeButton("取消", null)
+                .show();
+        }
     }
 
     private void hideNavBar() {
