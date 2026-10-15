@@ -13,6 +13,11 @@
                 android:padding="8dp" android:src="@drawable/ic_metro_gear"/>
         </LinearLayout>
 
+        <TextView android:id="@+id/tvTianyi" android:visibility="gone"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:gravity="center" android:textSize="14sp" android:textStyle="bold" android:tag="title"
+            android:background="@drawable/bg_card_md3" android:padding="14dp" android:layout_marginTop="10dp"/>
+
         <LinearLayout android:tag="card" android:id="@+id/metroCardDots" android:visibility="gone"
             android:layout_width="match_parent" android:layout_height="wrap_content"
             android:orientation="vertical" android:background="@drawable/bg_card_md3"
