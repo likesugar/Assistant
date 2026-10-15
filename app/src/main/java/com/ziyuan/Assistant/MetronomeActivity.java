@@ -500,7 +500,6 @@ public class MetronomeActivity extends Activity {
         findViewById(R.id.metroCardBpm).setBackgroundResource(card);
         findViewById(R.id.metroCardBeats).setBackgroundResource(card);
         findViewById(R.id.metroCardSub).setBackgroundResource(card);
-        findViewById(R.id.metroCardNotes).setBackgroundResource(card);
         findViewById(R.id.metroCardBg).setBackgroundResource(card);
         findViewById(R.id.metroCardDots).setBackgroundResource(card);
         int title = color(0xFFE8ECF4, 0xFF1F2329);
