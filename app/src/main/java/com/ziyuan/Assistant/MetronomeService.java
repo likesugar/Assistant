@@ -137,15 +137,15 @@ public class MetronomeService extends Service {
         engine.play();
         if (tianyiOn) {
             if (tianyi == null || !tianyi.isRunning()) {
-                android.content.SharedPreferences tp = getSharedPreferences("settings", MODE_PRIVATE);
+                android.content.SharedPreferences tsp = getSharedPreferences("settings", MODE_PRIVATE);
                 hrMgr = new HeartRateManager(this, null);
                 gpsMgr = new GpsManager(this, null);
                 hrMgr.start(); gpsMgr.start();
                 tianyi = new TianyiController(this, engine,
-                    tp.getBoolean("metroTianyiCheer", true),
-                    tp.getBoolean("metroTianyiStage", true), followOn);
+                    tsp.getBoolean("metroTianyiCheer", true),
+                    tsp.getBoolean("metroTianyiStage", true), followOn);
                 tianyi.hrMgr = hrMgr; tianyi.gpsMgr = gpsMgr;
-                tianyi.age = tp.getInt("metroAge", 30);
+                tianyi.age = tsp.getInt("metroAge", 30);
                 tianyi.start();
             }
         } else if (tianyi != null) {
