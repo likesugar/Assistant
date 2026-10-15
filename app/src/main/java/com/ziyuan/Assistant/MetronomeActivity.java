@@ -653,7 +653,8 @@ public class MetronomeActivity extends Activity {
         registerReceiver(tianyiRx, new android.content.IntentFilter("tianyi.sub"));
         registerReceiver(tianyiRx, new android.content.IntentFilter("tianyi.hr"));
         android.content.SharedPreferences pp = getSharedPreferences("settings", MODE_PRIVATE);
-        findViewById(R.id.sportCard).setVisibility(pp.getBoolean("metroTianyiFollow", false) ? View.VISIBLE : View.GONE);
+        findViewById(R.id.sportCard).setVisibility(
+            (pp.getBoolean("metroTianyiCheer", true) || pp.getBoolean("metroTianyiStage", true)) ? View.VISIBLE : View.GONE);
         android.content.SharedPreferences p = getSharedPreferences("settings", MODE_PRIVATE);
         keepScreen = p.getBoolean("metroKeepScreen", false);
         booster = p.getBoolean("metroBooster", false);
