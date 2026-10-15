@@ -114,6 +114,8 @@ public class MetroSettingsActivity extends Activity {
         // ===== 洛天依 =====
         root.addView(sectionTitle("洛天依"));
         LinearLayout card3 = card();
+        card3.addView(choiceRow("连接设备", hrStatus(), v -> startActivity(new android.content.Intent(this, BleScanActivity.class))));
+        card3.addView(choiceRow("年龄", "用于算最大心率 (220-年龄), 当前 " + prefs.getInt("metroAge", 30) + " 岁", v -> showAgeDialog()));
         card3.addView(switchRow("随机鼓励语 + 字幕", "每 35~55 秒随机一句鼓励, 顶部同步字幕", prefs.getBoolean("metroTianyiCheer", true), (on) -> {
             prefs.edit().putBoolean("metroTianyiCheer", on).apply();
             MetronomeActivity.notifySettingChanged(this);
@@ -127,8 +129,6 @@ public class MetroSettingsActivity extends Activity {
             prefs.edit().putBoolean("metroTianyiFollow", on).apply();
             MetronomeActivity.notifySettingChanged(this);
         }));
-        card3.addView(choiceRow("连接设备", hrStatus(), v -> startActivity(new android.content.Intent(this, BleScanActivity.class))));
-        card3.addView(choiceRow("年龄", "用于算最大心率 (220-年龄), 当前 " + prefs.getInt("metroAge", 30) + " 岁", v -> showAgeDialog()));
         root.addView(card3);
 
         setContentView(root);
