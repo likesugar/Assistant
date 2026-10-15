@@ -89,7 +89,6 @@ public class MetronomeActivity extends Activity {
         });
         ((SeekBar) findViewById(R.id.sbBgVol)).setProgress(bgVol);
 
-        findViewById(R.id.btnAudio).setOnClickListener(v -> showAudioPicker());
         bindNumEdit((android.widget.EditText) findViewById(R.id.tvBeats), notes, 1, 8, this::setNotes);
         bindNumEdit((android.widget.EditText) findViewById(R.id.tvSub), sub, 1, 4, this::setSub);
         bindNumEdit((android.widget.EditText) findViewById(R.id.tvBpm), bpm, 30, 252, this::setBpm);
@@ -155,7 +154,7 @@ public class MetronomeActivity extends Activity {
 
     private void refreshPresets() {
         for (int i = 0; i < presetChips.size(); i++) {
-            View cell = ((View) presetChips.get(i)).getParent();
+            View cell = (View) presetChips.get(i).getParent();
             boolean sel = bpm == PRESET_BPM[i];
             android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
             gd.setCornerRadius(dp(12));
