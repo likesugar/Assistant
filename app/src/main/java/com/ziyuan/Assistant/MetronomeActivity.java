@@ -122,13 +122,21 @@ public class MetronomeActivity extends Activity {
         return "最急板";
     }
 
-    private static final int[] PRESET_BPM = {150, 160, 170, 180, 190, 200};
+    private static final int[] PRESET_DEF = {150, 160, 170, 180, 190, 200};
     private static final String[] PRESET_NAME = {"轻松", "慢跑", "节奏", "快跑", "冲刺", "间歇"};
+    private final int[] presetVals = new int[6];
     private final List<TextView> presetChips = new ArrayList<>();
+
+    private int presetVal(int i) {
+        return getSharedPreferences("settings", MODE_PRIVATE).getInt("presetBpm" + i, PRESET_DEF[i]);
+    }
 
     private void buildBpmPresets() {
         LinearLayout row = (LinearLayout) findViewById(R.id.bpmPresets);
-        for (int i = 0; i < PRESET_BPM.length; i++) {
+        row.removeAllViews();
+        presetChips.clear();
+        for (int i = 0; i < 6; i++) {
+            presetVals[i] = presetVal(i);
             LinearLayout cell = new LinearLayout(this);
             cell.setOrientation(LinearLayout.VERTICAL);
             cell.setGravity(android.view.Gravity.CENTER);
@@ -136,10 +144,18 @@ public class MetronomeActivity extends Activity {
             int pad = dp(3);
             clp.setMargins(pad, 0, pad, 0);
             cell.setLayoutParams(clp);
-            TextView v = new TextView(this);
-            v.setText(String.valueOf(PRESET_BPM[i]));
+            // 数值框: 点一下进入编辑, 改完即存 (每格自定义节奏)
+            final android.widget.EditText v = new android.widget.EditText(this);
+            v.setText(String.valueOf(presetVals[i]));
             v.setTextSize(15);
             v.setGravity(android.view.Gravity.CENTER);
+            v.setBackgroundResource(android.R.color.transparent);
+            v.setTextColor(color(0xFFE8ECF4, 0xFF1F2329));
+            v.setSingleLine(true);
+            v.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+            v.setFocusableInTouchMode(false);
+            v.setCursorVisible(false);
+            v.setPadding(0, dp(2), 0, dp(2));
             TextView n = new TextView(this);
             n.setText(PRESET_NAME[i]);
             n.setTextSize(12);
@@ -147,20 +163,45 @@ public class MetronomeActivity extends Activity {
             n.setTag("sub");
             cell.addView(v);
             cell.addView(n);
-            final int val = PRESET_BPM[i];
-            cell.setOnClickListener(vv -> setBpm(val));
+            final android.widget.EditText fv = v;
+            final int fi = i;
+            v.setOnClickListener(vv -> {
+                fv.setFocusableInTouchMode(true);
+                fv.requestFocus();
+                fv.setCursorVisible(true);
+                android.view.inputmethod.InputMethodManager im = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                if (im != null) im.showSoftInput(fv, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+            });
+            v.setOnEditorActionListener((vv, a, ev) -> { commitPreset(fi, fv); return true; });
+            v.setOnFocusChangeListener((vv, hasF) -> { if (!hasF) commitPreset(fi, fv); });
+            cell.setOnClickListener(vv -> {
+                if (fv.hasFocus()) return;
+                setBpm(presetVal(fi));
+            });
             row.addView(cell);
-            presetChips.add((TextView) cell.getTag() == null ? v : v);
-            cell.setTag(v);
-            presetChips.set(i, v);
+            presetChips.add(v);
         }
+        refreshPresets();
+    }
+
+    private void commitPreset(int i, android.widget.EditText et) {
+        try {
+            int val = Math.max(30, Math.min(252, Integer.parseInt(et.getText().toString().trim())));
+            presetVals[i] = val;
+            et.setText(String.valueOf(val));
+            getSharedPreferences("settings", MODE_PRIVATE).edit().putInt("presetBpm" + i, val).apply();
+        } catch (Throwable ignored) {
+            et.setText(String.valueOf(presetVal(i)));
+        }
+        et.setFocusableInTouchMode(false);
+        et.setCursorVisible(false);
         refreshPresets();
     }
 
     private void refreshPresets() {
         for (int i = 0; i < presetChips.size(); i++) {
             View cell = (View) presetChips.get(i).getParent();
-            boolean sel = bpm == PRESET_BPM[i];
+            boolean sel = bpm == presetVals[i];
             android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
             gd.setCornerRadius(dp(12));
             if (sel) {
