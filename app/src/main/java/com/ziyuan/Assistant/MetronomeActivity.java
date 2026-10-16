@@ -804,6 +804,9 @@ public class MetronomeActivity extends Activity {
                     }
                 } catch (Throwable ignored) {}
                 final java.util.List<String[]> fdays = days;
+                final String fcity = city, ftype = type, fcur = curT, fmx = mx, fmn = mn;
+                final String fh = hum, fw = wind, fp = press, fv = vis, fa = aqi;
+                final String[][] fi = indices;
                 uiTick.post(() -> buildWeather(fcity, ftype, fcur, fmn, fmx, fh, fw, fp, fv, fa, fi, fdays, hum, wind, press, vis, aqi));
             } catch (Throwable e) {
                 String msg = e.getMessage(); uiTick.post(() -> { ((TextView) findViewById(R.id.lifeTemp)).setText("获取失败:" + (msg == null || msg.length() == 0 ? e.getClass().getSimpleName() : msg) + " 点击重试"); lifeFetched = false; lastWeatherAt = 0; });
@@ -841,6 +844,18 @@ public class MetronomeActivity extends Activity {
             }
         }
         throw new Exception("no code for " + name);
+    }
+
+    private static String wCode(int c) {
+        if (c == 0) return "晴";
+        if (c <= 3) return c == 1 ? "基本晴" : "多云";
+        if (c <= 48) return "雾";
+        if (c <= 57) return "毛毛雨";
+        if (c <= 67) return "雨";
+        if (c <= 77) return "雪";
+        if (c <= 82) return "阵雨";
+        if (c <= 86) return "阵雪";
+        return "雷雨";
     }
 
     private static String nightEmoji(int wc) {
