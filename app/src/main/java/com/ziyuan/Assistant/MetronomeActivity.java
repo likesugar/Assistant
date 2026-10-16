@@ -855,11 +855,35 @@ public class MetronomeActivity extends Activity {
                         }
                     } catch (Throwable ignored2) {}
                 }
+                java.util.List<String[]> hours = new java.util.ArrayList<>();
+                try {
+                    int hi2 = bh.indexOf("\"hourInfoData\":");
+                    if (hi2 >= 0) {
+                        int j2 = bh.indexOf('[', hi2);
+                        int depth2 = 0, end2 = -1;
+                        for (int k = j2; k < bh.length(); k++) {
+                            char ch = bh.charAt(k);
+                            if (ch == '[') depth2++;
+                            else if (ch == ']') { depth2--; if (depth2 == 0) { end2 = k + 1; break; } }
+                        }
+                        if (end2 > 0) {
+                            org.json.JSONArray ha = new org.json.JSONArray(bh.substring(j2, end2));
+                            for (int i = 0; i < ha.length() && i < 24; i++) {
+                                org.json.JSONObject o = ha.getJSONObject(i);
+                                hours.add(new String[]{o.optString("showHour", "--"),
+                                    String.valueOf(o.optDouble("temperature", 0)) + "°",
+                                    o.optString("windDirectionText", "") + o.optString("windPower", ""),
+                                    o.optString("precipitationProbability", "")});
+                            }
+                        }
+                    }
+                } catch (Throwable ignored5) {}
+                final java.util.List<String[]> fhours = hours;
                 final java.util.List<String[]> fdays = days;
                 final String fcity = city, ftype = type, fcur = curT, fmx = mx, fmn = mn;
                 final String fh = hum, fw = wind, fp = press, fv = vis, fa = aqi;
                 final String[][] fi = indices;
-                uiTick.post(() -> buildWeather(fcity, ftype, fcur, fmn, fmx, fh, fw, fp, fv, fa, fi, fdays, hum, wind, press, vis, aqi));
+                uiTick.post(() -> buildWeather(fcity, ftype, fcur, fmn, fmx, fh, fw, fp, fv, fa, fi, fdays, hum, wind, press, vis, aqi, fhours));
             } catch (Throwable e) {
                 String msg = e.getMessage(); uiTick.post(() -> { ((TextView) findViewById(R.id.lifeTemp)).setText("获取失败:" + (msg == null || msg.length() == 0 ? e.getClass().getSimpleName() : msg) + " 点击重试"); lifeFetched = false; lastWeatherAt = 0; });
             }
@@ -1037,16 +1061,29 @@ public class MetronomeActivity extends Activity {
 
     private String httpGet(String u) throws Throwable { return httpGet(u, null); }
 
-    private String[][] wDays; private String wCity, wType, wCurT, wMn, wMx, wHum, wWind, wPress, wVis, wAqi;
+    private String[][] wDays, wHours; private String wCity, wType, wCurT, wMn, wMx, wHum, wWind, wPress, wVis, wAqi;
     private android.widget.LinearLayout curBox; private int selDay = 0;
 
-    private void buildWeather(String city, String type, String curT, String mn, String mx, String hum, String wind, String press, String vis, String aqi, String[][] indices, java.util.List<String[]> days, String hum0, String wind0, String press0, String vis0, String aqi0) {
+    private void buildWeather(String city, String type, String curT, String mn, String mx, String hum, String wind, String press, String vis, String aqi, String[][] indices, java.util.List<String[]> days, String hum0, String wind0, String press0, String vis0, String aqi0, java.util.List<String[]> hours) {
+        wHours = hours.toArray(new String[0][]);
         wDays = days.toArray(new String[0][]); wCity = city; wType = type; wCurT = curT; wMn = mn; wMx = mx;
         wHum = hum0; wWind = wind0; wPress = press0; wVis = vis0; wAqi = aqi0; selDay = 0;
         TextView t2 = findViewById(R.id.lifeTemp);
         t2.setText(city + " · 点击切换");
         android.widget.LinearLayout grid = findViewById(R.id.lifeGrid);
         grid.removeAllViews();
+        // ===== 24小时预报 (自绘横滑) =====
+        if (wHours != null && wHours.length > 0) {
+            TextView hh = new TextView(this);
+            hh.setText("24小时预报");
+            hh.setTextColor(0xFF1F2329); hh.setTextSize(16); hh.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            android.widget.LinearLayout.LayoutParams hh0 = new android.widget.LinearLayout.LayoutParams(-2, -2);
+            hh0.setMargins(dp(2), 0, 0, dp(6));
+            grid.addView(hh, hh0);
+            HourView hv = new HourView(this, wHours);
+            hv.setLayoutParams(new android.widget.LinearLayout.LayoutParams(-1, dp(100)));
+            grid.addView(hv, new android.widget.LinearLayout.LayoutParams(-1, dp(100)));
+        }
         // ===== 7天预报·趋势 (单View自绘, 一列一栏, 可点) =====
         if (days.size() > 1) {
             TextView h15 = new TextView(this);
@@ -1290,6 +1327,69 @@ public class MetronomeActivity extends Activity {
     private static String shortWea(String wea) {
         if (wea == null) return "";
         return wea.replace("转", "/").replace("雨夹雪", "雨雪");
+    }
+
+    /** 24小时条: 自绘横滑 */
+    private class HourView extends android.view.View {
+        private final String[][] hs;
+        private final int colW = dp(64);
+        private final android.graphics.Paint txt = new android.graphics.Paint(), sub = new android.graphics.Paint(), big = new android.graphics.Paint();
+        private final android.widget.Scroller sc = new android.widget.Scroller(getContext());
+        private android.view.VelocityTracker vt;
+        private float lastX, downX, downY; private boolean dragging; private int scroll;
+
+        HourView(android.content.Context c, String[][] hours) {
+            super(c);
+            hs = hours;
+            txt.setColor(0xFF1F2329); txt.setAntiAlias(true); txt.setTextAlign(android.graphics.Paint.Align.CENTER);
+            txt.setTextSize(dp(12)); txt.setFakeBoldText(true);
+            big.setColor(0xFF1F2329); big.setAntiAlias(true); big.setTextAlign(android.graphics.Paint.Align.CENTER);
+            big.setTextSize(dp(17)); big.setFakeBoldText(true);
+            sub.setColor(0xFF9AA0A8); sub.setAntiAlias(true); sub.setTextAlign(android.graphics.Paint.Align.CENTER);
+            sub.setTextSize(dp(10));
+        }
+        private int maxScroll() { return Math.max(0, colW * hs.length - getWidth()); }
+        @Override public void computeScroll() { if (sc.computeScrollOffset()) { scroll = sc.getCurrX(); invalidate(); } }
+        @Override protected void onDraw(android.graphics.Canvas cv) {
+            super.onDraw(cv);
+            cv.save();
+            cv.translate(-Math.max(0, Math.min(scroll, maxScroll())), 0);
+            for (int i = 0; i < hs.length; i++) {
+                float cx = i * colW + colW / 2f;
+                cv.drawText(hs[i][0], cx, dp(16), txt);
+                cv.drawText(hs[i][1], cx, dp(42), big);
+                cv.drawText(hs[i][2], cx, dp(62), sub);
+                String pp = hs[i][3];
+                if (pp != null && pp.length() > 0 && !"0%".equals(pp)) cv.drawText("降水" + pp, cx, dp(78), sub);
+            }
+            cv.restore();
+        }
+        @Override public boolean onTouchEvent(android.view.MotionEvent e) {
+            if (vt == null) vt = android.view.VelocityTracker.obtain();
+            vt.addMovement(e);
+            switch (e.getActionMasked()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    downX = e.getX(); downY = e.getY(); lastX = e.getX(); dragging = false;
+                    sc.forceFinished(true);
+                    return true;
+                case android.view.MotionEvent.ACTION_MOVE:
+                    if (!dragging && Math.abs(e.getX() - downX) > dp(8)) { dragging = true; sc.forceFinished(true); }
+                    if (dragging) scroll = Math.max(0, Math.min(scroll + (int) (lastX - e.getX()), maxScroll()));
+                    lastX = e.getX();
+                    invalidate();
+                    return true;
+                case android.view.MotionEvent.ACTION_UP:
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    if (dragging) {
+                        vt.computeCurrentVelocity(1000);
+                        sc.fling(scroll, 0, (int) -vt.getXVelocity(), 0, 0, maxScroll(), 0, 0);
+                    }
+                    if (vt != null) { vt.recycle(); vt = null; }
+                    invalidate();
+                    return true;
+            }
+            return super.onTouchEvent(e);
+        }
     }
 
     /** 7天趋势卡: 画布全自绘 (列对位精确, 点击按坐标取列) */
