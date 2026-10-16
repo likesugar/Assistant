@@ -856,10 +856,12 @@ public class MetronomeActivity extends Activity {
                             org.json.JSONArray ha = new org.json.JSONArray(bh.substring(j2, end2));
                             for (int i = 0; i < ha.length() && i < 24; i++) {
                                 org.json.JSONObject o = ha.getJSONObject(i);
+                                String pp2 = o.optString("precipitationProbability", "");
+                                String uvv = o.optString("uv", "");
                                 hours.add(new String[]{o.optString("showHour", "--"),
                                     String.valueOf(o.optDouble("temperature", 0)) + "°",
                                     o.optString("windDirectionText", "") + o.optString("windPower", ""),
-                                    o.optString("precipitationProbability", "")});
+                                    uvv.length() > 0 ? "紫外线" + uvv : (pp2.length() > 0 && !"0%".equals(pp2) ? "降水" + pp2 : "")});
                             }
                         }
                     }
@@ -1360,7 +1362,7 @@ public class MetronomeActivity extends Activity {
                 cv.drawText(hs[i][1], cx, dp(42), big);
                 cv.drawText(hs[i][2], cx, dp(62), sub);
                 String pp = hs[i][3];
-                if (pp != null && pp.length() > 0 && !"0%".equals(pp)) cv.drawText("降水" + pp, cx, dp(78), sub);
+                if (pp != null && pp.length() > 0) cv.drawText(pp, cx, dp(78), sub);
             }
             cv.restore();
         }
