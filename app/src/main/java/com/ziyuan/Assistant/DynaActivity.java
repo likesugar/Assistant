@@ -378,6 +378,20 @@ public class DynaActivity extends Activity {
         if (id.isEmpty()) { Toast.makeText(this, "请输入ID", Toast.LENGTH_SHORT).show(); return; }
         JSONArray ts = DynaService.targets(sp);
         String myKind = liveMode ? "l" : "";
+        // 动态页添加: 若同目标已存在且是"纯开播", 升级为动态+开播双监控
+        if (!liveMode) {
+            for (int i = 0; i < ts.length(); i++) {
+                JSONObject t = ts.optJSONObject(i);
+                if (t != null && id.equals(t.optString("id")) && curPlatform.equals(t.optString("p"))
+                        && "l".equals(t.optString("k", ""))) {
+                    try { t.remove("k"); } catch (Exception ignored) {}
+                    sp.edit().putString("targets", ts.toString()).apply();
+                    input.setText("");
+                    Toast.makeText(this, "该目标原为纯开播, 已升级为动态+开播监控", Toast.LENGTH_LONG).show();
+                    refreshStatus(); buildList(); return;
+                }
+            }
+        }
         for (int i = 0; i < ts.length(); i++) {
             JSONObject t = ts.optJSONObject(i);
             if (t != null && id.equals(t.optString("id")) && curPlatform.equals(t.optString("p"))

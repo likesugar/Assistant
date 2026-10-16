@@ -178,7 +178,11 @@ public class DynaService extends Service {
                     }
                 }
             }
-            String text = sb.length() > 0 ? sb.toString() : "收藏房间无开播";
+            if (sb.length() == 0) {
+                int n = DynaService.targets(getSharedPreferences("dyna", MODE_PRIVATE)).length();
+                sb.append("监控 ").append(n).append(" 个目标 · 无收藏开播");
+            }
+            String text = sb.toString();
             NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             // 有开播才用 DEFAULT 渠道(状态栏出图标)；无开播走 LOW 渠道(状态栏不出图标，只在下拉栏里)
             Notification.Builder b = fgBuilder(sb.length() > 0 ? CH : CHL, text);
