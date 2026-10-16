@@ -25,7 +25,6 @@ public class DynaService extends Service {
     public static final String CH = "dynafg2";
     public static final String CHL = "dynafg_low";
     public static final String CHE = "dynaevt2";
-    public static final String CHD = "dynadynevt2";
     private volatile boolean running = false;
     private Thread worker;
 
@@ -119,7 +118,6 @@ public class DynaService extends Service {
                 else if ("douyin".equals(p)) checkDouyin(sp, id);
                 else if ("douyu".equals(p)) checkDouyu(sp, id);
                 else if ("huya".equals(p)) checkHuya(sp, id);
-                else if ("weibo".equals(p)) checkWeibo(sp, id);
             } catch (Throwable e) { }
             Thread.sleep(1200);
         }
@@ -266,8 +264,6 @@ public class DynaService extends Service {
 
     /** 开播类通知 → "开播提醒"渠道 */
     private void notify(String title, String text, String jump) { notifyCh(title, text, jump, CHE, "开播提醒"); }
-    /** 动态类通知 → "平台动态"渠道(独立通知栏, 与开播互不干扰) */
-    private void notifyDyn(String title, String text, String jump) { notifyCh(title, text, jump, CHD, "平台动态"); }
     private void notifyCh(String title, String text, String jump, String chId, String chName) {
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= 26) {
@@ -343,53 +339,6 @@ public class DynaService extends Service {
             }
         } catch (Throwable e) { }
         }
-        // 动态。"l"=纯开播目标跳过动态检测
-        if ("l".equals(kind)) return;
-        try {
-            String url = "https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space?host_mid=" + uid
-                    + "&offset=&my_ts=" + (System.currentTimeMillis() / 1000) + "&features=itemOpusStyle";
-            JSONObject r = new JSONObject(http(url, "GET", null, cookie, "https://space.bilibili.com/" + uid + "/dynamic"));
-            if (r.optInt("code", -1) != 0) return;
-            JSONArray items = r.getJSONObject("data").optJSONArray("items");
-            if (items == null || items.length() == 0) return;
-            // 跳过置顶
-            JSONObject item = null;
-            for (int i = 0; i < items.length(); i++) {
-                JSONObject it = items.getJSONObject(i);
-                JSONObject tag = it.getJSONObject("modules").optJSONObject("module_tag");
-                if (tag == null || !"置顶".equals(tag.optString("text", ""))) { item = it; break; }
-            }
-            if (item == null) return;
-            String did = item.optString("id_str", "");
-            JSONObject ma = item.getJSONObject("modules").getJSONObject("module_author");
-            String uname = ma.optString("name", uid);
-            saveInfo(sp, "bili", uid, uname, "");
-            if (changed(sp, key("bidy", uid), did)) {
-                String type = item.optString("type", "");
-                JSONObject md = item.getJSONObject("modules").getJSONObject("module_dynamic");
-                String msg = "发动态了", content;
-                if ("DYNAMIC_TYPE_AV".equals(type)) {
-                    msg = "投稿了"; content = md.getJSONObject("major").getJSONObject("archive").optString("title", "");
-                } else if ("DYNAMIC_TYPE_ARTICLE".equals(type)) {
-                    msg = "投稿了专栏"; content = md.getJSONObject("major").getJSONObject("opus").optString("title", "");
-                } else if ("DYNAMIC_TYPE_FORWARD".equals(type)) {
-                    msg = "转发了动态"; content = md.getJSONObject("desc").optString("text", "");
-                } else {
-                    JSONObject mj = md.optJSONObject("major");
-                    content = md.getJSONObject("desc").optString("text", "");
-                    if (mj != null && "MAJOR_TYPE_OPUS".equals(mj.optString("type"))) {
-                        JSONObject op = mj.getJSONObject("opus");
-                        String t = op.optString("title", "");
-                        String s = op.getJSONObject("summary").optString("text", "");
-                        content = t.isEmpty() ? s : "「" + t + "」" + s;
-                    }
-                }
-                if (content.length() > 100) content = content.substring(0, 100) + "...";
-                notifyDyn("【B站】【" + uname + "】" + msg, content, "https://www.bilibili.com/opus/" + did);
-            }
-        } catch (Throwable e) { }
-    }
-
     // ---------- 抖音：开播 ----------
     private void checkDouyin(SharedPreferences sp, String webRid) throws Exception {
         String ttwid = sp.getString("ttwid", null);
@@ -475,29 +424,3 @@ public class DynaService extends Service {
             notify("【虎牙】【" + uname + "】开播了", title, "https://www.huya.com/" + roomId);
         }
     }
-
-    // ---------- 微博：动态 ----------
-    private void checkWeibo(SharedPreferences sp, String uid) throws Exception {
-        String url = "https://m.weibo.cn/api/container/getIndex?type=uid&value=" + uid
-                + "&containerid=107603" + uid + "&count=25";
-        JSONObject r = new JSONObject(http(url, "GET", null, null, "https://m.weibo.cn/u/" + uid));
-        if (r.optInt("ok", -1) != 1) return;
-        JSONArray cards = r.getJSONObject("data").optJSONArray("cards");
-        if (cards == null || cards.length() == 0) return;
-        JSONObject mblog = null;
-        for (int i = 0; i < cards.length(); i++) {
-            JSONObject mb = cards.getJSONObject(i).optJSONObject("mblog");
-            if (mb != null) { mblog = mb; break; }
-        }
-        if (mblog == null) return;
-        String bid = mblog.optString("id", mblog.optString("bid", ""));
-        String uname = mblog.optJSONObject("user") != null ? mblog.getJSONObject("user").optString("screen_name", uid) : uid;
-        saveInfo(sp, "weibo", uid, uname, "");
-        if (changed(sp, key("weibo", uid), bid)) {
-            String text = mblog.optString("text", "");
-            text = text.replaceAll("<[^>]+>", "");
-            if (text.length() > 100) text = text.substring(0, 100) + "...";
-            notifyDyn("【微博】【" + uname + "】发微博了", text, "https://m.weibo.cn/u/" + uid);
-        }
-    }
-}

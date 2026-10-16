@@ -82,10 +82,6 @@ public class DynaActivity extends Activity {
         status.setPadding(0, dp(6), 0, dp(4));
         root.addView(status);
 
-        TextView hint = new TextView(this);
-        hint.setText(liveMode ? "检测开播状态，变化时发系统通知" : "检测动态更新与开播，变化时发系统通知");
-        hint.setTextSize(11); hint.setTextColor(sub);
-        root.addView(hint);
 
         // 查询间隔（一行，可自定义）
         LinearLayout itvRow = new LinearLayout(this);
@@ -116,7 +112,9 @@ public class DynaActivity extends Activity {
         TextView itvUnit = new TextView(this);
         itvUnit.setText(" 分钟"); itvUnit.setTextSize(15); itvUnit.setTextColor(fg);
         itvRow.addView(itvUnit);
-        root.addView(rowTop(itvRow, 10));
+        LinearLayout.LayoutParams itvlp = new LinearLayout.LayoutParams(-2, -2);
+        itvlp.leftMargin = dp(12);
+        itvRow.setLayoutParams(itvlp);
 
         // 监控目标（一行）
         LinearLayout pfRow = new LinearLayout(this);
@@ -148,7 +146,14 @@ public class DynaActivity extends Activity {
         input.setTextColor(fg);
         input.setHintTextColor(sub);
         input.setBackgroundResource(dark ? R.drawable.bg_input_dark : R.drawable.bg_input_flat);
-        root.addView(rowTop(input, 8));
+        LinearLayout inRow = new LinearLayout(this);
+        inRow.setOrientation(LinearLayout.HORIZONTAL);
+        inRow.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams inlp = new LinearLayout.LayoutParams(0, -2, 1f);
+        inlp.rightMargin = dp(8);
+        input.setLayoutParams(inlp);
+        inRow.addView(input);
+        
 
         LinearLayout addRow = new LinearLayout(this);
         addRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -164,8 +169,10 @@ public class DynaActivity extends Activity {
         addBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { addTarget(); }
         });
-        addRow.addView(addBtn);
-        root.addView(rowTop(addRow, 8));
+        addRow.removeView(addBtn);
+        inRow.addView(addBtn);
+        root.addView(rowTop(inRow, 8));
+        root.addView(rowTop(addRow, 4));
 
         // 目标列表 / 收藏列表：单列表 + 按钮切换（5行高度滚动框）
         final TextView tabMon = new TextView(this);
@@ -198,6 +205,7 @@ public class DynaActivity extends Activity {
         tabsRow.addView(tabMon);
         tabsRow.addView(gap(8));
         tabsRow.addView(tabFav);
+        tabsRow.addView(itvRow);
         LinearLayout listBlock = new LinearLayout(this);
         listBlock.setOrientation(LinearLayout.VERTICAL);
         listBlock.addView(tabsRow);

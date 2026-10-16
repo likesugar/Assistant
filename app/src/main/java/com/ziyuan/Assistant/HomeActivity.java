@@ -87,7 +87,7 @@ public class HomeActivity extends Activity {
     private boolean pagesBuilt = false;
     private CapsuleBottomBar bottomBar;
     private String lastCapsule = null;
-    private static final int[] MEDIA_CARDS = {R.id.cardPlayer, R.id.cardDownload, R.id.cardVideoDl, R.id.cardSpider, R.id.cardXhs, R.id.cardDyna, R.id.cardLive};
+    private static final int[] MEDIA_CARDS = {R.id.cardPlayer, R.id.cardDownload, R.id.cardVideoDl, R.id.cardSpider, R.id.cardXhs, R.id.cardLive};
 
     /** 三态导航: 0=首页 1=媒体 2=设置(内嵌页) */
     private void switchToPage(int p) {
@@ -579,7 +579,7 @@ public class HomeActivity extends Activity {
 
     private static final java.util.HashMap<String, String> CN_NAMES = new java.util.HashMap<String, String>() {{
         put("cardPlayer", "播放器"); put("cardDownload", "下载器"); put("cardVideoDl", "视频下载");
-        put("cardSpider", "资源嗅探"); put("cardXhs", "小红书"); put("cardDyna", "动态");
+        put("cardSpider", "资源嗅探"); put("cardXhs", "小红书");
         put("cardLive", "直播"); put("cardCalendar", "日历"); put("cardChat", "聊天室");
         put("cardMedicine", "用药提醒"); put("cardTapper", "点击器"); put("cardShortcut", "创建快捷键");
         put("cardWebShell", "网页转应用"); put("cardFun", "娱乐中心"); put("cardBili", "B站登录");
@@ -776,9 +776,6 @@ public class HomeActivity extends Activity {
         });
         findViewById(R.id.cardXhs).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, XhsActivity.class)); }
-        });
-        findViewById(R.id.cardDyna).setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) { startActivity(new Intent(HomeActivity.this, DynaActivity.class)); }
         });
         findViewById(R.id.cardLive).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
