@@ -357,7 +357,7 @@ public class SettingsActivity extends Activity {
         int[] titles = {R.id.tvTitle, R.id.t4, R.id.t5, R.id.t6, R.id.tOled, R.id.tvAboutTitle2};
         for (int id : titles) ((TextView) findViewById(id)).setTextColor(title);
         int[] subs = {R.id.label1, R.id.label2, R.id.descOled, R.id.desc1, R.id.desc2,
-                R.id.desc3, R.id.desc4, R.id.desc5, R.id.desc6, R.id.tvAboutText2};
+                R.id.desc3, R.id.desc5, R.id.desc6, R.id.tvAboutText2};
         for (int id : subs) ((TextView) findViewById(id)).setTextColor(sub);
         int[] accents = {R.id.btnClearAll, R.id.arrow};
         for (int id : accents) ((TextView) findViewById(id)).setTextColor(accent);

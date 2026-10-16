@@ -625,7 +625,7 @@ public class SettingsPageView extends android.widget.FrameLayout {
         int[] titles = {R.id.tvTitle, R.id.t4, R.id.t5, R.id.t6, R.id.tOled, R.id.tDark, R.id.tLan, R.id.tvAboutTitle2};
         for (int id : titles) ((TextView) findViewById(id)).setTextColor(title);
         int[] subs = {R.id.label1, R.id.labelGh, R.id.label2, R.id.descOled, R.id.descDark, R.id.descLan, R.id.desc1, R.id.desc2,
-                R.id.desc3, R.id.desc4, R.id.desc5, R.id.desc6, R.id.tvAboutText2};
+                R.id.desc3, R.id.desc5, R.id.desc6, R.id.tvAboutText2};
         for (int id : subs) ((TextView) findViewById(id)).setTextColor(sub);
         int[] accents = {R.id.btnClearAll, R.id.arrow};
         for (int id : accents) ((TextView) findViewById(id)).setTextColor(accent);
