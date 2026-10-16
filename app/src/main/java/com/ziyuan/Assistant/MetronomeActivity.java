@@ -912,7 +912,7 @@ public class MetronomeActivity extends Activity {
         t2.setText(city + " · 点击切换");
         android.widget.LinearLayout grid = findViewById(R.id.lifeGrid);
         grid.removeAllViews();
-        // ===== 15天预报·趋势 (横滑, 折线) =====
+        // ===== 7天预报·趋势 (单View自绘, 一列一栏, 可点) =====
         if (days.size() > 1) {
             TextView h15 = new TextView(this);
             h15.setText("7天预报");
@@ -921,36 +921,21 @@ public class MetronomeActivity extends Activity {
             hp0.setMargins(dp(2), 0, 0, dp(6));
             grid.addView(h15, hp0);
             final int colW = dp(78);
-            int n = Math.min(days.size(), 7);
+            final int n = Math.min(days.size(), 7);
             android.widget.HorizontalScrollView hsv = new android.widget.HorizontalScrollView(this);
             hsv.setFillViewport(true);
             hsv.setHorizontalScrollBarEnabled(false);
-            android.widget.LinearLayout rows = new android.widget.LinearLayout(this);
-            rows.setOrientation(android.widget.LinearLayout.VERTICAL);
-            rows.setMinimumWidth(colW * n);
-            // 行1: 星期+日期
-            android.widget.LinearLayout r1 = new android.widget.LinearLayout(this);
-            for (int i = 0; i < n; i++) r1.addView(trendCell(days.get(i)[0] + "\n" + days.get(i)[1], colW, 13, true, i, days));
-            rows.addView(r1);
-            // 行2: 白天天气 emoji + 天气文字
-            android.widget.LinearLayout r2 = new android.widget.LinearLayout(this);
-            for (int i = 0; i < n; i++) r2.addView(trendCell(days.get(i)[2] + "\n" + shortWea(days.get(i)[3]), colW, 11, false, i, days));
-            rows.addView(r2);
-            // 行3: 高低温折线 (数字画在线旁)
-            TrendView tv = new TrendView(this, n, colW, days);
-            tv.setLayoutParams(new android.widget.LinearLayout.LayoutParams(colW * n, dp(58)));
-            rows.addView(tv);
-            // 行4: 夜间 emoji
-            android.widget.LinearLayout r4 = new android.widget.LinearLayout(this);
-            for (int i = 0; i < n; i++) r4.addView(trendCell(days.get(i)[6], colW, 15, false, i, days));
-            rows.addView(r4);
-            // 行5: 风向风力
-            android.widget.LinearLayout r5 = new android.widget.LinearLayout(this);
-            for (int i = 0; i < n; i++) r5.addView(trendCell(days.get(i)[7].replace("级", "") + "级", colW, 10, false, i, days));
-            rows.addView(r5);
-            hsv.addView(rows);
+            TrendView tv = new TrendView(this, n, colW, days, idx -> {
+                String[] d = days.get(idx);
+                new android.app.AlertDialog.Builder(this)
+                    .setTitle(d[0] + " " + d[1])
+                    .setMessage(d[2] + " " + d[3] + "\n高 " + d[4] + "° / 低 " + d[5] + "°\n夜间 " + d[6] + "\n" + d[7])
+                    .setPositiveButton("知道了", null)
+                    .show();
+            });
+            tv.setLayoutParams(new android.widget.LinearLayout.LayoutParams(colW * n, dp(300)));
+            hsv.addView(tv);
             android.widget.LinearLayout.LayoutParams sp = new android.widget.LinearLayout.LayoutParams(-1, -2);
-            sp.setMargins(dp(-6), 0, dp(-6), 0);
             grid.addView(hsv, sp);
         }
         // 当前天气卡 (照图2)
@@ -1151,86 +1136,105 @@ public class MetronomeActivity extends Activity {
             .show();
     }
 
-    private TextView trendCell(String text, int w, float sizeSp, boolean bold, int idx, java.util.List<String[]> days) {
-        TextView tv = new TextView(this);
-        tv.setText(text);
-        tv.setTextColor(0xFF1F2329);
-        tv.setTextSize(sizeSp);
-        if (bold) tv.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        tv.setGravity(android.view.Gravity.CENTER);
-        tv.setLineSpacing(dp(2), 1f);
-        android.widget.LinearLayout.LayoutParams p = new android.widget.LinearLayout.LayoutParams(w, -2);
-        p.setMargins(dp(3), dp(6), dp(3), dp(6));
-        if (idx >= 0) tv.setOnClickListener(v -> {
-            String[] d = days.get(idx);
-            new android.app.AlertDialog.Builder(this)
-                .setTitle(d[0] + " " + d[1])
-                .setMessage(d[2] + " " + d[3] + "\n高 " + d[4] + "° / 低 " + d[5] + "°\n夜间 " + d[6] + "\n" + d[7])
-                .setPositiveButton("知道了", null)
-                .show();
-        });
-        return tv;
-    }
-
     private static String shortWea(String wea) {
         if (wea == null) return "";
         return wea.replace("转", "/").replace("雨夹雪", "雨雪");
     }
 
-    /** 高低温双折线 */
-    private static class TrendView extends android.view.View {
+    /** 7天趋势卡: 画布全自绘 (列对位精确, 点击按坐标取列) */
+    private class TrendView extends android.view.View {
         private final int cols, colW;
         private final java.util.List<String[]> days;
-        private final android.graphics.Paint line = new android.graphics.Paint(), dot = new android.graphics.Paint(), txt = new android.graphics.Paint();
-        TrendView(android.content.Context c, int cols, int colW, java.util.List<String[]> days) {
+        private final android.graphics.Paint line = new android.graphics.Paint(), dot = new android.graphics.Paint();
+        private final android.graphics.Paint txt = new android.graphics.Paint(), emo = new android.graphics.Paint(), sub = new android.graphics.Paint();
+        private final java.util.function.IntConsumer onClick;
+        private float downX, downY;
+        TrendView(android.content.Context c, int cols, int colW, java.util.List<String[]> days, java.util.function.IntConsumer onClick) {
             super(c);
-            this.cols = cols; this.colW = colW; this.days = days;
-            line.setColor(0xFFFF8A3C); line.setStyle(android.graphics.Paint.Style.STROKE);
-            line.setStrokeWidth(dp2(2)); line.setAntiAlias(true); line.setStrokeCap(android.graphics.Paint.Cap.ROUND);
-            dot.setColor(0xFFFF8A3C); dot.setAntiAlias(true);
-            txt.setColor(0xFF1F2329); txt.setAntiAlias(true);
-            txt.setTextAlign(android.graphics.Paint.Align.CENTER);
-            txt.setTextSize(dp2(12));
+            this.cols = cols; this.colW = colW; this.days = days; this.onClick = onClick;
+            line.setStyle(android.graphics.Paint.Style.STROKE);
+            line.setStrokeWidth(dp(2)); line.setAntiAlias(true); line.setStrokeCap(android.graphics.Paint.Cap.ROUND);
+            dot.setAntiAlias(true);
+            txt.setColor(0xFF1F2329); txt.setAntiAlias(true); txt.setTextAlign(android.graphics.Paint.Align.CENTER);
+            txt.setTextSize(dp(13)); txt.setFakeBoldText(true);
+            emo.setAntiAlias(true); emo.setTextAlign(android.graphics.Paint.Align.CENTER);
+            sub.setColor(0xFF9AA0A8); sub.setAntiAlias(true); sub.setTextAlign(android.graphics.Paint.Align.CENTER);
+            sub.setTextSize(dp(10));
         }
-        private static float dp2(int v) { return v * android.content.res.Resources.getSystem().getDisplayMetrics().density; }
         @Override protected void onDraw(android.graphics.Canvas cv) {
             super.onDraw(cv);
             if (days == null || days.isEmpty()) return;
             int n = Math.min(cols, days.size());
+            float y = dp(10);
+            for (int i = 0; i < n; i++) {
+                float cx = i * colW + colW / 2f;
+                String[] d = days.get(i);
+                cv.drawText(d[0], cx, y + dp(12), txt);
+                cv.drawText(d[1], cx, y + dp(28), sub);
+            }
+            float emojiY = y + dp(52);
+            for (int i = 0; i < n; i++) {
+                String[] d = days.get(i);
+                emo.setTextSize(dp(20));
+                cv.drawText(d[2], i * colW + colW / 2f, emojiY, emo);
+            }
+            // 折线区
+            float ly0 = emojiY + dp(16), lh = dp(74);
             float hiMin = Float.MAX_VALUE, hiMax = -Float.MAX_VALUE, loMin = hiMin, loMax = hiMax;
             for (int i = 0; i < n; i++) {
                 try { float v = Float.parseFloat(days.get(i)[4]); hiMin = Math.min(hiMin, v); hiMax = Math.max(hiMax, v); } catch (Throwable ignored) {}
                 try { float v = Float.parseFloat(days.get(i)[5]); loMin = Math.min(loMin, v); loMax = Math.max(loMax, v); } catch (Throwable ignored) {}
             }
             if (hiMin == Float.MAX_VALUE || loMin == Float.MAX_VALUE) return;
-            if (hiMax == hiMin) hiMax = hiMin + 1;
-            if (loMax == loMin) loMax = loMin + 1;
-            float mid = getHeight() / 2f;
-            float span = getHeight() / 2f - dp2(18);
-            float[] hx = new float[n], hy = new float[n], ly = new float[n];
+            if (hiMax == hiMin) hiMax += 1;
+            if (loMax == loMin) loMax += 1;
+            float[] hy = new float[n], lyy = new float[n];
             android.graphics.Path hp = new android.graphics.Path(), lp = new android.graphics.Path();
             for (int i = 0; i < n; i++) {
-                float x = i * colW + colW / 2f;
-                hx[i] = x;
-                try { hy[i] = mid - span * ((Float.parseFloat(days.get(i)[4]) - hiMin) / (hiMax - hiMin)); } catch (Throwable e) { hy[i] = mid - span; }
-                try { ly[i] = mid + span * (1 - (Float.parseFloat(days.get(i)[5]) - loMin) / (loMax - loMin)); } catch (Throwable e) { ly[i] = mid + span; }
-                if (i == 0) { hp.moveTo(x, hy[i]); lp.moveTo(x, ly[i]); }
-                else { hp.lineTo(x, hy[i]); lp.lineTo(x, ly[i]); }
+                float cx = i * colW + colW / 2f;
+                try { hy[i] = ly0 + lh * (1 - (Float.parseFloat(days.get(i)[4]) - hiMin) / (hiMax - hiMin)); } catch (Throwable e) { hy[i] = ly0; }
+                try { lyy[i] = ly0 + lh * (1 - (Float.parseFloat(days.get(i)[5]) - loMin) / (loMax - loMin)); } catch (Throwable e) { lyy[i] = ly0 + lh; }
+                if (i == 0) { hp.moveTo(cx, hy[i]); lp.moveTo(cx, lyy[i]); }
+                else { hp.lineTo(cx, hy[i]); lp.lineTo(cx, lyy[i]); }
             }
-            line.setColor(0xFFFF8A3C);
-            cv.drawPath(hp, line);
-            line.setColor(0xFF5BA8F5);
-            cv.drawPath(lp, line);
+            line.setColor(0xFFFF8A3C); cv.drawPath(hp, line);
+            line.setColor(0xFF5BA8F5); cv.drawPath(lp, line);
             for (int i = 0; i < n; i++) {
-                dot.setColor(0xFFFF8A3C);
-                cv.drawCircle(hx[i], hy[i], dp2(3), dot);
-                dot.setColor(0xFF5BA8F5);
-                cv.drawCircle(hx[i], ly[i], dp2(3), dot);
-                txt.setColor(0xFFE5762A);
-                cv.drawText(days.get(i)[4] + "°", hx[i], hy[i] - dp2(8), txt);
+                float cx = i * colW + colW / 2f;
+                dot.setColor(0xFFFF8A3C); cv.drawCircle(cx, hy[i], dp(3), dot);
+                txt.setTextSize(dp(12)); txt.setColor(0xFFE5762A); txt.setFakeBoldText(false);
+                cv.drawText(days.get(i)[4] + "°", cx, hy[i] - dp(7), txt);
+                dot.setColor(0xFF5BA8F5); cv.drawCircle(cx, lyy[i], dp(3), dot);
                 txt.setColor(0xFF4A90D9);
-                cv.drawText(days.get(i)[5] + "°", hx[i], ly[i] + dp2(17), txt);
+                cv.drawText(days.get(i)[5] + "°", cx, lyy[i] + dp(16), txt);
+                txt.setFakeBoldText(true);
             }
+            // 夜间 emoji
+            float ny = ly0 + lh + dp(26);
+            for (int i = 0; i < n; i++) {
+                emo.setTextSize(dp(16));
+                cv.drawText(days.get(i)[6], i * colW + colW / 2f, ny, emo);
+            }
+            // 风向风力两行
+            float wy = ny + dp(16);
+            for (int i = 0; i < n; i++) {
+                String w = days.get(i)[7];
+                String w1 = w.replaceAll("[<≤]?\\d+级$", "");
+                String w2 = w.substring(Math.min(w1.length(), w.length()));
+                cv.drawText(w1, i * colW + colW / 2f, wy, sub);
+                cv.drawText(w2, i * colW + colW / 2f, wy + dp(13), sub);
+            }
+        }
+        @Override public boolean onTouchEvent(android.view.MotionEvent e) {
+            if (e.getAction() == android.view.MotionEvent.ACTION_DOWN) { downX = e.getX(); downY = e.getY(); return true; }
+            if (e.getAction() == android.view.MotionEvent.ACTION_UP) {
+                if (Math.abs(e.getX() - downX) < dp(10) && Math.abs(e.getY() - downY) < dp(10)) {
+                    int col = (int) (e.getX() / colW);
+                    if (col >= 0 && col < Math.min(cols, days.size()) && onClick != null) onClick.accept(col);
+                }
+                return true;
+            }
+            return super.onTouchEvent(e);
         }
     }
 
