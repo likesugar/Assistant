@@ -743,11 +743,10 @@ public class MetronomeActivity extends Activity {
                 }
                 String u = "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon
                     + "&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset"
-                    + "&current=temperature_2m,relative_humidity_2m,weather_code,surface_pressure&timezone=auto&forecast_days=15";
+                    + "&current=temperature_2m,relative_humidity_2m,weather_code,surface_pressure&timezone=auto&forecast_days=1";
                 String json = httpGet(u);
                 org.json.JSONObject j = new org.json.JSONObject(json);
                 org.json.JSONObject cur = j.getJSONObject("current");
-                org.json.JSONArray days = j.getJSONObject("daily").getJSONArray("time");
                 org.json.JSONArray wc = j.getJSONObject("daily").getJSONArray("weather_code");
                 org.json.JSONArray tmax = j.getJSONObject("daily").getJSONArray("temperature_2m_max");
                 org.json.JSONArray tmin = j.getJSONObject("daily").getJSONArray("temperature_2m_min");
@@ -761,20 +760,8 @@ public class MetronomeActivity extends Activity {
                 String uvv = String.format("%.1f", uv.getDouble(0));
                 String riseT = rise.getString(0).substring(11), setT = set.getString(0).substring(11);
                 String press = String.format("%.0f", cur.getDouble("surface_pressure"));
-                java.util.List<String[]> rows = new java.util.ArrayList<>();
-                java.text.SimpleDateFormat df = new java.text.SimpleDateFormat("M/d", java.util.Locale.US);
-                String[] week = {"周日", "周一", "周二", "周三", "周四", "周五", "周六"};
-                for (int i = 0; i < days.length(); i++) {
-                    String d = days.getString(i);
-                    String md = df.format(new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).parse(d));
-                    java.util.Calendar ca = java.util.Calendar.getInstance();
-                    ca.setTime(new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).parse(d));
-                    String wk = week[ca.get(java.util.Calendar.DAY_OF_WEEK) - 1];
-                    rows.add(new String[]{i == 0 ? "今天" : wk, md, wCode(wc.getInt(i)),
-                        String.format("%.0f/%.0f°", tmin.getDouble(i), tmax.getDouble(i))});
-                }
                 final String fc = cname, fw = curW, ft = curT, fmx = d0max, fmn = d0min;
-                uiTick.post(() -> buildWeather(fc, fw, ft, fmx, fmn, hum, uvv, riseT, setT, press, rows));
+                uiTick.post(() -> buildWeather(fc, fw, ft, fmx, fmn, hum, uvv, riseT, setT, press));
             } catch (Throwable e) {
                 uiTick.post(() -> { ((TextView) findViewById(R.id.lifeTemp)).setText("天气获取失败, 点击重试"); lifeFetched = false; lastWeatherAt = 0; });
             }
@@ -824,7 +811,7 @@ public class MetronomeActivity extends Activity {
         return sb.toString();
     }
 
-    private void buildWeather(String city, String curW, String curT, String mx, String mn, String hum, String uv, String rise, String set, String press, java.util.List<String[]> rows) {
+    private void buildWeather(String city, String curW, String curT, String mx, String mn, String hum, String uv, String rise, String set, String press) {
         TextView t2 = findViewById(R.id.lifeTemp);
         t2.setText(city + " · 点击切换");
         android.widget.LinearLayout grid = findViewById(R.id.lifeGrid);
@@ -868,37 +855,43 @@ public class MetronomeActivity extends Activity {
         mp.setMargins(0, dp(10), 0, 0);
         cur.addView(meta, mp);
         grid.addView(cur, new android.widget.LinearLayout.LayoutParams(-1, -2));
-        // 15天预报
+        // 8格生活指数
+        String[][] DATA = {
+            {"短袖类", "穿衣"}, {"不适宜", "运动"}, {"弱", "紫外线"}, {"较适宜", "旅游"},
+            {"控油", "化妆"}, {"比较适宜", "钓鱼"}, {"较易发", "感冒"}, {"适宜", "洗车"}
+        };
         TextView h15 = new TextView(this);
-        h15.setText("15天预报");
+        h15.setText("生活指数");
         h15.setTextColor(0xFF1F2329); h15.setTextSize(16); h15.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         android.widget.LinearLayout.LayoutParams hp = new android.widget.LinearLayout.LayoutParams(-2, -2);
         hp.setMargins(dp(2), dp(14), 0, dp(6));
         grid.addView(h15, hp);
-        for (String[] r : rows) {
-            android.widget.LinearLayout row = new android.widget.LinearLayout(this);
-            row.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-            row.setGravity(android.view.Gravity.CENTER_VERTICAL);
-            row.setBackgroundResource(R.drawable.bg_input_flat);
-            int rp = dp(10); row.setPadding(rp, rp, rp, rp);
-            android.widget.LinearLayout.LayoutParams rp2 = new android.widget.LinearLayout.LayoutParams(-1, -2);
-            rp2.setMargins(0, dp(3), 0, 0);
-            TextView a = new TextView(this);
-            a.setText(r[0] + " " + r[1]);
-            a.setTextColor(0xFF1F2329); a.setTextSize(13);
-            a.getPaint().setFakeBoldText(r[0].equals("今天"));
-            TextView b = new TextView(this);
-            b.setText(r[2]);
-            b.setTextColor(0xFF9AA0A8); b.setTextSize(13);
-            TextView c = new TextView(this);
-            c.setText(r[3]);
-            c.setTextColor(0xFF1F2329); c.setTextSize(13); c.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-            android.widget.LinearLayout.LayoutParams p1 = new android.widget.LinearLayout.LayoutParams(0, -2, 1.2f);
-            android.widget.LinearLayout.LayoutParams p2 = new android.widget.LinearLayout.LayoutParams(0, -2, 1f);
-            android.widget.LinearLayout.LayoutParams p3 = new android.widget.LinearLayout.LayoutParams(0, -2, 0.8f);
-            p3.gravity = android.view.Gravity.END;
-            row.addView(a, p1); row.addView(b, p2); row.addView(c, p3);
-            grid.addView(row, rp2);
+        android.widget.LinearLayout grow = null;
+        for (int i = 0; i < DATA.length; i++) {
+            if (i % 4 == 0) {
+                grow = new android.widget.LinearLayout(this);
+                grow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+                grid.addView(grow, new android.widget.LinearLayout.LayoutParams(-1, -2));
+            }
+            android.widget.LinearLayout cell = new android.widget.LinearLayout(this);
+            cell.setOrientation(android.widget.LinearLayout.VERTICAL);
+            cell.setGravity(android.view.Gravity.CENTER);
+            cell.setBackgroundResource(R.drawable.bg_input_flat);
+            int cpd = dp(10); cell.setPadding(cpd, dp(12), cpd, dp(10));
+            android.widget.LinearLayout.LayoutParams cp = new android.widget.LinearLayout.LayoutParams(0, -2, 1f);
+            cp.setMargins(dp(3), dp(3), dp(3), dp(3));
+            TextView tv = new TextView(this);
+            tv.setText(DATA[i][0]);
+            tv.setTextColor(0xFF1F2329); tv.setTextSize(13); tv.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            tv.setGravity(android.view.Gravity.CENTER); tv.setSingleLine(true);
+            cell.addView(tv);
+            TextView tv2 = new TextView(this);
+            tv2.setText(DATA[i][1]); tv2.setTextColor(0xFF9AA0A8); tv2.setTextSize(12);
+            tv2.setGravity(android.view.Gravity.CENTER);
+            android.widget.LinearLayout.LayoutParams tp2 = new android.widget.LinearLayout.LayoutParams(-2, -2);
+            tp2.setMargins(0, dp(4), 0, 0);
+            cell.addView(tv2, tp2);
+            grow.addView(cell, cp);
         }
     }
 
@@ -941,8 +934,14 @@ public class MetronomeActivity extends Activity {
             lr.removeAllViews();
             new Thread(() -> {
                 try {
-                    String g = httpGet("https://geocoding-api.open-meteo.com/v1/search?name=" + java.net.URLEncoder.encode(q, "UTF-8") + "&count=8&language=zh&format=json");
-                    org.json.JSONArray rs = new org.json.JSONObject(g).optJSONArray("results");
+                    String[] tries = {q, q + "市", q.endsWith("市") ? q.substring(0, q.length() - 1) : q};
+                    org.json.JSONArray rs = null;
+                    for (String t : tries) {
+                        if (t.length() == 0) continue;
+                        String g = httpGet("https://geocoding-api.open-meteo.com/v1/search?name=" + java.net.URLEncoder.encode(t, "UTF-8") + "&count=8&language=zh&format=json");
+                        rs = new org.json.JSONObject(g).optJSONArray("results");
+                        if (rs != null && rs.length() > 0) break;
+                    }
                     if (rs == null || rs.length() == 0) throw new Exception("none");
                     java.util.List<org.json.JSONObject> list = new java.util.ArrayList<>();
                     for (int i = 0; i < rs.length(); i++) list.add(rs.getJSONObject(i));
@@ -1044,7 +1043,7 @@ public class MetronomeActivity extends Activity {
             android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
         dlg.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(0));
         android.view.WindowManager.LayoutParams wp = dlg.getWindow().getAttributes();
-        wp.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.82);
+        wp.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.84);
         wp.height = android.view.WindowManager.LayoutParams.WRAP_CONTENT;
         wp.gravity = android.view.Gravity.BOTTOM;
         wp.y = dp(80);
