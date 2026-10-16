@@ -86,6 +86,7 @@ public class HomeActivity extends Activity {
     private SettingsPageView pageSettings;
     private boolean pagesBuilt = false;
     private CapsuleBottomBar bottomBar;
+    private String lastCapsule = null;
     private static final int[] MEDIA_CARDS = {R.id.cardPlayer, R.id.cardDownload, R.id.cardVideoDl, R.id.cardSpider, R.id.cardXhs, R.id.cardDyna, R.id.cardLive};
 
     /** 三态导航: 0=首页 1=媒体 2=设置(内嵌页) */
@@ -626,6 +627,7 @@ public class HomeActivity extends Activity {
             }, hideHome, hideMedia, hidePan, hidePlayer);
         bottomBar.setTag("bottombar");
         root.addView(bottomBar);
+        lastCapsule = hideHome + "|" + hideMedia + "|" + hidePan + "|" + hidePlayer;
         findViewById(R.id.toolColumn).setBackgroundColor(dark ? 0xFF000000 : 0xFFEEF4FF);
         applyTraversal((android.view.ViewGroup) findViewById(R.id.toolColumn), dark);
     }
@@ -818,6 +820,9 @@ public class HomeActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        android.content.SharedPreferences spc = getSharedPreferences("settings", MODE_PRIVATE);
+        String sig = spc.getBoolean("hideHome", false) + "|" + spc.getBoolean("hideMedia", false) + "|" + spc.getBoolean("hidePan", false) + "|" + spc.getBoolean("hidePlayer", false);
+        if (!sig.equals(lastCapsule)) { applyTheme(); } // 下载配置/确认胶囊后回首页自动刷新
         if (pageIdx == 4) { buildFavPage(); applyPage(4); }
         if (bottomBar != null) bottomBar.setActiveTag(pageIdx == 0 ? "home" : pageIdx == 1 ? "media" : pageIdx == 2 ? "pan" : pageIdx == 4 ? "fav" : "set"); // 滑块对齐当前页
         if (pageIdx == 2 && pageSettings != null) pageSettings.refresh(); // 平台账号登录返回, 刷新登录态
