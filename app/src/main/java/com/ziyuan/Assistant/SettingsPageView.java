@@ -344,9 +344,16 @@ public class SettingsPageView extends android.widget.FrameLayout {
                     String gistId = sp.getString("ghGistId", "");
                     if (gistId.isEmpty()) {
                         String payload = "{\"description\":\"xgjhome ai config\",\"public\":false,\"files\":{\"config.json\":{\"content\":" + org.json.JSONObject.quote(json.toString()) + "}}}";
-                        String resp = ghHttp("https://api.github.com/gists", "POST", token, payload);
-                        sp.edit().putString("ghGistId", new org.json.JSONObject(resp).getString("id")).apply();
-                        toast("已上传 (新建gist)");
+                        try {
+                            String resp = ghHttp("https://api.github.com/gists", "POST", token, payload);
+                            sp.edit().putString("ghGistId", new org.json.JSONObject(resp).getString("id")).apply();
+                            toast("已上传 (新建gist)");
+                        } catch (Exception ce) {
+                            String m = String.valueOf(ce.getMessage());
+                            if (m.contains("404") || m.contains("403") || m.contains("401"))
+                                toast("新建gist失败(" + m + "): token需为经典token并勾选gist权限");
+                            else throw ce;
+                        }
                     } else {
                         String payload = "{\"files\":{\"config.json\":{\"content\":" + org.json.JSONObject.quote(json.toString()) + "}}}";
                         try {
