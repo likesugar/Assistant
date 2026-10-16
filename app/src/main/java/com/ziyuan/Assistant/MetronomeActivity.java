@@ -921,7 +921,7 @@ public class MetronomeActivity extends Activity {
             android.widget.LinearLayout.LayoutParams hp0 = new android.widget.LinearLayout.LayoutParams(-2, -2);
             hp0.setMargins(dp(2), 0, 0, dp(6));
             grid.addView(h15, hp0);
-            final int colW = dp(64);
+            final int colW = dp(78);
             int n = Math.min(days.size(), 15);
             android.widget.HorizontalScrollView hsv = new android.widget.HorizontalScrollView(this);
             hsv.setFillViewport(true);
@@ -1183,6 +1183,10 @@ public class MetronomeActivity extends Activity {
             try { startActivity(new android.content.Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)); } catch (Throwable ignored) {}
         });
         dlg.show();
+        android.view.WindowManager.LayoutParams rwp = dlg.getWindow().getAttributes();
+        rwp.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.84);
+        rwp.height = android.view.WindowManager.LayoutParams.WRAP_CONTENT;
+        dlg.getWindow().setAttributes(rwp);
     }
 
     private TextView trendCell(String text, int w, float sizeSp, boolean bold) {
@@ -1194,7 +1198,7 @@ public class MetronomeActivity extends Activity {
         tv.setGravity(android.view.Gravity.CENTER);
         tv.setLineSpacing(dp(2), 1f);
         android.widget.LinearLayout.LayoutParams p = new android.widget.LinearLayout.LayoutParams(w, -2);
-        p.setMargins(0, dp(6), 0, dp(6));
+        p.setMargins(dp(3), dp(6), dp(3), dp(6));
         return tv;
     }
 
