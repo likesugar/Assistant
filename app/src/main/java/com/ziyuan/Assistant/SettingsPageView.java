@@ -70,26 +70,32 @@ public class SettingsPageView extends android.widget.FrameLayout {
         android.widget.Switch swC = (android.widget.Switch) findViewById(R.id.swClipboard);
         swC.setChecked(host.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE).getBoolean("clipboard", true));
 
-        int[] swIds={R.id.swHideHome,R.id.swHideMedia,R.id.swHidePlayer};
-        String[] spKeys={"hideHome","hideMedia","hidePlayer"};
-        for(int i=0;i<3;i++){
-            final String k=spKeys[i];
-            android.widget.Switch swX=(android.widget.Switch) findViewById(swIds[i]);
+        // 胶囊: 开关先缓存, 点"确认生效"才写入并重建
+        final int[] capIds={R.id.swHidePan,R.id.swHideHome,R.id.swHideMedia,R.id.swHidePlayer};
+        final String[] capKeys={"hidePan","hideHome","hideMedia","hidePlayer"};
+        final boolean[] capPend=new boolean[4];
+        for(int i=0;i<4;i++){
+            final int fi=i;
+            android.widget.Switch swX=(android.widget.Switch) findViewById(capIds[i]);
             if(swX==null) continue;
-            swX.setChecked(host.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE).getBoolean(k,false));
+            capPend[i]=host.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE).getBoolean(capKeys[i],false);
+            swX.setChecked(capPend[i]);
             swX.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener(){
-                public void onCheckedChanged(android.widget.CompoundButton b, boolean on){
-                    host.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE).edit().putBoolean(k,on).apply();
-                    host.recreate();
-                }
+                public void onCheckedChanged(android.widget.CompoundButton b, boolean on){ capPend[fi]=on; }
             });
         }
-        android.widget.Switch swPan = (android.widget.Switch) findViewById(R.id.swHidePan);
-        swPan.setChecked(host.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE).getBoolean("hidePan", false));
-        swPan.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(android.widget.CompoundButton b, boolean on) {
-                host.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE).edit().putBoolean("hidePan", on).apply();
-                host.recreate();
+        View capBtn=findViewById(R.id.btnCapApply);
+        if(capBtn!=null) capBtn.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View v){
+                android.content.SharedPreferences.Editor ed=host.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE).edit();
+                boolean changed=false;
+                for(int i=0;i<4;i++){
+                    if(capPend[i]!=host.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE).getBoolean(capKeys[i],false)) changed=true;
+                    ed.putBoolean(capKeys[i],capPend[i]);
+                }
+                ed.apply();
+                if(changed) host.recreate();
+                else Toast.makeText(host,"设置未变化",Toast.LENGTH_SHORT).show();
             }
         });
         swC.setOnCheckedChangeListener(new android.widget.CompoundButton.OnCheckedChangeListener() {
