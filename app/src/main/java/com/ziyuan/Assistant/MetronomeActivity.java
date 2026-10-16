@@ -712,8 +712,8 @@ public class MetronomeActivity extends Activity {
 
     private int tc() { return dark() ? 0xFFF2F2F2 : 0xFF1F1F1F; }
     private int sc2() { return dark() ? 0xFF939DA8 : 0xFF9AA0A8; }
-    private int cellBg() { return dark() ? R.drawable.bg_input_dark : cellBg(); }
-    private int hlBg() { return dark() ? 0xFF26374E : hlBg(); }
+    private int cellBg() { return dark() ? R.drawable.bg_input_dark : R.drawable.bg_input_flat; }
+    private int hlBg() { return dark() ? 0xFF26374E : 0xFFE3EEFB; }
     // ===== 天气+生活服务 (中国天气网气象源, 默认IP定位城市) =====
     private boolean lifeFetched = false;
     private long lastWeatherAt = 0;
