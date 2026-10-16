@@ -782,7 +782,10 @@ public class MetronomeActivity extends Activity {
                     java.net.HttpURLConnection bc = (java.net.HttpURLConnection) new java.net.URL("https://www.baidu.com/s?wd=" + bq).openConnection();
                     bc.setConnectTimeout(8000); bc.setReadTimeout(8000);
                     bc.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-                    java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(bc.getInputStream(), "UTF-8"));
+                    bc.setRequestProperty("Accept-Encoding", "gzip");
+                    java.io.InputStream rawI = bc.getInputStream();
+                    if ("gzip".equals(bc.getContentEncoding())) rawI = new java.util.zip.GZIPInputStream(rawI);
+                    java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(rawI, "UTF-8"));
                     StringBuilder bb = new StringBuilder(); String bl;
                     while ((bl = br.readLine()) != null) bb.append(bl);
                     br.close();
@@ -867,15 +870,24 @@ public class MetronomeActivity extends Activity {
                 if (days.size() < 2) {
                 try {
                     String bq = java.net.URLEncoder.encode(cname + "天气", "UTF-8");
-                    java.net.HttpURLConnection bc = (java.net.HttpURLConnection) new java.net.URL("https://m.baidu.com/s?from=1022282z&word=" + bq).openConnection();
-                    bc.setConnectTimeout(15000); bc.setReadTimeout(25000);
-                    bc.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13; RMX3823) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
-                    bc.setRequestProperty("Cookie", "BAIDUID=" + java.util.UUID.randomUUID().toString().replace("-", "").toUpperCase() + ":FG=1");
-                    java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(bc.getInputStream(), "UTF-8"));
-                    StringBuilder bb = new StringBuilder(); String bl;
-                    while ((bl = br.readLine()) != null) bb.append(bl);
-                    br.close();
-                    String bh = bb.toString();
+                    String bh = null;
+                    for (int attempt = 0; attempt < 2 && bh == null; attempt++) {
+                        try {
+                            java.net.HttpURLConnection bc = (java.net.HttpURLConnection) new java.net.URL("https://m.baidu.com/s?from=1022282z&word=" + bq).openConnection();
+                            bc.setConnectTimeout(12000); bc.setReadTimeout(30000);
+                            bc.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13; RMX3823) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
+                            bc.setRequestProperty("Cookie", "BAIDUID=" + java.util.UUID.randomUUID().toString().replace("-", "").toUpperCase() + ":FG=1");
+                            bc.setRequestProperty("Accept-Encoding", "gzip");
+                            java.io.InputStream raw = bc.getInputStream();
+                            if ("gzip".equals(bc.getContentEncoding())) raw = new java.util.zip.GZIPInputStream(raw);
+                            java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(raw, "UTF-8"));
+                            StringBuilder bb = new StringBuilder(); String bl;
+                            while ((bl = br.readLine()) != null) bb.append(bl);
+                            br.close();
+                            if (bb.indexOf("dayForecastList") >= 0) bh = bb.toString();
+                        } catch (Throwable ignored6) {}
+                    }
+                    if (bh == null) throw new Exception("m.baidu fail");
                     int di = bh.indexOf("\"dayForecastList\":");
                     if (di >= 0) {
                         int j = bh.indexOf('[', di);
