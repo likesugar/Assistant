@@ -829,7 +829,7 @@ public class MetronomeActivity extends Activity {
                     if (!mh.find()) continue;
                     label = mh.group(1); date = mh.group(2);
                 }
-                java.util.regex.Matcher md = java.util.regex.Pattern.compile("png\d+ ([dn]\d{2})").matcher(b);
+                java.util.regex.Matcher md = java.util.regex.Pattern.compile("png\\d+ ([dn]\\d{2})").matcher(b);
                 String dc = md.find() ? md.group(1) : "d99";
                 String nc = md.find() ? md.group(1) : "n99";
                 java.util.regex.Matcher mw = java.util.regex.Pattern.compile(is15d ? "class=\"wea\">([^<]+)</span>" : "class=\"wea\">([^<]+)</p>").matcher(b);
@@ -968,7 +968,7 @@ public class MetronomeActivity extends Activity {
         String[][] DATA = indices;
         TextView h8 = new TextView(this);
         h8.setText("生活指数");
-        h15.setTextColor(0xFF1F2329); h15.setTextSize(16); h15.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        h8.setTextColor(0xFF1F2329); h8.setTextSize(16); h8.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         android.widget.LinearLayout.LayoutParams hp = new android.widget.LinearLayout.LayoutParams(-2, -2);
         hp.setMargins(dp(2), dp(14), 0, dp(6));
         grid.addView(h8, hp);
