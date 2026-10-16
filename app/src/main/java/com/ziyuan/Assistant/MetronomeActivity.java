@@ -822,7 +822,7 @@ public class MetronomeActivity extends Activity {
                                         if ("今天".equals(arr.getJSONObject(i).optString("word"))) { start = i; break; }
                                     }
                                     days.clear();
-                                    for (int i = start; i < arr.length() && days.size() < 7; i++) {
+                                    for (int i = start; i < arr.length() && days.size() < 15; i++) {
                                         org.json.JSONObject o = arr.getJSONObject(i);
                                         days.add(new String[]{
                                             o.optString("word", "--"), o.optString("date", "--"),
@@ -892,7 +892,7 @@ public class MetronomeActivity extends Activity {
                                 if ("今天".equals(arr.getJSONObject(i).optString("word"))) { start = i; break; }
                             }
                             days.clear();
-                            for (int i = start; i < arr.length() && days.size() < 7; i++) {
+                            for (int i = start; i < arr.length() && days.size() < 15; i++) {
                                 org.json.JSONObject o = arr.getJSONObject(i);
                                 String wd = o.optString("weather_day", "--");
                                 days.add(new String[]{
@@ -1156,13 +1156,13 @@ public class MetronomeActivity extends Activity {
         // ===== 7天预报·趋势 (单View自绘, 一列一栏, 可点) =====
         if (days.size() > 1) {
             TextView h15 = new TextView(this);
-            h15.setText("7天预报");
+            h15.setText("15天预报");
             h15.setTextColor(tc()); h15.setTextSize(16); h15.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
             android.widget.LinearLayout.LayoutParams hp0 = new android.widget.LinearLayout.LayoutParams(-2, -2);
             hp0.setMargins(dp(2), 0, 0, dp(6));
             grid.addView(h15, hp0);
             final int colW = dp(78);
-            final int n = Math.min(days.size(), 7);
+            final int n = Math.min(days.size(), 15);
             final TrendView[] tvh = new TrendView[1];
             TrendView tv = new TrendView(this, n, colW, wDays, idx -> { selDay = idx; if (tvh[0] != null) tvh[0].setSelected(idx); refreshCurCard(); });
             tvh[0] = tv;
