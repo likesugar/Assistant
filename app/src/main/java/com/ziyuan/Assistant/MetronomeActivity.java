@@ -116,7 +116,7 @@ public class MetronomeActivity extends Activity {
         b.setOnTouchListener((v, ev) -> {
             switch (ev.getActionMasked()) {
                 case android.view.MotionEvent.ACTION_DOWN:
-                    if (arrowH == null) arrowH = new android.os.Handler(Looper.getMainLooper());
+                    if (arrowH == null) arrowH = new android.os.Handler(android.os.Looper.getMainLooper());
                     if (arrowRun != null) arrowH.removeCallbacks(arrowRun);
                     arrowRun = new Runnable() { @Override public void run() { setBpm(bpm + dir); arrowH.postDelayed(this, 120); } };
                     arrowH.postDelayed(arrowRun, 450);
