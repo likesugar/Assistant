@@ -863,9 +863,8 @@ public class MetronomeActivity extends Activity {
                         }
                     }
                 } catch (Throwable ignored4) {}
-                // 7天趋势: 百度天气 dayForecastList (与百度页面同源同口径)
-                java.util.List<String[]> days = new java.util.ArrayList<>();
-                java.util.List<String[]> hours = new java.util.ArrayList<>();
+                // 7天趋势: 百度天气 dayForecastList (与百度页面同源同口径) — www路已出数则跳过
+                if (days.size() < 2) {
                 try {
                     String bq = java.net.URLEncoder.encode(cname + "天气", "UTF-8");
                     java.net.HttpURLConnection bc = (java.net.HttpURLConnection) new java.net.URL("https://m.baidu.com/s?from=1022282z&word=" + bq).openConnection();
@@ -892,6 +891,7 @@ public class MetronomeActivity extends Activity {
                             for (int i = 0; i < arr.length(); i++) {
                                 if ("今天".equals(arr.getJSONObject(i).optString("word"))) { start = i; break; }
                             }
+                            days.clear();
                             for (int i = start; i < arr.length() && days.size() < 7; i++) {
                                 org.json.JSONObject o = arr.getJSONObject(i);
                                 String wd = o.optString("weather_day", "--");
@@ -932,6 +932,7 @@ public class MetronomeActivity extends Activity {
                     }
                 } catch (Throwable ignored5) {}
                 } catch (Throwable ignored) {}
+                }
                 if (days.size() < 2) { // 百度不通 → 官方 d1 fc 兜底
                     days.clear();
                     try {
