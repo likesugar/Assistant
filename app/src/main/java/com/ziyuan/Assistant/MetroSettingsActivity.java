@@ -104,7 +104,7 @@ public class MetroSettingsActivity extends Activity {
             prefs.edit().putBoolean("metroKeepScreen", on).apply();
             MetronomeActivity.notifySettingChanged(this);
         }));
-        card2.addView(switchRow("生活服务", "打拍页显示百度天气生活指数 (开启才联网)", prefs.getBoolean("metroLifeService", false), (on) -> {
+        card2.addView(switchRow("天气", "打拍页显示百度天气生活指数 (开启才联网)", prefs.getBoolean("metroLifeService", false), (on) -> {
             prefs.edit().putBoolean("metroLifeService", on).apply();
         }));
         card2.addView(switchRow("音量增强", "所有拍子加大音量", prefs.getBoolean("metroBooster", false), (on) -> {
@@ -126,7 +126,7 @@ public class MetroSettingsActivity extends Activity {
             prefs.edit().putBoolean("metroTianyiCheer", on).apply();
             MetronomeActivity.notifySettingChanged(this);
         }));
-        card3.addView(switchRow("阶段提示 + 打拍自动变速", "热身→燃脂→冲刺→放松, BPM 随阶段渐变", prefs.getBoolean("metroTianyiStage", true), (on) -> {
+        card3.addView(switchRow("阶段提示 + 打拍自动变速", "热身→燃脂→冲刺→放松, BPM 随阶段渐变", prefs.getBoolean("metroTianyiStage", false), (on) -> {
             prefs.edit().putBoolean("metroTianyiStage", on).apply();
             MetronomeActivity.notifySettingChanged(this);
         }));

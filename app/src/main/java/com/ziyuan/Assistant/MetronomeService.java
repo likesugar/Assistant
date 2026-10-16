@@ -81,7 +81,7 @@ public class MetronomeService extends Service {
         boolean booster = intent.getBooleanExtra(EXTRA_BOOSTER, false);
         boolean accentFirst = intent.getBooleanExtra(EXTRA_ACCENT, false);
         android.content.SharedPreferences tp = getSharedPreferences("settings", MODE_PRIVATE);
-tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyiStage", true)
+tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyiStage", false)
             || tp.getBoolean("metroTianyiGps", true);
         gpsOn = tp.getBoolean("metroTianyiGps", true);
         if (intent.getBooleanExtra("settings_changed", false)) {
@@ -147,9 +147,9 @@ tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyi
                 }
                 tianyi = new TianyiController(this, engine,
                     tsp.getBoolean("metroTianyiCheer", true),
-                    tsp.getBoolean("metroTianyiStage", true));
+                    tsp.getBoolean("metroTianyiStage", false));
                 tianyi.gpsMgr = gpsMgr; tianyi.stepMgr = stepMgr;
-                if (tsp.getBoolean("metroTianyiStage", true)) {
+                if (tsp.getBoolean("metroTianyiStage", false)) {
                     tianyi.introDone = () -> { MetroEngine en = engine; if (en != null) en.play(); };
                     introPending = true; // 开场语音播完才响节拍
                 }
