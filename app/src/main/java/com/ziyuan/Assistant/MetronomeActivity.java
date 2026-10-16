@@ -761,7 +761,7 @@ public class MetronomeActivity extends Activity {
                 final String[][] fi = indices;
                 uiTick.post(() -> buildWeather(fcity, ftype, fcur, fmn, fmx, fh, fw, fp, fv, fa, fi));
             } catch (Throwable e) {
-                uiTick.post(() -> { ((TextView) findViewById(R.id.lifeTemp)).setText("天气获取失败, 点击重试"); lifeFetched = false; lastWeatherAt = 0; });
+                uiTick.post(() -> { ((TextView) findViewById(R.id.lifeTemp)).setText("获取失败:" + e.getClass().getSimpleName() + " 点击重试"); lifeFetched = false; lastWeatherAt = 0; });
             }
         }, "weather").start();
     }
@@ -790,9 +790,13 @@ public class MetronomeActivity extends Activity {
     }
 
     private static String extractVar(String page, String name) {
-        java.util.regex.Matcher m = java.util.regex.Pattern.compile("var " + name + " *=?(\\{.*?\\}|\\[.*?\\]);").matcher(page);
-        if (!m.find()) throw new RuntimeException("no " + name);
-        return m.group(1);
+        int i = page.indexOf("var " + name + " ");
+        if (i < 0) i = page.indexOf("var " + name + "=");
+        if (i < 0) throw new RuntimeException("no " + name);
+        int eq = page.indexOf('=', i);
+        int end = page.indexOf(";var ", eq);
+        if (end < 0) end = page.length();
+        return page.substring(eq + 1, end).trim();
     }
 
     private String httpGet(String u, String referer) throws Throwable {
