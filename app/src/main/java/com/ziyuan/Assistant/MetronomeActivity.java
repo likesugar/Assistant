@@ -97,12 +97,37 @@ public class MetronomeActivity extends Activity {
             View row = findViewById(R.id.bpmPresets);
             row.setVisibility(row.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
         });
+        bindBpmArrow(R.id.bpmDown, -1);
+        bindBpmArrow(R.id.bpmUp, 1);
         refreshTop();
         buildDots();
         buildBgList();
         themeAll();
         tvBpm.setText(String.valueOf(bpm));
         uiTick.postDelayed(tickRun, 80);
+    }
+
+    private android.os.Handler arrowH;
+    private Runnable arrowRun;
+    private void bindBpmArrow(int id, final int dir) {
+        View b = findViewById(id);
+        if (b == null) return;
+        b.setOnClickListener(v -> setBpm(bpm + dir));
+        b.setOnTouchListener((v, ev) -> {
+            switch (ev.getActionMasked()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    if (arrowH == null) arrowH = new android.os.Handler(Looper.getMainLooper());
+                    if (arrowRun != null) arrowH.removeCallbacks(arrowRun);
+                    arrowRun = new Runnable() { @Override public void run() { setBpm(bpm + dir); arrowH.postDelayed(this, 120); } };
+                    arrowH.postDelayed(arrowRun, 450);
+                    return false;
+                case android.view.MotionEvent.ACTION_UP:
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    if (arrowH != null && arrowRun != null) arrowH.removeCallbacks(arrowRun);
+                    return false;
+            }
+            return false;
+        });
     }
 
     private void refreshTop() {
@@ -122,21 +147,13 @@ public class MetronomeActivity extends Activity {
         return "最急板";
     }
 
-    private static final int[] PRESET_DEF = {150, 160, 170, 180, 190, 200};
+    private static final int[] PRESET_BPM = {150, 160, 170, 180, 190, 200};
     private static final String[] PRESET_NAME = {"轻松", "慢跑", "节奏", "快跑", "冲刺", "间歇"};
-    private final int[] presetVals = new int[6];
     private final List<TextView> presetChips = new ArrayList<>();
-
-    private int presetVal(int i) {
-        return getSharedPreferences("settings", MODE_PRIVATE).getInt("presetBpm" + i, PRESET_DEF[i]);
-    }
 
     private void buildBpmPresets() {
         LinearLayout row = (LinearLayout) findViewById(R.id.bpmPresets);
-        row.removeAllViews();
-        presetChips.clear();
-        for (int i = 0; i < 6; i++) {
-            presetVals[i] = presetVal(i);
+        for (int i = 0; i < PRESET_BPM.length; i++) {
             LinearLayout cell = new LinearLayout(this);
             cell.setOrientation(LinearLayout.VERTICAL);
             cell.setGravity(android.view.Gravity.CENTER);
@@ -144,18 +161,10 @@ public class MetronomeActivity extends Activity {
             int pad = dp(3);
             clp.setMargins(pad, 0, pad, 0);
             cell.setLayoutParams(clp);
-            // 数值框: 点一下进入编辑, 改完即存 (每格自定义节奏)
-            final android.widget.EditText v = new android.widget.EditText(this);
-            v.setText(String.valueOf(presetVals[i]));
+            TextView v = new TextView(this);
+            v.setText(String.valueOf(PRESET_BPM[i]));
             v.setTextSize(15);
             v.setGravity(android.view.Gravity.CENTER);
-            v.setBackgroundResource(android.R.color.transparent);
-            v.setTextColor(color(0xFFE8ECF4, 0xFF1F2329));
-            v.setSingleLine(true);
-            v.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-            v.setFocusableInTouchMode(false);
-            v.setCursorVisible(false);
-            v.setPadding(0, dp(2), 0, dp(2));
             TextView n = new TextView(this);
             n.setText(PRESET_NAME[i]);
             n.setTextSize(12);
@@ -163,45 +172,20 @@ public class MetronomeActivity extends Activity {
             n.setTag("sub");
             cell.addView(v);
             cell.addView(n);
-            final android.widget.EditText fv = v;
-            final int fi = i;
-            v.setOnClickListener(vv -> {
-                fv.setFocusableInTouchMode(true);
-                fv.requestFocus();
-                fv.setCursorVisible(true);
-                android.view.inputmethod.InputMethodManager im = (android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-                if (im != null) im.showSoftInput(fv, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
-            });
-            v.setOnEditorActionListener((vv, a, ev) -> { commitPreset(fi, fv); return true; });
-            v.setOnFocusChangeListener((vv, hasF) -> { if (!hasF) commitPreset(fi, fv); });
-            cell.setOnClickListener(vv -> {
-                if (fv.hasFocus()) return;
-                setBpm(presetVal(fi));
-            });
+            final int val = PRESET_BPM[i];
+            cell.setOnClickListener(vv -> setBpm(val));
             row.addView(cell);
-            presetChips.add(v);
+            presetChips.add((TextView) cell.getTag() == null ? v : v);
+            cell.setTag(v);
+            presetChips.set(i, v);
         }
-        refreshPresets();
-    }
-
-    private void commitPreset(int i, android.widget.EditText et) {
-        try {
-            int val = Math.max(30, Math.min(252, Integer.parseInt(et.getText().toString().trim())));
-            presetVals[i] = val;
-            et.setText(String.valueOf(val));
-            getSharedPreferences("settings", MODE_PRIVATE).edit().putInt("presetBpm" + i, val).apply();
-        } catch (Throwable ignored) {
-            et.setText(String.valueOf(presetVal(i)));
-        }
-        et.setFocusableInTouchMode(false);
-        et.setCursorVisible(false);
         refreshPresets();
     }
 
     private void refreshPresets() {
         for (int i = 0; i < presetChips.size(); i++) {
             View cell = (View) presetChips.get(i).getParent();
-            boolean sel = bpm == presetVals[i];
+            boolean sel = bpm == PRESET_BPM[i];
             android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
             gd.setCornerRadius(dp(12));
             if (sel) {

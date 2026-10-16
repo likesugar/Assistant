@@ -63,10 +63,17 @@
                     android:orientation="vertical" android:gravity="center">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="节奏" android:textSize="15sp" android:textStyle="bold" android:tag="title"/>
-                    <EditText android:id="@+id/tvBpm" android:layout_width="52dp" android:layout_height="40dp"
-                        android:gravity="center" android:layout_marginTop="10dp" android:text="80" android:textSize="18sp" android:textStyle="bold" android:tag="title"
-                        android:inputType="number" android:imeOptions="actionDone"
-                        android:background="@drawable/bg_btn_md3"/>
+                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:gravity="center" android:layout_marginTop="10dp">
+                        <TextView android:id="@+id/bpmDown" android:layout_width="wrap_content" android:layout_height="40dp"
+                            android:gravity="center" android:text="☜" android:textSize="20sp" android:textStyle="bold" android:paddingLeft="4dp" android:paddingRight="4dp" android:tag="title"/>
+                        <EditText android:id="@+id/tvBpm" android:layout_width="52dp" android:layout_height="40dp"
+                            android:gravity="center" android:text="80" android:textSize="18sp" android:textStyle="bold" android:tag="title"
+                            android:inputType="number" android:imeOptions="actionDone"
+                            android:background="@drawable/bg_btn_md3"/>
+                        <TextView android:id="@+id/bpmUp" android:layout_width="wrap_content" android:layout_height="40dp"
+                            android:gravity="center" android:text="☞" android:textSize="20sp" android:textStyle="bold" android:paddingLeft="4dp" android:paddingRight="4dp" android:tag="title"/>
+                    </LinearLayout>
                 </LinearLayout>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
                     android:orientation="vertical" android:gravity="center">
