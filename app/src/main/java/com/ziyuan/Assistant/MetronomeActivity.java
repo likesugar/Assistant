@@ -702,53 +702,290 @@ public class MetronomeActivity extends Activity {
         }
     }
 
-    // ===== 生活服务 (内置百度天气今日数据, 无网络请求) =====
+    // ===== 天气+生活服务 (open-meteo 免key, 默认用本机定位) =====
     private boolean lifeFetched = false;
+    private long lastWeatherAt = 0;
+
+    private static String wCode(int c) {
+        if (c == 0) return "晴";
+        if (c <= 3) return c == 1 ? "基本晴" : "多云";
+        if (c <= 48) return "雾";
+        if (c <= 57) return "毛毛雨";
+        if (c <= 67) return "雨";
+        if (c <= 77) return "雪";
+        if (c <= 82) return "阵雨";
+        if (c <= 86) return "阵雪";
+        return "雷雨";
+    }
 
     private void refreshLifeCard() {
         boolean on = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroLifeService", false);
         android.widget.LinearLayout lc = findViewById(R.id.lifeCard);
         if (!on) { lc.setVisibility(View.GONE); return; }
         lc.setVisibility(View.VISIBLE);
-        if (lifeFetched) return;
-        lifeFetched = true;
+        long now = android.os.SystemClock.elapsedRealtime();
+        if (lifeFetched && now - lastWeatherAt < 10 * 60 * 1000) return;
+        lifeFetched = true; lastWeatherAt = now;
         TextView t1 = findViewById(R.id.lifeTitle), t2 = findViewById(R.id.lifeTemp);
         t1.setText("生活服务");
-        t2.setText("温州 23° 多云");
-        String[][] DATA = {
-            {"短袖类", "穿衣"}, {"不适宜", "运动"}, {"弱", "紫外线"}, {"较适宜", "旅游"},
-            {"控油", "化妆"}, {"比较适宜", "钓鱼"}, {"较易发", "感冒"}, {"适宜", "洗车"}
-        };
+        t2.setText("定位中…");
+        t2.setOnClickListener(v -> pickCity());
+        new Thread(() -> {
+            try {
+                double lat, lon; String cname;
+                android.content.SharedPreferences sp = getSharedPreferences("settings", MODE_PRIVATE);
+                double sl = Double.longBitsToDouble(sp.getLong("lifeLat", 0)), sn = Double.longBitsToDouble(sp.getLong("lifeLon", 0));
+                if (sl != 0 || sn != 0) { lat = sl; lon = sn; cname = sp.getString("lifeCityName", "已选地区"); }
+                else {
+                    double[] loc = locateOnce();
+                    lat = loc[0]; lon = loc[1];
+                    cname = "我的位置";
+                }
+                String u = "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon
+                    + "&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset"
+                    + "&current=temperature_2m,relative_humidity_2m,weather_code,surface_pressure&timezone=auto&forecast_days=15";
+                String json = httpGet(u);
+                org.json.JSONObject j = new org.json.JSONObject(json);
+                org.json.JSONObject cur = j.getJSONObject("current");
+                org.json.JSONArray days = j.getJSONObject("daily").getJSONArray("time");
+                org.json.JSONArray wc = j.getJSONObject("daily").getJSONArray("weather_code");
+                org.json.JSONArray tmax = j.getJSONObject("daily").getJSONArray("temperature_2m_max");
+                org.json.JSONArray tmin = j.getJSONObject("daily").getJSONArray("temperature_2m_min");
+                org.json.JSONArray uv = j.getJSONObject("daily").getJSONArray("uv_index_max");
+                org.json.JSONArray rise = j.getJSONObject("daily").getJSONArray("sunrise");
+                org.json.JSONArray set = j.getJSONObject("daily").getJSONArray("sunset");
+                String curW = wCode(cur.getInt("weather_code"));
+                String curT = String.format("%.0f", cur.getDouble("temperature_2m"));
+                String d0max = String.format("%.0f", tmax.getDouble(0)), d0min = String.format("%.0f", tmin.getDouble(0));
+                String hum = cur.getInt("relative_humidity_2m") + "%";
+                String uvv = String.format("%.1f", uv.getDouble(0));
+                String riseT = rise.getString(0).substring(11), setT = set.getString(0).substring(11);
+                String press = String.format("%.0f", cur.getDouble("surface_pressure"));
+                java.util.List<String[]> rows = new java.util.ArrayList<>();
+                java.text.SimpleDateFormat df = new java.text.SimpleDateFormat("M/d", java.util.Locale.US);
+                String[] week = {"周日", "周一", "周二", "周三", "周四", "周五", "周六"};
+                for (int i = 0; i < days.length(); i++) {
+                    String d = days.getString(i);
+                    String md = df.format(new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).parse(d));
+                    java.util.Calendar ca = java.util.Calendar.getInstance();
+                    ca.setTime(new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).parse(d));
+                    String wk = week[ca.get(java.util.Calendar.DAY_OF_WEEK) - 1];
+                    rows.add(new String[]{i == 0 ? "今天" : wk, md, wCode(wc.getInt(i)),
+                        String.format("%.0f/%.0f°", tmin.getDouble(i), tmax.getDouble(i))});
+                }
+                final String fc = cname, fw = curW, ft = curT, fmx = d0max, fmn = d0min;
+                uiTick.post(() -> buildWeather(fc, fw, ft, fmx, fmn, hum, uvv, riseT, setT, press, rows));
+            } catch (Throwable e) {
+                uiTick.post(() -> { ((TextView) findViewById(R.id.lifeTemp)).setText("天气获取失败, 点击重试"); lifeFetched = false; lastWeatherAt = 0; });
+            }
+        }, "weather").start();
+    }
+
+    private double[] locateOnce() throws Throwable {
+        android.location.LocationManager lm = (android.location.LocationManager) getSystemService(LOCATION_SERVICE);
+        android.location.Location best = null;
+        try {
+            for (String pv : new String[]{android.location.LocationManager.GPS_PROVIDER, android.location.LocationManager.NETWORK_PROVIDER, android.location.LocationManager.PASSIVE_PROVIDER}) {
+                try {
+                    android.location.Location l = lm.getLastKnownLocation(pv);
+                    if (l != null && (best == null || l.getTime() > best.getTime())) best = l;
+                } catch (Throwable ignored) {}
+            }
+        } catch (Throwable ignored) {}
+        if (best != null) return new double[]{best.getLatitude(), best.getLongitude()};
+        // 定位缓存没有 → IP 定城市名 → 地理编码
+        java.net.HttpURLConnection hc = (java.net.HttpURLConnection) new java.net.URL("https://whois.pconline.com.cn/ipJson.jsp?json=true").openConnection();
+        hc.setConnectTimeout(8000); hc.setReadTimeout(8000);
+        java.io.BufferedReader hr = new java.io.BufferedReader(new java.io.InputStreamReader(hc.getInputStream(), "GBK"));
+        StringBuilder hsb = new StringBuilder(); String hline;
+        while ((hline = hr.readLine()) != null) hsb.append(hline);
+        hr.close();
+        String ip = hsb.toString();
+        java.util.regex.Matcher mc = java.util.regex.Pattern.compile("\"city\":\"([^\"]+?)市?\"").matcher(ip);
+        String city = mc.find() ? mc.group(1) : "杭州";
+        return geocode(city);
+    }
+
+    private double[] geocode(String name) throws Throwable {
+        String g = httpGet("https://geocoding-api.open-meteo.com/v1/search?name=" + java.net.URLEncoder.encode(name, "UTF-8") + "&count=1&language=zh&format=json");
+        org.json.JSONArray rs = new org.json.JSONObject(g).optJSONArray("results");
+        if (rs == null || rs.length() == 0) throw new Exception("no geo");
+        org.json.JSONObject r = rs.getJSONObject(0);
+        return new double[]{r.getDouble("latitude"), r.getLongitude()};
+    }
+
+    private String httpGet(String u) throws Throwable {
+        java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(u).openConnection();
+        c.setConnectTimeout(8000); c.setReadTimeout(8000);
+        java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(c.getInputStream(), "UTF-8"));
+        StringBuilder sb = new StringBuilder(); String line;
+        while ((line = r.readLine()) != null) sb.append(line);
+        r.close();
+        return sb.toString();
+    }
+
+    private void buildWeather(String city, String curW, String curT, String mx, String mn, String hum, String uv, String rise, String set, String press, java.util.List<String[]> rows) {
+        TextView t2 = findViewById(R.id.lifeTemp);
+        t2.setText(city + " · 点击切换");
         android.widget.LinearLayout grid = findViewById(R.id.lifeGrid);
         grid.removeAllViews();
-        android.widget.LinearLayout row = null;
-        for (int i = 0; i < DATA.length; i++) {
-            if (i % 4 == 0) {
-                row = new android.widget.LinearLayout(this);
-                row.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-                grid.addView(row, new android.widget.LinearLayout.LayoutParams(-1, -2));
-            }
-            android.widget.LinearLayout cell = new android.widget.LinearLayout(this);
-            cell.setOrientation(android.widget.LinearLayout.VERTICAL);
-            cell.setGravity(android.view.Gravity.CENTER);
-            cell.setBackgroundResource(R.drawable.bg_input_flat);
-            int pd = dp(10); cell.setPadding(pd, dp(14), pd, dp(12));
+        // 当前天气卡 (照图2)
+        android.widget.LinearLayout cur = new android.widget.LinearLayout(this);
+        cur.setOrientation(android.widget.LinearLayout.VERTICAL);
+        cur.setBackgroundResource(R.drawable.bg_input_flat);
+        int pd = dp(12); cur.setPadding(pd, pd, pd, pd);
+        android.widget.LinearLayout big = new android.widget.LinearLayout(this);
+        big.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        big.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        TextView tw = new TextView(this);
+        tw.setText(curW + " " + mn + "~" + mx + "°C");
+        tw.setTextColor(0xFF1F2329); tw.setTextSize(22); tw.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        big.addView(tw);
+        TextView tnow = new TextView(this);
+        tnow.setText("  当前 " + curT + "°");
+        tnow.setTextColor(0xFF9AA0A8); tnow.setTextSize(15);
+        big.addView(tnow);
+        cur.addView(big);
+        android.widget.LinearLayout meta = new android.widget.LinearLayout(this);
+        meta.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        meta.setGravity(android.view.Gravity.CENTER);
+        String[][] ms = {{"湿度", hum}, {"紫外线", uv}, {"日出", rise}, {"日落", set}, {"气压", press + "hPa"}};
+        for (String[] m : ms) {
+            android.widget.LinearLayout col = new android.widget.LinearLayout(this);
+            col.setOrientation(android.widget.LinearLayout.VERTICAL);
+            col.setGravity(android.view.Gravity.CENTER);
             android.widget.LinearLayout.LayoutParams cp = new android.widget.LinearLayout.LayoutParams(0, -2, 1f);
-            cp.setMargins(dp(4), dp(4), dp(4), dp(4));
-            TextView tv = new TextView(this);
-            tv.setText(DATA[i][0]);
-            tv.setTextColor(0xFF1F2329); tv.setTextSize(14); tv.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-            tv.setGravity(android.view.Gravity.CENTER); tv.setSingleLine(true);
-            cell.addView(tv);
-            TextView tv2 = new TextView(this);
-            tv2.setText(DATA[i][1]); tv2.setTextColor(0xFF9AA0A8); tv2.setTextSize(12);
-            tv2.setGravity(android.view.Gravity.CENTER);
-            android.widget.LinearLayout.LayoutParams tp2 = new android.widget.LinearLayout.LayoutParams(-2, -2);
-            tp2.setMargins(0, dp(6), 0, 0);
-            cell.addView(tv2, tp2);
-            row.addView(cell, cp);
+            TextView v = new TextView(this);
+            v.setText(m[1]); v.setTextColor(0xFF1F2329); v.setTextSize(13); v.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            v.setGravity(android.view.Gravity.CENTER);
+            col.addView(v);
+            TextView k = new TextView(this);
+            k.setText(m[0]); k.setTextColor(0xFF9AA0A8); k.setTextSize(11); k.setGravity(android.view.Gravity.CENTER);
+            col.addView(k);
+            meta.addView(col, cp);
+        }
+        android.widget.LinearLayout.LayoutParams mp = new android.widget.LinearLayout.LayoutParams(-1, -2);
+        mp.setMargins(0, dp(10), 0, 0);
+        cur.addView(meta, mp);
+        grid.addView(cur, new android.widget.LinearLayout.LayoutParams(-1, -2));
+        // 15天预报
+        TextView h15 = new TextView(this);
+        h15.setText("15天预报");
+        h15.setTextColor(0xFF1F2329); h15.setTextSize(16); h15.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        android.widget.LinearLayout.LayoutParams hp = new android.widget.LinearLayout.LayoutParams(-2, -2);
+        hp.setMargins(dp(2), dp(14), 0, dp(6));
+        grid.addView(h15, hp);
+        for (String[] r : rows) {
+            android.widget.LinearLayout row = new android.widget.LinearLayout(this);
+            row.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+            row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            row.setBackgroundResource(R.drawable.bg_input_flat);
+            int rp = dp(10); row.setPadding(rp, rp, rp, rp);
+            android.widget.LinearLayout.LayoutParams rp2 = new android.widget.LinearLayout.LayoutParams(-1, -2);
+            rp2.setMargins(0, dp(3), 0, 0);
+            TextView a = new TextView(this);
+            a.setText(r[0] + " " + r[1]);
+            a.setTextColor(0xFF1F2329); a.setTextSize(13);
+            a.getPaint().setFakeBoldText(r[0].equals("今天"));
+            TextView b = new TextView(this);
+            b.setText(r[2]);
+            b.setTextColor(0xFF9AA0A8); b.setTextSize(13);
+            TextView c = new TextView(this);
+            c.setText(r[3]);
+            c.setTextColor(0xFF1F2329); c.setTextSize(13); c.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            android.widget.LinearLayout.LayoutParams p1 = new android.widget.LinearLayout.LayoutParams(0, -2, 1.2f);
+            android.widget.LinearLayout.LayoutParams p2 = new android.widget.LinearLayout.LayoutParams(0, -2, 1f);
+            android.widget.LinearLayout.LayoutParams p3 = new android.widget.LinearLayout.LayoutParams(0, -2, 0.8f);
+            p3.gravity = android.view.Gravity.END;
+            row.addView(a, p1); row.addView(b, p2); row.addView(c, p3);
+            grid.addView(row, rp2);
         }
     }
+
+    private void pickCity() {
+        android.widget.EditText et = new android.widget.EditText(this);
+        et.setHint("输入城市名, 如 温州 / Wenzhou");
+        et.setSingleLine(true);
+        et.setTextSize(15);
+        int pd = dp(20);
+        android.widget.LinearLayout box = new android.widget.LinearLayout(this);
+        box.setOrientation(android.widget.LinearLayout.VERTICAL);
+        box.setBackgroundResource(R.drawable.bg_dialog_dark_round);
+        box.setPadding(pd, dp(24), pd, dp(16));
+        TextView ti = new TextView(this);
+        ti.setText("选择地区");
+        ti.setTextColor(0xFFF2F2F2); ti.setTextSize(19); ti.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        box.addView(ti);
+        android.widget.LinearLayout.LayoutParams ep = new android.widget.LinearLayout.LayoutParams(-1, -2);
+        ep.setMargins(0, dp(16), 0, 0);
+        et.setTextColor(0xFFF2F2F2); et.setHintTextColor(0xFF777777);
+        et.setBackgroundResource(R.drawable.bg_input_dark);
+        et.setPadding(dp(12), dp(10), dp(12), dp(10));
+        box.addView(et, ep);
+        android.widget.LinearLayout lr = new android.widget.LinearLayout(this);
+        lr.setOrientation(android.widget.LinearLayout.VERTICAL);
+        android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(-1, -2);
+        lp.setMargins(0, dp(12), 0, 0);
+        box.addView(lr, lp);
+        final android.app.Dialog dlg = new android.app.Dialog(this);
+        dlg.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        dlg.setContentView(box, new android.view.ViewGroup.LayoutParams(
+            (int) (getResources().getDisplayMetrics().widthPixels * 0.84),
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
+        dlg.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(0));
+        Runnable[] holder = new Runnable[1];
+        holder[0] = () -> {
+            String q = et.getText().toString().trim();
+            if (q.length() == 0) return;
+            ti.setText("搜索中…");
+            lr.removeAllViews();
+            new Thread(() -> {
+                try {
+                    String g = httpGet("https://geocoding-api.open-meteo.com/v1/search?name=" + java.net.URLEncoder.encode(q, "UTF-8") + "&count=8&language=zh&format=json");
+                    org.json.JSONArray rs = new org.json.JSONObject(g).optJSONArray("results");
+                    if (rs == null || rs.length() == 0) throw new Exception("none");
+                    java.util.List<org.json.JSONObject> list = new java.util.ArrayList<>();
+                    for (int i = 0; i < rs.length(); i++) list.add(rs.getJSONObject(i));
+                    uiTick.post(() -> {
+                        ti.setText("选择地区");
+                        for (org.json.JSONObject o : list) {
+                            String nm = o.optString("name") + " · " + o.optString("admin1", "") + " " + o.optString("country", "");
+                            TextView tv = new TextView(this);
+                            tv.setText(nm);
+                            tv.setTextColor(0xFFF2F2F2); tv.setTextSize(15);
+                            tv.setPadding(dp(8), dp(12), dp(8), dp(12));
+                            double la = o.getDouble("latitude"), lo = o.getDouble("longitude");
+                            String cn = o.optString("name");
+                            tv.setOnClickListener(v -> {
+                                getSharedPreferences("settings", MODE_PRIVATE).edit()
+                                    .putLong("lifeLat", Double.doubleToLongBits(la))
+                                    .putLong("lifeLon", Double.doubleToLongBits(lo))
+                                    .putString("lifeCityName", cn).apply();
+                                dlg.dismiss();
+                                lifeFetched = false; lastWeatherAt = 0;
+                                refreshLifeCard();
+                            });
+                            lr.addView(tv);
+                        }
+                    });
+                } catch (Throwable e) {
+                    uiTick.post(() -> ti.setText("没找到, 换个名字试试"));
+                }
+            }, "geo").start();
+        };
+        et.setOnEditorActionListener((v, a, e) -> { holder[0].run(); return true; });
+        TextView btn = new TextView(this);
+        btn.setText("搜索");
+        btn.setTextColor(0xFFFF6A1E); btn.setTextSize(17); btn.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        btn.setGravity(android.view.Gravity.CENTER);
+        android.widget.LinearLayout.LayoutParams bp = new android.widget.LinearLayout.LayoutParams(-1, -2);
+        bp.setMargins(0, dp(16), 0, 0);
+        btn.setOnClickListener(v -> holder[0].run());
+        box.addView(btn, bp);
+        dlg.show();
+    }
+
+    /** 定位总开关没开: 按图1样式弹提醒 (深色圆角+橙色按钮) */
 
     /** 定位总开关没开: 按图1样式弹提醒 (深色圆角+橙色按钮) */
     private void ensureLocService() {
