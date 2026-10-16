@@ -756,10 +756,15 @@ public class MetronomeActivity extends Activity {
                     }
                 }
                 for (int i = 0; i < 8; i++) if (indices[i][0] == null) { indices[i][0] = want[i]; indices[i][1] = "--"; }
+                // 15天趋势: 官方 1-7 天 + 8-15 天两页
+                java.util.List<String[]> days = new java.util.ArrayList<>();
+                try { parseDays(httpGet("http://www.weather.com.cn/weather/" + code + ".shtml"), false, days); } catch (Throwable ignored) {}
+                try { parseDays(httpGet("http://www.weather.com.cn/weather15d/" + code + ".shtml"), true, days); } catch (Throwable ignored) {}
                 final String fcity = city, ftype = type, fcur = curT, fmx = mx, fmn = mn;
                 final String fh = hum, fw = wind, fp = press, fv = vis, fa = aqi;
                 final String[][] fi = indices;
-                uiTick.post(() -> buildWeather(fcity, ftype, fcur, fmn, fmx, fh, fw, fp, fv, fa, fi));
+                final java.util.List<String[]> fdays = days;
+                uiTick.post(() -> buildWeather(fcity, ftype, fcur, fmn, fmx, fh, fw, fp, fv, fa, fi, fdays));
             } catch (Throwable e) {
                 uiTick.post(() -> { ((TextView) findViewById(R.id.lifeTemp)).setText("获取失败:" + e.getClass().getSimpleName() + " 点击重试"); lifeFetched = false; lastWeatherAt = 0; });
             }
@@ -789,6 +794,67 @@ public class MetronomeActivity extends Activity {
         throw new Exception("no code");
     }
 
+    private static String wEmoji(String code) {
+        if (code == null || code.length() < 2) return "🌥";
+        int c;
+        try { c = Integer.parseInt(code.replaceAll("[^0-9]", "")); } catch (Throwable e) { return "🌥"; }
+        if (c == 0) return "☀️";
+        if (c == 1) return "🌤";
+        if (c == 2) return "☁️";
+        if (c == 3 || c == 8) return "🌦";
+        if (c == 4) return "⛈";
+        if (c >= 5 && c <= 12) return "🌧";
+        if (c >= 13 && c <= 16) return "🌨";
+        if (c == 17 || c == 18 || c == 27 || c == 28) return "🌫";
+        return "🌥";
+    }
+
+    /** 解析天气网页面天数列表: 7天页(class=sky) 与 8-15天页(class=t) */
+    private static void parseDays(String html, boolean is15d, java.util.List<String[]> out) {
+        String[] blocks = is15d
+            ? html.split("(?=<li class=\"t\">)")
+            : html.split("(?=<li class=\"sky )");
+        for (String b : blocks) {
+            if (is15d ? !b.startsWith("<li class=\"t\">") : !b.startsWith("<li class=\"sky ")) continue;
+            int end = b.indexOf("</li>");
+            if (end > 0) b = b.substring(0, end);
+            try {
+                String label, date;
+                if (is15d) {
+                    java.util.regex.Matcher mt = java.util.regex.Pattern.compile("class=\"time\">([^<（]+)（([^）]+)）").matcher(b);
+                    if (!mt.find()) continue;
+                    label = mt.group(1); date = mt.group(2);
+                } else {
+                    java.util.regex.Matcher mh = java.util.regex.Pattern.compile("<h1>([^<（]+)（([^）]+)）</h1>").matcher(b);
+                    if (!mh.find()) continue;
+                    label = mh.group(1); date = mh.group(2);
+                }
+                java.util.regex.Matcher md = java.util.regex.Pattern.compile("png\d+ ([dn]\d{2})").matcher(b);
+                String dc = md.find() ? md.group(1) : "d99";
+                String nc = md.find() ? md.group(1) : "n99";
+                java.util.regex.Matcher mw = java.util.regex.Pattern.compile(is15d ? "class=\"wea\">([^<]+)</span>" : "class=\"wea\">([^<]+)</p>").matcher(b);
+                String wea = mw.find() ? mw.group(1) : "";
+                String hi, lo, wind;
+                if (is15d) {
+                    java.util.regex.Matcher mtem = java.util.regex.Pattern.compile("<em>(-?\\d+)℃</em>/(-?\\d+)℃").matcher(b);
+                    if (!mtem.find()) continue;
+                    hi = mtem.group(1); lo = mtem.group(2);
+                    java.util.regex.Matcher mw1 = java.util.regex.Pattern.compile("class=\"wind\">([^<]+)</span>.*?class=\"wind1\">([^<]+)</span>").matcher(b);
+                    wind = mw1.find() ? mw1.group(1) + mw1.group(2) : "";
+                } else {
+                    java.util.regex.Matcher mtem = java.util.regex.Pattern.compile("<span>(-?\\d+)</span>/<i>(-?\\d+)℃</i>").matcher(b);
+                    if (!mtem.find()) continue;
+                    hi = mtem.group(1); lo = mtem.group(2);
+                    java.util.regex.Matcher mw1 = java.util.regex.Pattern.compile("title=\"([^\"]+)\" class=\"[A-Z]+\"").matcher(b);
+                    String w1 = mw1.find() ? mw1.group(1) : "";
+                    java.util.regex.Matcher mw2 = java.util.regex.Pattern.compile("<i>([^<]*级)</i>").matcher(b);
+                    wind = w1 + (mw2.find() ? mw2.group(1) : "");
+                }
+                out.add(new String[]{label, date, wEmoji(dc.substring(1)), wea, hi, lo, wEmoji(nc.substring(1)), wind});
+            } catch (Throwable ignored) {}
+        }
+    }
+
     private static String extractVar(String page, String name) {
         int i = page.indexOf("var " + name + " ");
         if (i < 0) i = page.indexOf("var " + name + "=");
@@ -813,11 +879,52 @@ public class MetronomeActivity extends Activity {
 
     private String httpGet(String u) throws Throwable { return httpGet(u, null); }
 
-    private void buildWeather(String city, String type, String curT, String mn, String mx, String hum, String wind, String press, String vis, String aqi, String[][] indices) {
+    private void buildWeather(String city, String type, String curT, String mn, String mx, String hum, String wind, String press, String vis, String aqi, String[][] indices, java.util.List<String[]> days) {
         TextView t2 = findViewById(R.id.lifeTemp);
         t2.setText(city + " · 点击切换");
         android.widget.LinearLayout grid = findViewById(R.id.lifeGrid);
         grid.removeAllViews();
+        // ===== 15天预报·趋势 (横滑, 折线) =====
+        if (days.size() > 1) {
+            TextView h15 = new TextView(this);
+            h15.setText("15天预报");
+            h15.setTextColor(0xFF1F2329); h15.setTextSize(16); h15.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            android.widget.LinearLayout.LayoutParams hp0 = new android.widget.LinearLayout.LayoutParams(-2, -2);
+            hp0.setMargins(dp(2), 0, 0, dp(6));
+            grid.addView(h15, hp0);
+            final int colW = dp(64);
+            int n = Math.min(days.size(), 15);
+            android.widget.HorizontalScrollView hsv = new android.widget.HorizontalScrollView(this);
+            hsv.setFillViewport(true);
+            hsv.setHorizontalScrollBarEnabled(false);
+            android.widget.LinearLayout rows = new android.widget.LinearLayout(this);
+            rows.setOrientation(android.widget.LinearLayout.VERTICAL);
+            rows.setMinimumWidth(colW * n);
+            // 行1: 星期+日期
+            android.widget.LinearLayout r1 = new android.widget.LinearLayout(this);
+            for (int i = 0; i < n; i++) r1.addView(trendCell(days.get(i)[0] + "\n" + days.get(i)[1], colW, 13, true));
+            rows.addView(r1);
+            // 行2: 白天天气 emoji + 天气文字
+            android.widget.LinearLayout r2 = new android.widget.LinearLayout(this);
+            for (int i = 0; i < n; i++) r2.addView(trendCell(days.get(i)[2] + "\n" + shortWea(days.get(i)[3]), colW, 11, false));
+            rows.addView(r2);
+            // 行3: 高低温折线 (数字画在线旁)
+            TrendView tv = new TrendView(this, n, colW, days);
+            tv.setLayoutParams(new android.widget.LinearLayout.LayoutParams(colW * n, dp(58)));
+            rows.addView(tv);
+            // 行4: 夜间 emoji
+            android.widget.LinearLayout r4 = new android.widget.LinearLayout(this);
+            for (int i = 0; i < n; i++) r4.addView(trendCell(days.get(i)[6], colW, 15, false));
+            rows.addView(r4);
+            // 行5: 风向风力
+            android.widget.LinearLayout r5 = new android.widget.LinearLayout(this);
+            for (int i = 0; i < n; i++) r5.addView(trendCell(days.get(i)[7].replace("级", "") + "级", colW, 10, false));
+            rows.addView(r5);
+            hsv.addView(rows);
+            android.widget.LinearLayout.LayoutParams sp = new android.widget.LinearLayout.LayoutParams(-1, -2);
+            sp.setMargins(dp(-6), 0, dp(-6), 0);
+            grid.addView(hsv, sp);
+        }
         // 当前天气卡 (照图2)
         android.widget.LinearLayout cur = new android.widget.LinearLayout(this);
         cur.setOrientation(android.widget.LinearLayout.VERTICAL);
@@ -859,12 +966,12 @@ public class MetronomeActivity extends Activity {
         grid.addView(cur, new android.widget.LinearLayout.LayoutParams(-1, -2));
         // 8格生活指数
         String[][] DATA = indices;
-        TextView h15 = new TextView(this);
-        h15.setText("生活指数");
+        TextView h8 = new TextView(this);
+        h8.setText("生活指数");
         h15.setTextColor(0xFF1F2329); h15.setTextSize(16); h15.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         android.widget.LinearLayout.LayoutParams hp = new android.widget.LinearLayout.LayoutParams(-2, -2);
         hp.setMargins(dp(2), dp(14), 0, dp(6));
-        grid.addView(h15, hp);
+        grid.addView(h8, hp);
         android.widget.LinearLayout grow = null;
         for (int i = 0; i < DATA.length; i++) {
             if (i % 4 == 0) {
@@ -1002,6 +1109,81 @@ public class MetronomeActivity extends Activity {
         cancelRepeat();
         getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         super.onPause();
+    }
+
+    private TextView trendCell(String text, int w, float sizeSp, boolean bold) {
+        TextView tv = new TextView(this);
+        tv.setText(text);
+        tv.setTextColor(0xFF1F2329);
+        tv.setTextSize(sizeSp);
+        if (bold) tv.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        tv.setGravity(android.view.Gravity.CENTER);
+        tv.setLineSpacing(dp(2), 1f);
+        android.widget.LinearLayout.LayoutParams p = new android.widget.LinearLayout.LayoutParams(w, -2);
+        p.setMargins(0, dp(6), 0, dp(6));
+        return tv;
+    }
+
+    private static String shortWea(String wea) {
+        if (wea == null) return "";
+        return wea.replace("转", "/").replace("雨夹雪", "雨雪");
+    }
+
+    /** 高低温双折线 */
+    private static class TrendView extends android.view.View {
+        private final int cols, colW;
+        private final java.util.List<String[]> days;
+        private final android.graphics.Paint line = new android.graphics.Paint(), dot = new android.graphics.Paint(), txt = new android.graphics.Paint();
+        TrendView(android.content.Context c, int cols, int colW, java.util.List<String[]> days) {
+            super(c);
+            this.cols = cols; this.colW = colW; this.days = days;
+            line.setColor(0xFFFF8A3C); line.setStyle(android.graphics.Paint.Style.STROKE);
+            line.setStrokeWidth(dp2(2)); line.setAntiAlias(true); line.setStrokeCap(android.graphics.Paint.Cap.ROUND);
+            dot.setColor(0xFFFF8A3C); dot.setAntiAlias(true);
+            txt.setColor(0xFF1F2329); txt.setAntiAlias(true);
+            txt.setTextAlign(android.graphics.Paint.Align.CENTER);
+            txt.setTextSize(dp2(12));
+        }
+        private static float dp2(int v) { return v * android.content.res.Resources.getSystem().getDisplayMetrics().density; }
+        @Override protected void onDraw(android.graphics.Canvas cv) {
+            super.onDraw(cv);
+            if (days == null || days.isEmpty()) return;
+            int n = Math.min(cols, days.size());
+            float hiMin = Float.MAX_VALUE, hiMax = -Float.MAX_VALUE, loMin = hiMin, loMax = hiMax;
+            for (int i = 0; i < n; i++) {
+                try { float v = Float.parseFloat(days.get(i)[4]); hiMin = Math.min(hiMin, v); hiMax = Math.max(hiMax, v); } catch (Throwable ignored) {}
+                try { float v = Float.parseFloat(days.get(i)[5]); loMin = Math.min(loMin, v); loMax = Math.max(loMax, v); } catch (Throwable ignored) {}
+            }
+            if (hiMin == Float.MAX_VALUE || loMin == Float.MAX_VALUE) return;
+            if (hiMax == hiMin) hiMax = hiMin + 1;
+            if (loMax == loMin) loMax = loMin + 1;
+            float mid = getHeight() / 2f;
+            float span = getHeight() / 2f - dp2(18);
+            float[] hx = new float[n], hy = new float[n], ly = new float[n];
+            android.graphics.Path hp = new android.graphics.Path(), lp = new android.graphics.Path();
+            for (int i = 0; i < n; i++) {
+                float x = i * colW + colW / 2f;
+                hx[i] = x;
+                try { hy[i] = mid - span * ((Float.parseFloat(days.get(i)[4]) - hiMin) / (hiMax - hiMin)); } catch (Throwable e) { hy[i] = mid - span; }
+                try { ly[i] = mid + span * (1 - (Float.parseFloat(days.get(i)[5]) - loMin) / (loMax - loMin)); } catch (Throwable e) { ly[i] = mid + span; }
+                if (i == 0) { hp.moveTo(x, hy[i]); lp.moveTo(x, ly[i]); }
+                else { hp.lineTo(x, hy[i]); lp.lineTo(x, ly[i]); }
+            }
+            line.setColor(0xFFFF8A3C);
+            cv.drawPath(hp, line);
+            line.setColor(0xFF5BA8F5);
+            cv.drawPath(lp, line);
+            for (int i = 0; i < n; i++) {
+                dot.setColor(0xFFFF8A3C);
+                cv.drawCircle(hx[i], hy[i], dp2(3), dot);
+                dot.setColor(0xFF5BA8F5);
+                cv.drawCircle(hx[i], ly[i], dp2(3), dot);
+                txt.setColor(0xFFE5762A);
+                cv.drawText(days.get(i)[4] + "°", hx[i], hy[i] - dp2(8), txt);
+                txt.setColor(0xFF4A90D9);
+                cv.drawText(days.get(i)[5] + "°", hx[i], ly[i] + dp2(17), txt);
+            }
+        }
     }
 
     @Override
