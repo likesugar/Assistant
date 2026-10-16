@@ -945,19 +945,6 @@ public class MetronomeActivity extends Activity {
                 } catch (Throwable ignored5) {}
                 } catch (Throwable ignored) {}
                 }
-                if (days.size() < 2) { // 百度不通 → 官方 d1 fc 兜底
-                    days.clear();
-                    try {
-                        org.json.JSONArray f = new org.json.JSONObject(extractVar(page, "fc")).getJSONArray("f");
-                        for (int i = 0; i < f.length(); i++) {
-                            org.json.JSONObject o = f.getJSONObject(i);
-                            days.add(new String[]{o.optString("fj"), o.optString("fi"),
-                                wEmoji("d" + o.optString("fa", "99")), wCode(safeInt(o.optString("fa"))),
-                                o.optString("fc"), o.optString("fd"), nightEmoji(safeInt(o.optString("fb"))),
-                                o.optString("fe") + o.optString("fg"), "--", "--", "--", "--"});
-                        }
-                    } catch (Throwable ignored2) {}
-                }
                 final java.util.List<String[]> fhours = hours;
                 final java.util.List<String[]> fdays = days;
                 final String fcity = city, ftype = type, fcur = curT, fmx = mx, fmn = mn;
@@ -1168,7 +1155,7 @@ public class MetronomeActivity extends Activity {
         // ===== 7天预报·趋势 (单View自绘, 一列一栏, 可点) =====
         if (days.size() > 1) {
             TextView h15 = new TextView(this);
-            h15.setText("15天预报");
+            h15.setText("15天预报·" + n + "列");
             h15.setTextColor(tc()); h15.setTextSize(16); h15.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
             android.widget.LinearLayout.LayoutParams hp0 = new android.widget.LinearLayout.LayoutParams(-2, -2);
             hp0.setMargins(dp(2), 0, 0, dp(6));
