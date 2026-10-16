@@ -798,48 +798,60 @@ public class MetronomeActivity extends Activity {
                         for (int i = 0; i < 8; i++) if (!"--".equals(baidu[i][1])) { indices[i][0] = baidu[i][0]; indices[i][1] = baidu[i][1]; }
                     }
                 } catch (Throwable ignored4) {}
-                // 7天趋势: 中国气象源 (d1 fc) 为主, open-meteo 仅作隐形兜底
+                // 7天趋势: 百度天气 dayForecastList (与百度页面同源同口径)
                 java.util.List<String[]> days = new java.util.ArrayList<>();
                 try {
-                    org.json.JSONArray f = new org.json.JSONObject(extractVar(page, "fc")).getJSONArray("f");
-                    for (int i = 0; i < f.length(); i++) {
-                        org.json.JSONObject o = f.getJSONObject(i);
-                        days.add(new String[]{o.optString("fj"), o.optString("fi"),
-                            wEmoji("d" + o.optString("fa", "99")), wCode(safeInt(o.optString("fa"))),
-                            o.optString("fc"), o.optString("fd"), nightEmoji(safeInt(o.optString("fb"))),
-                            o.optString("fe") + o.optString("fg"), "--", "--", "--", "--"});
+                    String bq = java.net.URLEncoder.encode(cname + "天气", "UTF-8");
+                    java.net.HttpURLConnection bc = (java.net.HttpURLConnection) new java.net.URL("https://m.baidu.com/s?from=1022282z&word=" + bq).openConnection();
+                    bc.setConnectTimeout(10000); bc.setReadTimeout(10000);
+                    bc.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13; RMX3823) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
+                    bc.setRequestProperty("Cookie", "BAIDUID=" + java.util.UUID.randomUUID().toString().replace("-", "").toUpperCase() + ":FG=1");
+                    java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(bc.getInputStream(), "UTF-8"));
+                    StringBuilder bb = new StringBuilder(); String bl;
+                    while ((bl = br.readLine()) != null) bb.append(bl);
+                    br.close();
+                    String bh = bb.toString();
+                    int di = bh.indexOf("\"dayForecastList\":");
+                    if (di >= 0) {
+                        int j = bh.indexOf('[', di);
+                        int depth = 0, end = -1;
+                        for (int k = j; k < bh.length(); k++) {
+                            char ch = bh.charAt(k);
+                            if (ch == '[') depth++;
+                            else if (ch == ']') { depth--; if (depth == 0) { end = k + 1; break; } }
+                        }
+                        if (end > 0) {
+                            org.json.JSONArray arr = new org.json.JSONArray(bh.substring(j, end));
+                            int start = 0;
+                            for (int i = 0; i < arr.length(); i++) {
+                                if ("今天".equals(arr.getJSONObject(i).optString("word"))) { start = i; break; }
+                            }
+                            for (int i = start; i < arr.length() && days.size() < 7; i++) {
+                                org.json.JSONObject o = arr.getJSONObject(i);
+                                String wd = o.optString("weather_day", "--");
+                                days.add(new String[]{
+                                    o.optString("word", "--"), o.optString("date", "--"),
+                                    baiduEmoji(o.optString("dayIconKey", "")), wd,
+                                    o.optString("temperature_day", "--"), o.optString("temperature_night", "--"),
+                                    baiduEmoji(o.optString("nightIconKey", "")),
+                                    o.optString("wind_direction", "") + o.optString("wind_power", ""),
+                                    o.optString("uv", "--"),
+                                    o.optString("sunriseTime", "--"), o.optString("sunsetTime", "--"),
+                                    o.getJSONObject("humidity").optString("text", "--") + "%"});
+                            }
+                        }
                     }
                 } catch (Throwable ignored) {}
-                if (days.size() < 2) {
+                if (days.size() < 2) { // 百度不通 → 官方 d1 fc 兜底
                     days.clear();
                     try {
-                        double[] ll = geocode(cname);
-                        String dj = httpGet("https://api.open-meteo.com/v1/forecast?latitude=" + ll[0] + "&longitude=" + ll[1]
-                            + "&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset,precipitation_probability_max,wind_speed_10m_max,wind_direction_dominant"
-                            + "&timezone=auto&forecast_days=7");
-                        org.json.JSONObject dd = new org.json.JSONObject(dj).getJSONObject("daily");
-                        org.json.JSONArray dtime = dd.getJSONArray("time");
-                        String[] week = {"周日", "周一", "周二", "周三", "周四", "周五", "周六"};
-                        java.text.SimpleDateFormat in = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US);
-                        java.util.Calendar ca = java.util.Calendar.getInstance();
-                        for (int i = 0; i < dtime.length(); i++) {
-                            String dstr = dtime.getString(i);
-                            ca.setTime(in.parse(dstr));
-                            String wk = week[ca.get(java.util.Calendar.DAY_OF_WEEK) - 1];
-                            String label = i == 0 ? "今天" : i == 1 ? "明天" : i == 2 ? "后天" : wk;
-                            String date = (ca.get(java.util.Calendar.MONTH) + 1) + "/" + ca.get(java.util.Calendar.DAY_OF_MONTH);
-                            int wc = dd.getJSONArray("weather_code").getInt(i);
-                            String hi = String.format("%.0f", dd.getJSONArray("temperature_2m_max").getDouble(i));
-                            String lo = String.format("%.0f", dd.getJSONArray("temperature_2m_min").getDouble(i));
-                            String uv = String.format("%.1f", dd.getJSONArray("uv_index_max").getDouble(i));
-                            String rise = dd.getJSONArray("sunrise").getString(i).substring(11);
-                            String sett = dd.getJSONArray("sunset").getString(i).substring(11);
-                            String pp = dd.getJSONArray("precipitation_probability_max").getInt(i) + "%";
-                            double spd = dd.getJSONArray("wind_speed_10m_max").getDouble(i);
-                            int lv = spd < 6 ? 1 : spd < 12 ? 2 : spd < 20 ? 3 : spd < 29 ? 4 : spd < 39 ? 5 : 6;
-                            String[] dirn = {"北", "东北", "东", "东南", "南", "西南", "西", "西北"};
-                            String wd = dirn[((int) Math.round(dd.getJSONArray("wind_direction_dominant").getDouble(i) / 45.0)) % 8] + "风" + lv + "级";
-                            days.add(new String[]{label, date, wEmoji(String.format("d%02d", wc)), wCode(wc), hi, lo, nightEmoji(wc), wd, uv, rise, sett, pp});
+                        org.json.JSONArray f = new org.json.JSONObject(extractVar(page, "fc")).getJSONArray("f");
+                        for (int i = 0; i < f.length(); i++) {
+                            org.json.JSONObject o = f.getJSONObject(i);
+                            days.add(new String[]{o.optString("fj"), o.optString("fi"),
+                                wEmoji("d" + o.optString("fa", "99")), wCode(safeInt(o.optString("fa"))),
+                                o.optString("fc"), o.optString("fd"), nightEmoji(safeInt(o.optString("fb"))),
+                                o.optString("fe") + o.optString("fg"), "--", "--", "--", "--"});
                         }
                     } catch (Throwable ignored2) {}
                 }
@@ -896,6 +908,21 @@ public class MetronomeActivity extends Activity {
         if (c <= 82) return "阵雨";
         if (c <= 86) return "阵雪";
         return "雷雨";
+    }
+
+    private static String baiduEmoji(String key) {
+        if (key == null || key.length() == 0) return "🌥";
+        boolean night = key.endsWith("_ye");
+        String k = night ? key.substring(0, key.length() - 3) : key;
+        if (k.startsWith("qing")) return night ? "🌙" : "☀️";
+        if (k.startsWith("duoyun")) return night ? "☁️" : "⛅";
+        if (k.startsWith("yin")) return "☁️";
+        if (k.contains("leizhenyu")) return "⛈";
+        if (k.contains("zhenyu")) return "🌦";
+        if (k.contains("yu")) return "🌧";
+        if (k.contains("xue")) return "🌨";
+        if (k.contains("wu") || k.contains("sha")) return "🌫";
+        return "🌥";
     }
 
     private static int safeInt(String v) {
@@ -1084,7 +1111,7 @@ public class MetronomeActivity extends Activity {
         meta.setGravity(android.view.Gravity.CENTER);
         String[][] ms = today
             ? new String[][]{{"湿度", hum}, {"风力", wind}, {"气压", press}, {"能见度", vis}, {"空气", aqi}}
-            : new String[][]{{"降水", d[11]}, {"紫外线", d[8]}, {"日出", d[9]}, {"日落", d[10]}, {"风力", wind}};
+            : new String[][]{{"湿度", d[11]}, {"紫外线", d[8]}, {"日出", d[9]}, {"日落", d[10]}, {"风力", wind}};
         for (String[] m : ms) {
             android.widget.LinearLayout col = new android.widget.LinearLayout(this);
             col.setOrientation(android.widget.LinearLayout.VERTICAL);
