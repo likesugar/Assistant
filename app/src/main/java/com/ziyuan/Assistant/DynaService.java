@@ -339,6 +339,8 @@ public class DynaService extends Service {
             }
         } catch (Throwable e) { }
         }
+    }
+
     // ---------- 抖音：开播 ----------
     private void checkDouyin(SharedPreferences sp, String webRid) throws Exception {
         String ttwid = sp.getString("ttwid", null);
