@@ -798,50 +798,48 @@ public class MetronomeActivity extends Activity {
                         for (int i = 0; i < 8; i++) if (!"--".equals(baidu[i][1])) { indices[i][0] = baidu[i][0]; indices[i][1] = baidu[i][1]; }
                     }
                 } catch (Throwable ignored4) {}
-                // 7天趋势: open-meteo daily (手机端稳定可达), 逐日天气/温度/紫外线/日出日落/降水概率/风
+                // 7天趋势: 中国气象源 (d1 fc) 为主, open-meteo 仅作隐形兜底
                 java.util.List<String[]> days = new java.util.ArrayList<>();
                 try {
-                    double[] ll = geocode(cname);
-                    double lat = ll[0], lon = ll[1];
-                    String dj = httpGet("https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon
-                        + "&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset,precipitation_probability_max,wind_speed_10m_max,wind_direction_dominant"
-                        + "&timezone=auto&forecast_days=7");
-                    org.json.JSONObject dd = new org.json.JSONObject(dj).getJSONObject("daily");
-                    org.json.JSONArray dtime = dd.getJSONArray("time");
-                    String[] week = {"周日", "周一", "周二", "周三", "周四", "周五", "周六"};
-                    java.text.SimpleDateFormat in = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US);
-                    java.util.Calendar ca = java.util.Calendar.getInstance();
-                    for (int i = 0; i < dtime.length(); i++) {
-                        String dstr = dtime.getString(i);
-                        ca.setTime(in.parse(dstr));
-                        String wk = week[ca.get(java.util.Calendar.DAY_OF_WEEK) - 1];
-                        String label = i == 0 ? "今天" : i == 1 ? "明天" : i == 2 ? "后天" : wk;
-                        String date = (ca.get(java.util.Calendar.MONTH) + 1) + "/" + ca.get(java.util.Calendar.DAY_OF_MONTH);
-                        int wc = dd.getJSONArray("weather_code").getInt(i);
-                        String wea = wCode(wc);
-                        String hi = String.format("%.0f", dd.getJSONArray("temperature_2m_max").getDouble(i));
-                        String lo = String.format("%.0f", dd.getJSONArray("temperature_2m_min").getDouble(i));
-                        String uv = String.format("%.1f", dd.getJSONArray("uv_index_max").getDouble(i));
-                        String rise = dd.getJSONArray("sunrise").getString(i).substring(11);
-                        String sett = dd.getJSONArray("sunset").getString(i).substring(11);
-                        String pp = dd.getJSONArray("precipitation_probability_max").getInt(i) + "%";
-                        double spd = dd.getJSONArray("wind_speed_10m_max").getDouble(i);
-                        int lv = spd < 6 ? 1 : spd < 12 ? 2 : spd < 20 ? 3 : spd < 29 ? 4 : spd < 39 ? 5 : 6;
-                        String[] dirn = {"北", "东北", "东", "东南", "南", "西南", "西", "西北"};
-                        String wd = dirn[((int) Math.round(dd.getJSONArray("wind_direction_dominant").getDouble(i) / 45.0)) % 8] + "风" + lv + "级";
-                        days.add(new String[]{label, date, wEmoji(String.format("d%02d", wc)), wea, hi, lo, nightEmoji(wc), wd, uv, rise, sett, pp});
+                    org.json.JSONArray f = new org.json.JSONObject(extractVar(page, "fc")).getJSONArray("f");
+                    for (int i = 0; i < f.length(); i++) {
+                        org.json.JSONObject o = f.getJSONObject(i);
+                        days.add(new String[]{o.optString("fj"), o.optString("fi"),
+                            wEmoji("d" + o.optString("fa", "99")), wCode(safeInt(o.optString("fa"))),
+                            o.optString("fc"), o.optString("fd"), nightEmoji(safeInt(o.optString("fb"))),
+                            o.optString("fe") + o.optString("fg"), "--", "--", "--", "--"});
                     }
                 } catch (Throwable ignored) {}
-                if (days.size() < 2) { // open-meteo 不通 → 官方 d1 fc 兜底 (5天)
+                if (days.size() < 2) {
                     days.clear();
                     try {
-                        org.json.JSONArray f = new org.json.JSONObject(extractVar(page, "fc")).getJSONArray("f");
-                        for (int i = 0; i < f.length(); i++) {
-                            org.json.JSONObject o = f.getJSONObject(i);
-                            days.add(new String[]{o.optString("fj"), o.optString("fi"),
-                                wEmoji("d" + o.optString("fa", "99")), wCode(safeInt(o.optString("fa"))),
-                                o.optString("fc"), o.optString("fd"), nightEmoji(safeInt(o.optString("fb"))),
-                                o.optString("fe") + o.optString("fg"), "--", "--", "--", "--"});
+                        double[] ll = geocode(cname);
+                        String dj = httpGet("https://api.open-meteo.com/v1/forecast?latitude=" + ll[0] + "&longitude=" + ll[1]
+                            + "&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset,precipitation_probability_max,wind_speed_10m_max,wind_direction_dominant"
+                            + "&timezone=auto&forecast_days=7");
+                        org.json.JSONObject dd = new org.json.JSONObject(dj).getJSONObject("daily");
+                        org.json.JSONArray dtime = dd.getJSONArray("time");
+                        String[] week = {"周日", "周一", "周二", "周三", "周四", "周五", "周六"};
+                        java.text.SimpleDateFormat in = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US);
+                        java.util.Calendar ca = java.util.Calendar.getInstance();
+                        for (int i = 0; i < dtime.length(); i++) {
+                            String dstr = dtime.getString(i);
+                            ca.setTime(in.parse(dstr));
+                            String wk = week[ca.get(java.util.Calendar.DAY_OF_WEEK) - 1];
+                            String label = i == 0 ? "今天" : i == 1 ? "明天" : i == 2 ? "后天" : wk;
+                            String date = (ca.get(java.util.Calendar.MONTH) + 1) + "/" + ca.get(java.util.Calendar.DAY_OF_MONTH);
+                            int wc = dd.getJSONArray("weather_code").getInt(i);
+                            String hi = String.format("%.0f", dd.getJSONArray("temperature_2m_max").getDouble(i));
+                            String lo = String.format("%.0f", dd.getJSONArray("temperature_2m_min").getDouble(i));
+                            String uv = String.format("%.1f", dd.getJSONArray("uv_index_max").getDouble(i));
+                            String rise = dd.getJSONArray("sunrise").getString(i).substring(11);
+                            String sett = dd.getJSONArray("sunset").getString(i).substring(11);
+                            String pp = dd.getJSONArray("precipitation_probability_max").getInt(i) + "%";
+                            double spd = dd.getJSONArray("wind_speed_10m_max").getDouble(i);
+                            int lv = spd < 6 ? 1 : spd < 12 ? 2 : spd < 20 ? 3 : spd < 29 ? 4 : spd < 39 ? 5 : 6;
+                            String[] dirn = {"北", "东北", "东", "东南", "南", "西南", "西", "西北"};
+                            String wd = dirn[((int) Math.round(dd.getJSONArray("wind_direction_dominant").getDouble(i) / 45.0)) % 8] + "风" + lv + "级";
+                            days.add(new String[]{label, date, wEmoji(String.format("d%02d", wc)), wCode(wc), hi, lo, nightEmoji(wc), wd, uv, rise, sett, pp});
                         }
                     } catch (Throwable ignored2) {}
                 }
