@@ -807,8 +807,8 @@ public class MetronomeActivity extends Activity {
                             }
                         }
                         for (int i = 0; i < 8; i++) if (!"--".equals(baidu[i][1])) { indices[i][0] = baidu[i][0]; indices[i][1] = baidu[i][1]; }
-                        // 同页兜底: dayForecastList / hourInfoData (m站不通时 7天+小时条从这里来)
-                        if (days.size() < 2) {
+                        // 同页解析: dayForecastList / hourInfoData (桌面页有数据即覆盖, 优先于fc兜底)
+                        {
                             int di2 = bhtml.indexOf("\"dayForecastList\":");
                             if (di2 >= 0) {
                                 int j3 = bhtml.indexOf('[', di2);
@@ -840,7 +840,7 @@ public class MetronomeActivity extends Activity {
                                 }
                             }
                         }
-                        if (hours.size() == 0) {
+                        {
                             int hi3 = bhtml.indexOf("\"hourInfoData\":");
                             if (hi3 >= 0) {
                                 int j4 = bhtml.indexOf('[', hi3);
