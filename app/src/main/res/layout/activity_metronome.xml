@@ -65,14 +65,14 @@
                         android:text="节奏" android:textSize="15sp" android:textStyle="bold" android:tag="title"/>
                     <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:orientation="horizontal" android:gravity="center" android:layout_marginTop="10dp">
-                        <TextView android:id="@+id/bpmDown" android:layout_width="wrap_content" android:layout_height="40dp"
-                            android:gravity="center" android:text="☜\uFE0E" android:textSize="17sp" android:textStyle="bold" android:paddingLeft="2dp" android:paddingRight="2dp" android:minWidth="26dp" android:tag="title"/>
+                        <ImageView android:id="@+id/bpmDown" android:layout_width="34dp" android:layout_height="40dp"
+                            android:scaleType="fitCenter" android:layout_marginRight="6dp" android:src="@drawable/ic_tri_left"/>
                         <EditText android:id="@+id/tvBpm" android:layout_width="52dp" android:layout_height="40dp"
                             android:gravity="center" android:text="80" android:textSize="18sp" android:textStyle="bold" android:tag="title"
                             android:inputType="number" android:imeOptions="actionDone"
                             android:background="@drawable/bg_btn_md3"/>
-                        <TextView android:id="@+id/bpmUp" android:layout_width="wrap_content" android:layout_height="40dp"
-                            android:gravity="center" android:text="☞\uFE0E" android:textSize="17sp" android:textStyle="bold" android:paddingLeft="2dp" android:paddingRight="2dp" android:minWidth="26dp" android:tag="title"/>
+                        <ImageView android:id="@+id/bpmUp" android:layout_width="34dp" android:layout_height="40dp"
+                            android:scaleType="fitCenter" android:layout_marginLeft="6dp" android:src="@drawable/ic_tri_right"/>
                     </LinearLayout>
                 </LinearLayout>
                 <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"

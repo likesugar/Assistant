@@ -99,6 +99,9 @@ public class MetronomeActivity extends Activity {
         });
         bindBpmArrow(R.id.bpmDown, -1);
         bindBpmArrow(R.id.bpmUp, 1);
+        int triC = color(0xFFE8ECF4, 0xFF1F2329);
+        ((android.widget.ImageView) findViewById(R.id.bpmDown)).setColorFilter(triC);
+        ((android.widget.ImageView) findViewById(R.id.bpmUp)).setColorFilter(triC);
         refreshTop();
         buildDots();
         buildBgList();
