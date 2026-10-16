@@ -727,24 +727,39 @@ public class MetronomeActivity extends Activity {
                     cname = ipCity();
                     code = cityCode(cname);
                 }
-                String json = httpGet("http://t.weather.itboy.net/api/weather/city/" + code);
-                org.json.JSONObject j = new org.json.JSONObject(json);
-                if (j.optInt("status") != 200) throw new Exception("bad status");
-                org.json.JSONObject data = j.getJSONObject("data");
-                String city = j.getJSONObject("cityInfo").optString("city", cname);
-                String wendu = data.optString("wendu", "--");
-                String shidu = data.optString("shidu", "--");
-                String quality = data.optString("quality", "--");
-                String pm25 = String.valueOf(Math.round(data.optDouble("pm25", 0)));
-                org.json.JSONArray fc = data.getJSONArray("forecast");
-                org.json.JSONObject d0 = fc.getJSONObject(0);
-                String type = d0.optString("type", "--");
-                String high = d0.optString("high", "").replace("高温 ", "").replace("℃", "");
-                String low = d0.optString("low", "").replace("低温 ", "").replace("℃", "");
-                String sunrise = d0.optString("sunrise", "--"), sunset = d0.optString("sunset", "--");
-                String fx = d0.optString("fx", "--"), fl = d0.optString("fl", "--");
-                final String fcity = city, ftype = type, fhigh = high, flow = low;
-                uiTick.post(() -> buildWeather(fcity, ftype, wendu, flow, fhigh, shidu, fx, fl, sunrise, sunset, quality, pm25));
+                String page = httpGet("http://d1.weather.com.cn/weather_index/" + code + ".html?_=" + System.currentTimeMillis(), "http://www.weather.com.cn/");
+                org.json.JSONObject sk = new org.json.JSONObject(extractVar(page, "dataSK"));
+                org.json.JSONObject dz = new org.json.JSONObject(extractVar(page, "cityDZ")).getJSONObject("weatherinfo");
+                org.json.JSONObject zs = new org.json.JSONObject(extractVar(page, "dataZS")).getJSONObject("zs");
+                org.json.JSONObject f0 = new org.json.JSONObject(extractVar(page, "fc")).getJSONArray("f").getJSONObject(0);
+                String city = sk.optString("cityname", cname);
+                String type = dz.optString("weather", sk.optString("weather", "--"));
+                String curT = sk.optString("temp", dz.optString("temp", "--"));
+                String mx = f0.optString("fc", "--"), mn = f0.optString("fd", "--");
+                String hum = sk.optString("SD", "--");
+                String wind = sk.optString("WD", "") + sk.optString("WS", "");
+                String press = sk.optString("qy", "--") + "hPa";
+                String vis = sk.optString("njd", "--");
+                String aqi = "良 " + sk.optString("aqi", "--");
+                String[][] indices = new String[8][2];
+                String[] want = {"穿衣", "运动", "紫外线", "旅游", "化妆", "钓鱼", "感冒", "洗车"};
+                java.util.Iterator<String> it = zs.keys();
+                while (it.hasNext()) {
+                    String k = it.next();
+                    if (!k.endsWith("_name")) continue;
+                    String nm = zs.optString(k, "");
+                    for (int i = 0; i < want.length; i++) {
+                        if (nm.startsWith(want[i]) && indices[i][1] == null) {
+                            indices[i][0] = want[i];
+                            indices[i][1] = zs.optString(k.substring(0, k.length() - 5) + "_hint", "--");
+                        }
+                    }
+                }
+                for (int i = 0; i < 8; i++) if (indices[i][0] == null) { indices[i][0] = want[i]; indices[i][1] = "--"; }
+                final String fcity = city, ftype = type, fcur = curT, fmx = mx, fmn = mn;
+                final String fh = hum, fw = wind, fp = press, fv = vis, fa = aqi;
+                final String[][] fi = indices;
+                uiTick.post(() -> buildWeather(fcity, ftype, fcur, fmn, fmx, fh, fw, fp, fv, fa, fi));
             } catch (Throwable e) {
                 uiTick.post(() -> { ((TextView) findViewById(R.id.lifeTemp)).setText("天气获取失败, 点击重试"); lifeFetched = false; lastWeatherAt = 0; });
             }
@@ -774,10 +789,17 @@ public class MetronomeActivity extends Activity {
         throw new Exception("no code");
     }
 
-    private String httpGet(String u) throws Throwable {
+    private static String extractVar(String page, String name) {
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("var " + name + " *=?(\\{.*?\\}|\\[.*?\\]);").matcher(page);
+        if (!m.find()) throw new RuntimeException("no " + name);
+        return m.group(1);
+    }
+
+    private String httpGet(String u, String referer) throws Throwable {
         java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(u).openConnection();
         c.setConnectTimeout(8000); c.setReadTimeout(8000);
         c.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
+        if (referer != null) c.setRequestProperty("Referer", referer);
         java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(c.getInputStream(), "UTF-8"));
         StringBuilder sb = new StringBuilder(); String line;
         while ((line = r.readLine()) != null) sb.append(line);
@@ -785,7 +807,9 @@ public class MetronomeActivity extends Activity {
         return sb.toString();
     }
 
-    private void buildWeather(String city, String type, String curT, String mn, String mx, String hum, String fx, String fl, String rise, String set, String quality, String pm25) {
+    private String httpGet(String u) throws Throwable { return httpGet(u, null); }
+
+    private void buildWeather(String city, String type, String curT, String mn, String mx, String hum, String wind, String press, String vis, String aqi, String[][] indices) {
         TextView t2 = findViewById(R.id.lifeTemp);
         t2.setText(city + " · 点击切换");
         android.widget.LinearLayout grid = findViewById(R.id.lifeGrid);
@@ -810,7 +834,7 @@ public class MetronomeActivity extends Activity {
         android.widget.LinearLayout meta = new android.widget.LinearLayout(this);
         meta.setOrientation(android.widget.LinearLayout.HORIZONTAL);
         meta.setGravity(android.view.Gravity.CENTER);
-        String[][] ms = {{"湿度", hum}, {"风力", fx + fl}, {"日出", rise}, {"日落", set}, {"空气", quality + " " + pm25}};
+        String[][] ms = {{"湿度", hum}, {"风力", wind}, {"气压", press}, {"能见度", vis}, {"空气", aqi}};
         for (String[] m : ms) {
             android.widget.LinearLayout col = new android.widget.LinearLayout(this);
             col.setOrientation(android.widget.LinearLayout.VERTICAL);
@@ -830,10 +854,7 @@ public class MetronomeActivity extends Activity {
         cur.addView(meta, mp);
         grid.addView(cur, new android.widget.LinearLayout.LayoutParams(-1, -2));
         // 8格生活指数
-        String[][] DATA = {
-            {"短袖类", "穿衣"}, {"不适宜", "运动"}, {"弱", "紫外线"}, {"较适宜", "旅游"},
-            {"控油", "化妆"}, {"比较适宜", "钓鱼"}, {"较易发", "感冒"}, {"适宜", "洗车"}
-        };
+        String[][] DATA = indices;
         TextView h15 = new TextView(this);
         h15.setText("生活指数");
         h15.setTextColor(0xFF1F2329); h15.setTextSize(16); h15.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
@@ -908,14 +929,21 @@ public class MetronomeActivity extends Activity {
             lr.removeAllViews();
             new Thread(() -> {
                 try {
-                    String g = httpGet("http://toy1.weather.com.cn/search?cityname=" + java.net.URLEncoder.encode(q, "UTF-8"));
-                    java.util.regex.Matcher mr = java.util.regex.Pattern.compile("(101\\d{6})~[^~]*~([^~]+)~").matcher(g);
+                    String[] tries = {q, q + "市", q.endsWith("市") ? q.substring(0, q.length() - 1) : q};
                     java.util.List<String[]> list = new java.util.ArrayList<>();
-                    while (mr.find()) {
-                        String code = mr.group(1), nm = mr.group(2);
-                        boolean dup = false;
-                        for (String[] x : list) if (x[0].equals(code)) { dup = true; break; }
-                        if (!dup) list.add(new String[]{code, nm});
+                    for (String t : tries) {
+                        if (t.length() == 0) continue;
+                        try {
+                            String g = httpGet("http://toy1.weather.com.cn/search?cityname=" + java.net.URLEncoder.encode(t, "UTF-8"), "http://www.weather.com.cn/");
+                            java.util.regex.Matcher mr = java.util.regex.Pattern.compile("(101\\d{6})~[^~]*~([^~]+)~").matcher(g);
+                            while (mr.find()) {
+                                String code = mr.group(1), nm = mr.group(2);
+                                boolean dup = false;
+                                for (String[] x : list) if (x[0].equals(code)) { dup = true; break; }
+                                if (!dup) list.add(new String[]{code, nm});
+                            }
+                        } catch (Throwable ignored) {}
+                        if (!list.isEmpty()) break;
                     }
                     if (list.isEmpty()) throw new Exception("none");
                     uiTick.post(() -> {
