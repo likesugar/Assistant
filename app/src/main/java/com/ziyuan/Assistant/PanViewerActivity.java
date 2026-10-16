@@ -21,6 +21,7 @@ import java.util.HashMap;
 public class PanViewerActivity extends Activity {
 
     private WebView web;
+    private static int dp2(int v) { return (int) (v * android.content.res.Resources.getSystem().getDisplayMetrics().density); }
     private String key;
 
     @Override protected void onCreate(Bundle b) {
@@ -149,6 +150,28 @@ public class PanViewerActivity extends Activity {
         web.setVerticalScrollBarEnabled(true);
         web.setBackgroundColor(Color.TRANSPARENT);
         root.addView(web, new LinearLayout.LayoutParams(-1, 0, 1f));
+        // 常驻"复制"按钮: 复制当前排盘页全文 (小六壬/梅花/六爻/奇门/八字通用)
+        web.addJavascriptInterface(new Object() {
+            @android.webkit.JavascriptInterface
+            public void done(String text) {
+                android.content.ClipboardManager cm = (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                if (cm != null) cm.setPrimaryClip(android.content.ClipData.newPlainText("pan", text));
+                runOnUiThread(() -> android.widget.Toast.makeText(PanViewerActivity.this, "已复制排盘内容", android.widget.Toast.LENGTH_SHORT).show());
+            }
+        }, "__copy");
+        android.widget.Button cpBtn = new android.widget.Button(this);
+        cpBtn.setText("复制排盘");
+        cpBtn.setTextSize(14);
+        cpBtn.setTextColor(0xFFFFFFFF);
+        cpBtn.setBackground(new android.graphics.drawable.GradientDrawable() {{
+            setColor(0xCC2A3142); setCornerRadius(dp2(14));
+        }});
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(-2, dp2(40));
+        ((android.graphics.drawable.GradientDrawable) cpBtn.getBackground()).setAlpha(230);
+        clp.setMargins(dp2(16), dp2(8), dp2(16), dp2(12));
+        cpBtn.setOnClickListener(v -> web.evaluateJavascript(
+            "(function(){var t=document.body?document.body.innerText:'';__copy.done(t);})()", null));
+        root.addView(cpBtn, clp);
         setContentView(root);
         Immersive.hide(this);
         web.loadUrl("https://pan.local/index.html");
