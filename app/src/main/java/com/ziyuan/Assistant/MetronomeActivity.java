@@ -1057,6 +1057,9 @@ public class MetronomeActivity extends Activity {
             grid.addView(h15, hp0);
             final int colW = dp(78);
             final int n = Math.min(days.size(), 7);
+            final TrendView[] tvh = new TrendView[1];
+            TrendView tv = new TrendView(this, n, colW, wDays, idx -> { selDay = idx; if (tvh[0] != null) tvh[0].setSelected(idx); refreshCurCard(); });
+            tvh[0] = tv;
             tv.setLayoutParams(new android.widget.LinearLayout.LayoutParams(-1, dp(238)));
             grid.addView(tv, new android.widget.LinearLayout.LayoutParams(-1, dp(238)));
         }
