@@ -685,7 +685,7 @@ public class MetronomeActivity extends Activity {
             requestPermissions(new String[]{"android.permission.ACTIVITY_RECOGNITION", P}, 3);
             return;
         }
-        if (checkSelfPermission(P) == 0) { ensureLocService(); return; }
+        if (checkSelfPermission(P) == 0) return;
         if (shouldShowRequestPermissionRationale(P)) {
             // 拒过一次: 再弹系统申请框
             requestPermissions(new String[]{P}, 2);
@@ -702,21 +702,9 @@ public class MetronomeActivity extends Activity {
         }
     }
 
-    // ===== 天气+生活服务 (open-meteo 免key, 默认用本机定位) =====
+    // ===== 天气+生活服务 (中国天气网气象源, 默认IP定位城市) =====
     private boolean lifeFetched = false;
     private long lastWeatherAt = 0;
-
-    private static String wCode(int c) {
-        if (c == 0) return "晴";
-        if (c <= 3) return c == 1 ? "基本晴" : "多云";
-        if (c <= 48) return "雾";
-        if (c <= 57) return "毛毛雨";
-        if (c <= 67) return "雨";
-        if (c <= 77) return "雪";
-        if (c <= 82) return "阵雨";
-        if (c <= 86) return "阵雪";
-        return "雷雨";
-    }
 
     private void refreshLifeCard() {
         boolean on = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroLifeService", false);
@@ -732,78 +720,64 @@ public class MetronomeActivity extends Activity {
         t2.setOnClickListener(v -> pickCity());
         new Thread(() -> {
             try {
-                double lat, lon; String cname;
                 android.content.SharedPreferences sp = getSharedPreferences("settings", MODE_PRIVATE);
-                double sl = Double.longBitsToDouble(sp.getLong("lifeLat", 0)), sn = Double.longBitsToDouble(sp.getLong("lifeLon", 0));
-                if (sl != 0 || sn != 0) { lat = sl; lon = sn; cname = sp.getString("lifeCityName", "已选地区"); }
-                else {
-                    double[] loc = locateOnce();
-                    lat = loc[0]; lon = loc[1];
-                    cname = "我的位置";
+                String code = sp.getString("lifeCityCode", "");
+                String cname = sp.getString("lifeCityName", "");
+                if (code.length() == 0) {
+                    cname = ipCity();
+                    code = cityCode(cname);
                 }
-                String u = "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon
-                    + "&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset"
-                    + "&current=temperature_2m,relative_humidity_2m,weather_code,surface_pressure&timezone=auto&forecast_days=1";
-                String json = httpGet(u);
+                String json = httpGet("http://t.weather.itboy.net/api/weather/city/" + code);
                 org.json.JSONObject j = new org.json.JSONObject(json);
-                org.json.JSONObject cur = j.getJSONObject("current");
-                org.json.JSONArray wc = j.getJSONObject("daily").getJSONArray("weather_code");
-                org.json.JSONArray tmax = j.getJSONObject("daily").getJSONArray("temperature_2m_max");
-                org.json.JSONArray tmin = j.getJSONObject("daily").getJSONArray("temperature_2m_min");
-                org.json.JSONArray uv = j.getJSONObject("daily").getJSONArray("uv_index_max");
-                org.json.JSONArray rise = j.getJSONObject("daily").getJSONArray("sunrise");
-                org.json.JSONArray set = j.getJSONObject("daily").getJSONArray("sunset");
-                String curW = wCode(cur.getInt("weather_code"));
-                String curT = String.format("%.0f", cur.getDouble("temperature_2m"));
-                String d0max = String.format("%.0f", tmax.getDouble(0)), d0min = String.format("%.0f", tmin.getDouble(0));
-                String hum = cur.getInt("relative_humidity_2m") + "%";
-                String uvv = String.format("%.1f", uv.getDouble(0));
-                String riseT = rise.getString(0).substring(11), setT = set.getString(0).substring(11);
-                String press = String.format("%.0f", cur.getDouble("surface_pressure"));
-                final String fc = cname, fw = curW, ft = curT, fmx = d0max, fmn = d0min;
-                uiTick.post(() -> buildWeather(fc, fw, ft, fmx, fmn, hum, uvv, riseT, setT, press));
+                if (j.optInt("status") != 200) throw new Exception("bad status");
+                org.json.JSONObject data = j.getJSONObject("data");
+                String city = j.getJSONObject("cityInfo").optString("city", cname);
+                String wendu = data.optString("wendu", "--");
+                String shidu = data.optString("shidu", "--");
+                String quality = data.optString("quality", "--");
+                String pm25 = String.valueOf(Math.round(data.optDouble("pm25", 0)));
+                org.json.JSONArray fc = data.getJSONArray("forecast");
+                org.json.JSONObject d0 = fc.getJSONObject(0);
+                String type = d0.optString("type", "--");
+                String high = d0.optString("high", "").replace("高温 ", "").replace("℃", "");
+                String low = d0.optString("low", "").replace("低温 ", "").replace("℃", "");
+                String sunrise = d0.optString("sunrise", "--"), sunset = d0.optString("sunset", "--");
+                String fx = d0.optString("fx", "--"), fl = d0.optString("fl", "--");
+                final String fcity = city, ftype = type, fhigh = high, flow = low;
+                uiTick.post(() -> buildWeather(fcity, ftype, wendu, flow, fhigh, shidu, fx, fl, sunrise, sunset, quality, pm25));
             } catch (Throwable e) {
                 uiTick.post(() -> { ((TextView) findViewById(R.id.lifeTemp)).setText("天气获取失败, 点击重试"); lifeFetched = false; lastWeatherAt = 0; });
             }
         }, "weather").start();
     }
 
-    private double[] locateOnce() throws Throwable {
-        android.location.LocationManager lm = (android.location.LocationManager) getSystemService(LOCATION_SERVICE);
-        android.location.Location best = null;
-        try {
-            for (String pv : new String[]{android.location.LocationManager.GPS_PROVIDER, android.location.LocationManager.NETWORK_PROVIDER, android.location.LocationManager.PASSIVE_PROVIDER}) {
-                try {
-                    android.location.Location l = lm.getLastKnownLocation(pv);
-                    if (l != null && (best == null || l.getTime() > best.getTime())) best = l;
-                } catch (Throwable ignored) {}
-            }
-        } catch (Throwable ignored) {}
-        if (best != null) return new double[]{best.getLatitude(), best.getLongitude()};
-        // 定位缓存没有 → IP 定城市名 → 地理编码
+    private String ipCity() throws Throwable {
         java.net.HttpURLConnection hc = (java.net.HttpURLConnection) new java.net.URL("https://whois.pconline.com.cn/ipJson.jsp?json=true").openConnection();
         hc.setConnectTimeout(8000); hc.setReadTimeout(8000);
         java.io.BufferedReader hr = new java.io.BufferedReader(new java.io.InputStreamReader(hc.getInputStream(), "GBK"));
         StringBuilder hsb = new StringBuilder(); String hline;
         while ((hline = hr.readLine()) != null) hsb.append(hline);
         hr.close();
-        String ip = hsb.toString();
-        java.util.regex.Matcher mc = java.util.regex.Pattern.compile("\"city\":\"([^\"]+?)市?\"").matcher(ip);
-        String city = mc.find() ? mc.group(1) : "杭州";
-        return geocode(city);
+        java.util.regex.Matcher mc = java.util.regex.Pattern.compile("\"city\":\"([^\"]+?)市?\"").matcher(hsb.toString());
+        return mc.find() ? mc.group(1) : "杭州";
     }
 
-    private double[] geocode(String name) throws Throwable {
-        String g = httpGet("https://geocoding-api.open-meteo.com/v1/search?name=" + java.net.URLEncoder.encode(name, "UTF-8") + "&count=1&language=zh&format=json");
-        org.json.JSONArray rs = new org.json.JSONObject(g).optJSONArray("results");
-        if (rs == null || rs.length() == 0) throw new Exception("no geo");
-        org.json.JSONObject r = rs.getJSONObject(0);
-        return new double[]{r.getDouble("latitude"), r.getDouble("longitude")};
+    /** 中国天气网搜索: 城市名 → 101 开头的 9 位代码 */
+    private String cityCode(String name) throws Throwable {
+        String g = httpGet("http://toy1.weather.com.cn/search?cityname=" + java.net.URLEncoder.encode(name, "UTF-8"));
+        java.util.regex.Matcher mr = java.util.regex.Pattern.compile("(101\\d{6})~[^~]*~([^~]+)~").matcher(g);
+        while (mr.find()) {
+            if (mr.group(2).equals(name)) return mr.group(1);
+        }
+        mr.reset();
+        if (mr.find()) return mr.group(1);
+        throw new Exception("no code");
     }
 
     private String httpGet(String u) throws Throwable {
         java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(u).openConnection();
         c.setConnectTimeout(8000); c.setReadTimeout(8000);
+        c.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
         java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(c.getInputStream(), "UTF-8"));
         StringBuilder sb = new StringBuilder(); String line;
         while ((line = r.readLine()) != null) sb.append(line);
@@ -811,7 +785,7 @@ public class MetronomeActivity extends Activity {
         return sb.toString();
     }
 
-    private void buildWeather(String city, String curW, String curT, String mx, String mn, String hum, String uv, String rise, String set, String press) {
+    private void buildWeather(String city, String type, String curT, String mn, String mx, String hum, String fx, String fl, String rise, String set, String quality, String pm25) {
         TextView t2 = findViewById(R.id.lifeTemp);
         t2.setText(city + " · 点击切换");
         android.widget.LinearLayout grid = findViewById(R.id.lifeGrid);
@@ -825,7 +799,7 @@ public class MetronomeActivity extends Activity {
         big.setOrientation(android.widget.LinearLayout.HORIZONTAL);
         big.setGravity(android.view.Gravity.CENTER_VERTICAL);
         TextView tw = new TextView(this);
-        tw.setText(curW + " " + mn + "~" + mx + "°C");
+        tw.setText(type + " " + mn + "~" + mx + "°C");
         tw.setTextColor(0xFF1F2329); tw.setTextSize(22); tw.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         big.addView(tw);
         TextView tnow = new TextView(this);
@@ -836,7 +810,7 @@ public class MetronomeActivity extends Activity {
         android.widget.LinearLayout meta = new android.widget.LinearLayout(this);
         meta.setOrientation(android.widget.LinearLayout.HORIZONTAL);
         meta.setGravity(android.view.Gravity.CENTER);
-        String[][] ms = {{"湿度", hum}, {"紫外线", uv}, {"日出", rise}, {"日落", set}, {"气压", press + "hPa"}};
+        String[][] ms = {{"湿度", hum}, {"风力", fx + fl}, {"日出", rise}, {"日落", set}, {"空气", quality + " " + pm25}};
         for (String[] m : ms) {
             android.widget.LinearLayout col = new android.widget.LinearLayout(this);
             col.setOrientation(android.widget.LinearLayout.VERTICAL);
@@ -897,7 +871,7 @@ public class MetronomeActivity extends Activity {
 
     private void pickCity() {
         android.widget.EditText et = new android.widget.EditText(this);
-        et.setHint("输入城市名, 如 温州 / Wenzhou");
+        et.setHint("输入城市名, 如 温州");
         et.setSingleLine(true);
         et.setTextSize(15);
         int pd = dp(20);
@@ -934,32 +908,27 @@ public class MetronomeActivity extends Activity {
             lr.removeAllViews();
             new Thread(() -> {
                 try {
-                    String[] tries = {q, q + "市", q.endsWith("市") ? q.substring(0, q.length() - 1) : q};
-                    org.json.JSONArray rs = null;
-                    for (String t : tries) {
-                        if (t.length() == 0) continue;
-                        String g = httpGet("https://geocoding-api.open-meteo.com/v1/search?name=" + java.net.URLEncoder.encode(t, "UTF-8") + "&count=8&language=zh&format=json");
-                        rs = new org.json.JSONObject(g).optJSONArray("results");
-                        if (rs != null && rs.length() > 0) break;
+                    String g = httpGet("http://toy1.weather.com.cn/search?cityname=" + java.net.URLEncoder.encode(q, "UTF-8"));
+                    java.util.regex.Matcher mr = java.util.regex.Pattern.compile("(101\\d{6})~[^~]*~([^~]+)~").matcher(g);
+                    java.util.List<String[]> list = new java.util.ArrayList<>();
+                    while (mr.find()) {
+                        String code = mr.group(1), nm = mr.group(2);
+                        boolean dup = false;
+                        for (String[] x : list) if (x[0].equals(code)) { dup = true; break; }
+                        if (!dup) list.add(new String[]{code, nm});
                     }
-                    if (rs == null || rs.length() == 0) throw new Exception("none");
-                    java.util.List<org.json.JSONObject> list = new java.util.ArrayList<>();
-                    for (int i = 0; i < rs.length(); i++) list.add(rs.getJSONObject(i));
+                    if (list.isEmpty()) throw new Exception("none");
                     uiTick.post(() -> {
                         ti.setText("选择地区");
-                        for (org.json.JSONObject o : list) {
-                            String nm = o.optString("name") + " · " + o.optString("admin1", "") + " " + o.optString("country", "");
+                        for (String[] o : list) {
                             TextView tv = new TextView(this);
-                            tv.setText(nm);
+                            tv.setText(o[1]);
                             tv.setTextColor(0xFFF2F2F2); tv.setTextSize(15);
                             tv.setPadding(dp(8), dp(12), dp(8), dp(12));
-                            double la; double lo;
-                            try { la = o.getDouble("latitude"); lo = o.getDouble("longitude"); } catch (Throwable ignored2) { continue; }
-                            String cn = o.optString("name");
+                            String cd = o[0], cn = o[1];
                             tv.setOnClickListener(v -> {
                                 getSharedPreferences("settings", MODE_PRIVATE).edit()
-                                    .putLong("lifeLat", Double.doubleToLongBits(la))
-                                    .putLong("lifeLon", Double.doubleToLongBits(lo))
+                                    .putString("lifeCityCode", cd)
                                     .putString("lifeCityName", cn).apply();
                                 dlg.dismiss();
                                 lifeFetched = false; lastWeatherAt = 0;
@@ -985,77 +954,6 @@ public class MetronomeActivity extends Activity {
         dlg.show();
     }
 
-    /** 定位总开关没开: 按图1样式弹提醒 (深色圆角+橙色按钮) */
-
-    /** 定位总开关没开: 按图1样式弹提醒 (深色圆角+橙色按钮) */
-    private void ensureLocService() {
-        android.location.LocationManager lm = (android.location.LocationManager) getSystemService(LOCATION_SERVICE);
-        boolean on = false;
-        try {
-            on = lm.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)
-              || lm.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER);
-        } catch (Throwable ignored) {}
-        if (on) return;
-        int pd = dp(24);
-        android.widget.LinearLayout box = new android.widget.LinearLayout(this);
-        box.setOrientation(android.widget.LinearLayout.VERTICAL);
-        box.setBackgroundResource(R.drawable.bg_dialog_dark_round);
-        box.setPadding(pd, dp(26), pd, dp(10));
-        TextView tvTitle = new TextView(this);
-        tvTitle.setText("提醒");
-        tvTitle.setTextColor(0xFFF2F2F2);
-        tvTitle.setTextSize(20);
-        tvTitle.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        box.addView(tvTitle);
-        TextView tvMsg = new TextView(this);
-        tvMsg.setText("该功能需使用定位服务，是否开启？");
-        tvMsg.setTextColor(0xFFC9C9C9);
-        tvMsg.setTextSize(16.5f);
-        tvMsg.setLineSpacing(dp(4), 1f);
-        android.widget.LinearLayout.LayoutParams mp = new android.widget.LinearLayout.LayoutParams(-1, -2);
-        mp.setMargins(0, dp(22), 0, dp(26));
-        box.addView(tvMsg, mp);
-        android.widget.LinearLayout row = new android.widget.LinearLayout(this);
-        row.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-        TextView bNo = new TextView(this);
-        bNo.setText("取消");
-        bNo.setTextColor(0xFFFF6A1E);
-        bNo.setTextSize(17.5f);
-        bNo.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        bNo.setGravity(android.view.Gravity.CENTER);
-        TextView bYes = new TextView(this);
-        bYes.setText("确定");
-        bYes.setTextColor(0xFFFF6A1E);
-        bYes.setTextSize(17.5f);
-        bYes.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        bYes.setGravity(android.view.Gravity.CENTER);
-        android.widget.LinearLayout.LayoutParams bp = new android.widget.LinearLayout.LayoutParams(0, -2, 1f);
-        bp.setMargins(0, dp(10), 0, dp(10));
-        row.addView(bNo, bp);
-        View div = new View(this);
-        div.setBackgroundColor(0xFF4A4A4A);
-        row.addView(div, new android.widget.LinearLayout.LayoutParams(dp(1), -2));
-        row.addView(bYes, bp);
-        box.addView(row);
-        final android.app.Dialog dlg = new android.app.Dialog(this);
-        dlg.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
-        dlg.setContentView(box, new android.view.ViewGroup.LayoutParams(
-            android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
-        dlg.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(0));
-        android.view.WindowManager.LayoutParams wp = dlg.getWindow().getAttributes();
-        wp.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.84);
-        wp.height = android.view.WindowManager.LayoutParams.WRAP_CONTENT;
-        wp.gravity = android.view.Gravity.BOTTOM;
-        wp.y = dp(80);
-        dlg.getWindow().setAttributes(wp);
-        dlg.getWindow().setWindowAnimations(android.R.style.Animation_Activity);
-        bNo.setOnClickListener(v -> dlg.dismiss());
-        bYes.setOnClickListener(v -> {
-            dlg.dismiss();
-            try { startActivity(new android.content.Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)); } catch (Throwable ignored) {}
-        });
-        dlg.show();
-    }
 
     private void hideNavBar() {
         android.view.WindowInsetsController c = getWindow().getInsetsController();
