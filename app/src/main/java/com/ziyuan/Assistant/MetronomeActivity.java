@@ -811,144 +811,89 @@ public class MetronomeActivity extends Activity {
                             }
                         }
                         for (int i = 0; i < 8; i++) if (!"--".equals(baidu[i][1])) { indices[i][0] = baidu[i][0]; indices[i][1] = baidu[i][1]; }
-                        // 同页解析: dayForecastList / hourInfoData (桌面页有数据即覆盖, 优先于fc兜底)
-                        {
-                            int di2 = bhtml.indexOf("\"dayForecastList\":");
-                            if (di2 >= 0) {
-                                int j3 = bhtml.indexOf('[', di2);
-                                int dp3 = 0, end3 = -1;
-                                for (int k = j3; k < bhtml.length(); k++) {
-                                    char ch = bhtml.charAt(k);
-                                    if (ch == '[') dp3++;
-                                    else if (ch == ']') { dp3--; if (dp3 == 0) { end3 = k + 1; break; } }
-                                }
-                                if (end3 > 0) {
-                                    org.json.JSONArray arr = new org.json.JSONArray(bhtml.substring(j3, end3));
-                                    int start = 0;
-                                    for (int i = 0; i < arr.length(); i++) {
-                                        if ("今天".equals(arr.getJSONObject(i).optString("word"))) { start = i; break; }
-                                    }
-                                    days.clear();
-                                    for (int i = start; i < arr.length() && days.size() < 15; i++) {
-                                        org.json.JSONObject o = arr.getJSONObject(i);
-                                        days.add(new String[]{
-                                            o.optString("word", "--"), o.optString("date", "--"),
-                                            baiduEmoji(o.optString("dayIconKey", "")), o.optString("weather_day", "--"),
-                                            o.optString("temperature_day", "--"), o.optString("temperature_night", "--"),
-                                            baiduEmoji(o.optString("nightIconKey", "")),
-                                            o.optString("wind_direction", "") + o.optString("wind_power", ""),
-                                            o.optString("uv", "--"),
-                                            o.optString("sunriseTime", "--"), o.optString("sunsetTime", "--"),
-                                            o.optJSONObject("humidity") == null ? "--" : o.getJSONObject("humidity").optString("text", "--") + "%"});
-                                    }
-                                }
-                            }
-                        }
-                        {
-                            int hi3 = bhtml.indexOf("\"hourInfoData\":");
-                            if (hi3 >= 0) {
-                                int j4 = bhtml.indexOf('[', hi3);
-                                int dp4 = 0, end4 = -1;
-                                for (int k = j4; k < bhtml.length(); k++) {
-                                    char ch = bhtml.charAt(k);
-                                    if (ch == '[') dp4++;
-                                    else if (ch == ']') { dp4--; if (dp4 == 0) { end4 = k + 1; break; } }
-                                }
-                                if (end4 > 0) {
-                                    org.json.JSONArray ha = new org.json.JSONArray(bhtml.substring(j4, end4));
-                                    for (int i = 0; i < ha.length() && i < 24; i++) {
-                                        org.json.JSONObject o = ha.getJSONObject(i);
-                                        String pp3 = o.optString("precipitationProbability", "");
-                                        String uv3 = o.optString("uv", "");
-                                        hours.add(new String[]{o.optString("showHour", "--"),
-                                            String.valueOf(o.optDouble("temperature", 0)) + "°",
-                                            o.optString("windDirectionText", "") + o.optString("windPower", ""),
-                                            uv3.length() > 0 ? "紫外线" + uv3 : (pp3.length() > 0 && !"0%".equals(pp3) ? "降水" + pp3 : "")});
-                                    }
-                                }
-                            }
+                } catch (Throwable ignored4) {}
+                // 15天: 百度天气数据API (senode"更多天气"页同源, 45天全量, 逐日湿度/紫外线/日出日落)
+                try {
+                    String mm = new java.text.SimpleDateFormat("yyyyMM", java.util.Locale.US).format(new java.util.Date());
+                    String aj = httpGet("https://weather.pae.baidu.com/weathergo/muti_weather_api?landing=1&weather_id=" + code
+                        + "&query=" + java.net.URLEncoder.encode("天气", "UTF-8") + "&month=" + mm, "https://senode.baidu.com/");
+                    int ii = aj.indexOf("\"info\":[");
+                    int j3 = aj.indexOf('[', ii);
+                    int dp3 = 0, end3 = -1;
+                    for (int k = j3; k < aj.length(); k++) {
+                        char ch = aj.charAt(k);
+                        if (ch == '[') dp3++;
+                        else if (ch == ']') { dp3--; if (dp3 == 0) { end3 = k + 1; break; } }
+                    }
+                    if (end3 > 0) {
+                        org.json.JSONArray arr = new org.json.JSONArray(aj.substring(j3, end3));
+                        String todayStr = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(new java.util.Date());
+                        java.text.SimpleDateFormat in = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US);
+                        java.util.Calendar ca = java.util.Calendar.getInstance();
+                        String[] week = {"周日", "周一", "周二", "周三", "周四", "周五", "周六"};
+                        int cnt = 0;
+                        for (int i = 0; i < arr.length() && cnt < 15; i++) {
+                            org.json.JSONObject o = arr.getJSONObject(i);
+                            String dstr = o.optString("date", "");
+                            if (dstr.compareTo(todayStr) < 0) continue;
+                            ca.setTime(in.parse(dstr));
+                            String label = cnt == 0 ? "今天" : cnt == 1 ? "明天" : cnt == 2 ? "后天" : week[ca.get(java.util.Calendar.DAY_OF_WEEK) - 1];
+                            String date2 = (ca.get(java.util.Calendar.MONTH) + 1) + "/" + ca.get(java.util.Calendar.DAY_OF_MONTH);
+                            int hum2 = o.optInt("humidity", -1);
+                            days.add(new String[]{
+                                label, date2,
+                                baiduEmoji(o.optString("dayIconKey", "")), o.optString("weather_day", "--"),
+                                o.optString("temperature_day", "--"), o.optString("temperature_night", "--"),
+                                baiduEmoji(o.optString("nightIconKey", "")),
+                                o.optString("wind_direction_day", "") + o.optString("wind_power_day", ""),
+                                o.optString("uv", "--"),
+                                o.optString("sunriseTime", "--"), o.optString("sunsetTime", "--"),
+                                hum2 >= 0 ? hum2 + "%" : "--"});
+                            cnt++;
                         }
                     }
-                } catch (Throwable ignored4) {}
-                // 7天趋势: 百度天气 dayForecastList (与百度页面同源同口径) — www路已出数则跳过
-                if (days.size() < 2) {
+                } catch (Throwable ignored6) {}
+                // 24小时: www桌面页 hourInfoData (数据API不带逐小时)
                 try {
                     String bq = java.net.URLEncoder.encode(cname + "天气", "UTF-8");
-                    String bh = null;
-                    for (int attempt = 0; attempt < 2 && bh == null; attempt++) {
-                        try {
-                            java.net.HttpURLConnection bc = (java.net.HttpURLConnection) new java.net.URL("https://m.baidu.com/s?from=1022282z&word=" + bq).openConnection();
-                            bc.setConnectTimeout(12000); bc.setReadTimeout(30000);
-                            bc.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13; RMX3823) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
-                            bc.setRequestProperty("Cookie", "BAIDUID=" + java.util.UUID.randomUUID().toString().replace("-", "").toUpperCase() + ":FG=1");
-                            bc.setRequestProperty("Accept-Encoding", "gzip");
-                            java.io.InputStream raw = bc.getInputStream();
-                            if ("gzip".equals(bc.getContentEncoding())) raw = new java.util.zip.GZIPInputStream(raw);
-                            java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(raw, "UTF-8"));
-                            StringBuilder bb = new StringBuilder(); String bl;
-                            while ((bl = br.readLine()) != null) bb.append(bl);
-                            br.close();
-                            if (bb.indexOf("dayForecastList") >= 0) bh = bb.toString();
-                        } catch (Throwable ignored6) {}
-                    }
-                    if (bh == null) throw new Exception("m.baidu fail");
-                    int di = bh.indexOf("\"dayForecastList\":");
-                    if (di >= 0) {
-                        int j = bh.indexOf('[', di);
-                        int depth = 0, end = -1;
-                        for (int k = j; k < bh.length(); k++) {
-                            char ch = bh.charAt(k);
-                            if (ch == '[') depth++;
-                            else if (ch == ']') { depth--; if (depth == 0) { end = k + 1; break; } }
+                    java.net.HttpURLConnection bc = (java.net.HttpURLConnection) new java.net.URL("https://www.baidu.com/s?wd=" + bq).openConnection();
+                    bc.setConnectTimeout(12000); bc.setReadTimeout(20000);
+                    bc.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
+                    bc.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+                    bc.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9");
+                    bc.setRequestProperty("Upgrade-Insecure-Requests", "1");
+                    bc.setRequestProperty("Cookie", "BAIDUID=" + java.util.UUID.randomUUID().toString().replace("-", "").toUpperCase() + ":FG=1");
+                    bc.setRequestProperty("Accept-Encoding", "gzip");
+                    java.io.InputStream rawI = bc.getInputStream();
+                    if ("gzip".equals(bc.getContentEncoding())) rawI = new java.util.zip.GZIPInputStream(rawI);
+                    java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(rawI, "UTF-8"));
+                    StringBuilder bb = new StringBuilder(); String bl;
+                    while ((bl = br.readLine()) != null) bb.append(bl);
+                    br.close();
+                    String bhtml = bb.toString();
+                    int hi3 = bhtml.indexOf("\"hourInfoData\":");
+                    if (hi3 >= 0) {
+                        int j4 = bhtml.indexOf('[', hi3);
+                        int dp4 = 0, end4 = -1;
+                        for (int k = j4; k < bhtml.length(); k++) {
+                            char ch = bhtml.charAt(k);
+                            if (ch == '[') dp4++;
+                            else if (ch == ']') { dp4--; if (dp4 == 0) { end4 = k + 1; break; } }
                         }
-                        if (end > 0) {
-                            org.json.JSONArray arr = new org.json.JSONArray(bh.substring(j, end));
-                            int start = 0;
-                            for (int i = 0; i < arr.length(); i++) {
-                                if ("今天".equals(arr.getJSONObject(i).optString("word"))) { start = i; break; }
-                            }
-                            days.clear();
-                            for (int i = start; i < arr.length() && days.size() < 15; i++) {
-                                org.json.JSONObject o = arr.getJSONObject(i);
-                                String wd = o.optString("weather_day", "--");
-                                days.add(new String[]{
-                                    o.optString("word", "--"), o.optString("date", "--"),
-                                    baiduEmoji(o.optString("dayIconKey", "")), wd,
-                                    o.optString("temperature_day", "--"), o.optString("temperature_night", "--"),
-                                    baiduEmoji(o.optString("nightIconKey", "")),
-                                    o.optString("wind_direction", "") + o.optString("wind_power", ""),
-                                    o.optString("uv", "--"),
-                                    o.optString("sunriseTime", "--"), o.optString("sunsetTime", "--"),
-                                    o.getJSONObject("humidity").optString("text", "--") + "%"});
-                            }
-                        }
-                    }
-                try {
-                    int hi2 = bh.indexOf("\"hourInfoData\":");
-                    if (hi2 >= 0) {
-                        int j2 = bh.indexOf('[', hi2);
-                        int depth2 = 0, end2 = -1;
-                        for (int k = j2; k < bh.length(); k++) {
-                            char ch = bh.charAt(k);
-                            if (ch == '[') depth2++;
-                            else if (ch == ']') { depth2--; if (depth2 == 0) { end2 = k + 1; break; } }
-                        }
-                        if (end2 > 0) {
-                            org.json.JSONArray ha = new org.json.JSONArray(bh.substring(j2, end2));
+                        if (end4 > 0) {
+                            org.json.JSONArray ha = new org.json.JSONArray(bhtml.substring(j4, end4));
                             for (int i = 0; i < ha.length() && i < 24; i++) {
                                 org.json.JSONObject o = ha.getJSONObject(i);
-                                String pp2 = o.optString("precipitationProbability", "");
-                                String uvv = o.optString("uv", "");
+                                String pp3 = o.optString("precipitationProbability", "");
+                                String uv3 = o.optString("uv", "");
                                 hours.add(new String[]{o.optString("showHour", "--"),
                                     String.valueOf(o.optDouble("temperature", 0)) + "°",
                                     o.optString("windDirectionText", "") + o.optString("windPower", ""),
-                                    uvv.length() > 0 ? "紫外线" + uvv : (pp2.length() > 0 && !"0%".equals(pp2) ? "降水" + pp2 : "")});
+                                    uv3.length() > 0 ? "紫外线" + uv3 : (pp3.length() > 0 && !"0%".equals(pp3) ? "降水" + pp3 : "")});
                             }
                         }
                     }
                 } catch (Throwable ignored5) {}
-                } catch (Throwable ignored) {}
-                }
                 final java.util.List<String[]> fhours = hours;
                 final java.util.List<String[]> fdays = days;
                 final String fcity = city, ftype = type, fcur = curT, fmx = mx, fmn = mn;
