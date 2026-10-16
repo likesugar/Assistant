@@ -847,7 +847,7 @@ public class MetronomeActivity extends Activity {
                     hi = mtem.group(1); lo = mtem.group(2);
                     java.util.regex.Matcher mw1 = java.util.regex.Pattern.compile("title=\"([^\"]+)\" class=\"[A-Z]+\"").matcher(b);
                     String w1 = mw1.find() ? mw1.group(1) : "";
-                    java.util.regex.Matcher mw2 = java.util.regex.Pattern.compile("<i>([^<]*级)</i>").matcher(b);
+                    java.util.regex.Matcher mw2 = java.util.regex.Pattern.compile("<i>(.{0,8}级)</i>").matcher(b);
                     wind = w1 + (mw2.find() ? mw2.group(1) : "");
                 }
                 out.add(new String[]{label, date, wEmoji(dc.substring(1)), wea, hi, lo, wEmoji(nc.substring(1)), wind});
