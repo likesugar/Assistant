@@ -764,11 +764,40 @@ public class MetronomeActivity extends Activity {
                     }
                 }
                 for (int i = 0; i < 8; i++) if (indices[i][0] == null) { indices[i][0] = want[i]; indices[i][1] = "--"; }
-                try { // 穿衣: 提示穿什么衣服 (按今日高温)
+                try { // 穿衣: 提示穿什么衣服 (按今日高温, 官方兜底)
                     double h0 = Double.parseDouble(mx);
                     indices[0][1] = h0 >= 30 ? "短袖类" : h0 >= 26 ? "短袖/薄外套" : h0 >= 22 ? "薄外套类"
                         : h0 >= 18 ? "外套类" : h0 >= 12 ? "夹克/风衣" : h0 >= 6 ? "厚外套/毛衣" : "羽绒服类";
                 } catch (Throwable ignored3) {}
+                try { // 百度生活服务(电脑模式UA): 成功则整体替换8项
+                    String bq = java.net.URLEncoder.encode(cname + "天气", "UTF-8");
+                    java.net.HttpURLConnection bc = (java.net.HttpURLConnection) new java.net.URL("https://www.baidu.com/s?wd=" + bq).openConnection();
+                    bc.setConnectTimeout(8000); bc.setReadTimeout(8000);
+                    bc.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+                    java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(bc.getInputStream(), "UTF-8"));
+                    StringBuilder bb = new StringBuilder(); String bl;
+                    while ((bl = br.readLine()) != null) bb.append(bl);
+                    br.close();
+                    String bhtml = bb.toString();
+                    if (bhtml.contains("item_name")) {
+                        String[] want2 = {"穿衣", "运动", "紫外线", "旅游", "化妆", "钓鱼", "感冒", "洗车"};
+                        java.util.List<int[]> pos2 = new java.util.ArrayList<>();
+                        java.util.List<String> names2 = new java.util.ArrayList<>();
+                        java.util.regex.Matcher mn2 = java.util.regex.Pattern.compile("\"item_name\":\"([^\"]+)\"").matcher(bhtml);
+                        while (mn2.find()) { pos2.add(new int[]{mn2.start(), mn2.end()}); names2.add(mn2.group(1)); }
+                        String[][] baidu = new String[8][2];
+                        for (int i = 0; i < 8; i++) baidu[i] = new String[]{want2[i], "--"};
+                        for (int i = 0; i < names2.size(); i++) {
+                            for (int w = 0; w < want2.length; w++) {
+                                if (!names2.get(i).equals(want2[w]) || !"--".equals(baidu[w][1])) continue;
+                                int from = Math.max(0, pos2.get(i)[0] - 1600), to = Math.min(bhtml.length(), pos2.get(i)[1] + 1600);
+                                java.util.regex.Matcher ml2 = java.util.regex.Pattern.compile("\"item_level\":\"([^\"]+)\"").matcher(bhtml.substring(from, to));
+                                if (ml2.find()) baidu[w][1] = ml2.group(1);
+                            }
+                        }
+                        for (int i = 0; i < 8; i++) if (!"--".equals(baidu[i][1])) { indices[i][0] = baidu[i][0]; indices[i][1] = baidu[i][1]; }
+                    }
+                } catch (Throwable ignored4) {}
                 // 7天趋势: open-meteo daily (手机端稳定可达), 逐日天气/温度/紫外线/日出日落/降水概率/风
                 java.util.List<String[]> days = new java.util.ArrayList<>();
                 try {
