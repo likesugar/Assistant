@@ -769,26 +769,40 @@ public class MetronomeActivity extends Activity {
                     indices[0][1] = h0 >= 30 ? "短袖类" : h0 >= 26 ? "短袖/薄外套" : h0 >= 22 ? "薄外套类"
                         : h0 >= 18 ? "外套类" : h0 >= 12 ? "夹克/风衣" : h0 >= 6 ? "厚外套/毛衣" : "羽绒服类";
                 } catch (Throwable ignored3) {}
-                // 15天趋势: 官方 1-7 天 + 8-15 天两页
+                // 7天趋势: open-meteo daily (手机端稳定可达), 逐日天气/温度/紫外线/日出日落/降水概率/风
                 java.util.List<String[]> days = new java.util.ArrayList<>();
-                try { parseDays(httpGet("https://www.weather.com.cn/weather/" + code + ".shtml"), false, days); } catch (Throwable ignored) {}
-                if (days.size() < 2) { // 页面拿不到 → 官方 d1 fc 兜底
-                    days.clear();
-                    try {
-                        org.json.JSONArray f = new org.json.JSONObject(extractVar(page, "fc")).getJSONArray("f");
-                        for (int i = 0; i < f.length(); i++) {
-                            org.json.JSONObject o = f.getJSONObject(i);
-                            days.add(new String[]{o.optString("fj"), o.optString("fi"), wEmoji(o.optString("fa")),
-                                "", o.optString("fc"), o.optString("fd"), wEmoji(o.optString("fb")),
-                                o.optString("fe") + o.optString("fg")});
-                        }
-                    } catch (Throwable ignored2) {}
-                }
-                final String fcity = city, ftype = type, fcur = curT, fmx = mx, fmn = mn;
-                final String fh = hum, fw = wind, fp = press, fv = vis, fa = aqi;
-                final String[][] fi = indices;
+                try {
+                    String dj = httpGet("https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon
+                        + "&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset,precipitation_probability_max,wind_speed_10m_max,wind_direction_dominant"
+                        + "&timezone=auto&forecast_days=7");
+                    org.json.JSONObject dd = new org.json.JSONObject(dj).getJSONObject("daily");
+                    org.json.JSONArray dtime = dd.getJSONArray("time");
+                    String[] week = {"周日", "周一", "周二", "周三", "周四", "周五", "周六"};
+                    java.text.SimpleDateFormat in = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US);
+                    java.util.Calendar ca = java.util.Calendar.getInstance();
+                    for (int i = 0; i < dtime.length(); i++) {
+                        String dstr = dtime.getString(i);
+                        ca.setTime(in.parse(dstr));
+                        String wk = week[ca.get(java.util.Calendar.DAY_OF_WEEK) - 1];
+                        String label = i == 0 ? "今天" : i == 1 ? "明天" : i == 2 ? "后天" : wk;
+                        String date = (ca.get(java.util.Calendar.MONTH) + 1) + "/" + ca.get(java.util.Calendar.DAY_OF_MONTH);
+                        int wc = dd.getJSONArray("weather_code").getInt(i);
+                        String wea = wCode(wc);
+                        String hi = String.format("%.0f", dd.getJSONArray("temperature_2m_max").getDouble(i));
+                        String lo = String.format("%.0f", dd.getJSONArray("temperature_2m_min").getDouble(i));
+                        String uv = String.format("%.1f", dd.getJSONArray("uv_index_max").getDouble(i));
+                        String rise = dd.getJSONArray("sunrise").getString(i).substring(11);
+                        String sett = dd.getJSONArray("sunset").getString(i).substring(11);
+                        String pp = dd.getJSONArray("precipitation_probability_max").getInt(i) + "%";
+                        double spd = dd.getJSONArray("wind_speed_10m_max").getDouble(i);
+                        int lv = spd < 6 ? 1 : spd < 12 ? 2 : spd < 20 ? 3 : spd < 29 ? 4 : spd < 39 ? 5 : 6;
+                        String[] dirn = {"北", "东北", "东", "东南", "南", "西南", "西", "西北"};
+                        String wd = dirn[((int) Math.round(dd.getJSONArray("wind_direction_dominant").getDouble(i) / 45.0)) % 8] + "风" + lv + "级";
+                        days.add(new String[]{label, date, wEmoji(String.format("d%02d", wc)), wea, hi, lo, nightEmoji(wc), wd, uv, rise, sett, pp});
+                    }
+                } catch (Throwable ignored) {}
                 final java.util.List<String[]> fdays = days;
-                uiTick.post(() -> buildWeather(fcity, ftype, fcur, fmn, fmx, fh, fw, fp, fv, fa, fi, fdays));
+                uiTick.post(() -> buildWeather(fcity, ftype, fcur, fmn, fmx, fh, fw, fp, fv, fa, fi, fdays, hum, wind, press, vis, aqi));
             } catch (Throwable e) {
                 String msg = e.getMessage(); uiTick.post(() -> { ((TextView) findViewById(R.id.lifeTemp)).setText("获取失败:" + (msg == null || msg.length() == 0 ? e.getClass().getSimpleName() : msg) + " 点击重试"); lifeFetched = false; lastWeatherAt = 0; });
             }
@@ -825,6 +839,14 @@ public class MetronomeActivity extends Activity {
             }
         }
         throw new Exception("no code for " + name);
+    }
+
+    private static String nightEmoji(int wc) {
+        if (wc == 0) return "🌙";
+        if (wc <= 2) return "☁️";
+        if (wc <= 12) return "🌧";
+        if (wc <= 16) return "🌨";
+        return "🌥";
     }
 
     private static String wEmoji(String code) {
@@ -912,7 +934,12 @@ public class MetronomeActivity extends Activity {
 
     private String httpGet(String u) throws Throwable { return httpGet(u, null); }
 
-    private void buildWeather(String city, String type, String curT, String mn, String mx, String hum, String wind, String press, String vis, String aqi, String[][] indices, java.util.List<String[]> days) {
+    private String[][] wDays; private String wCity, wType, wCurT, wMn, wMx, wHum, wWind, wPress, wVis, wAqi;
+    private android.widget.LinearLayout curBox; private int selDay = 0;
+
+    private void buildWeather(String city, String type, String curT, String mn, String mx, String hum, String wind, String press, String vis, String aqi, String[][] indices, java.util.List<String[]> days, String hum0, String wind0, String press0, String vis0, String aqi0) {
+        wDays = days.toArray(new String[0][]); wCity = city; wType = type; wCurT = curT; wMn = mn; wMx = mx;
+        wHum = hum0; wWind = wind0; wPress = press0; wVis = vis0; wAqi = aqi0; selDay = 0;
         TextView t2 = findViewById(R.id.lifeTemp);
         t2.setText(city + " · 点击切换");
         android.widget.LinearLayout grid = findViewById(R.id.lifeGrid);
@@ -930,20 +957,33 @@ public class MetronomeActivity extends Activity {
             android.widget.HorizontalScrollView hsv = new android.widget.HorizontalScrollView(this);
             hsv.setFillViewport(true);
             hsv.setHorizontalScrollBarEnabled(false);
-            TrendView tv = new TrendView(this, n, colW, days, idx -> {
-                String[] d = days.get(idx);
-                new android.app.AlertDialog.Builder(this)
-                    .setTitle(d[0] + " " + d[1])
-                    .setMessage(d[2] + " " + d[3] + "\n高 " + d[4] + "° / 低 " + d[5] + "°\n夜间 " + d[6] + "\n" + d[7])
-                    .setPositiveButton("知道了", null)
-                    .show();
-            });
+            TrendView tv = new TrendView(this, n, colW, wDays, idx -> { selDay = idx; tv.setSelected(idx); refreshCurCard(); });
             tv.setLayoutParams(new android.widget.LinearLayout.LayoutParams(colW * n, dp(238)));
             hsv.addView(tv);
             android.widget.LinearLayout.LayoutParams sp = new android.widget.LinearLayout.LayoutParams(-1, -2);
             grid.addView(hsv, sp);
         }
-        // 当前天气卡 (照图2)
+        // 当前天气卡 (照图2) — 随选中日刷新
+        curBox = new android.widget.LinearLayout(this);
+        curBox.setOrientation(android.widget.LinearLayout.VERTICAL);
+        grid.addView(curBox, new android.widget.LinearLayout.LayoutParams(-1, -2));
+        refreshCurCard();
+        buildIndices(indices);
+    }
+
+    private void refreshCurCard() {
+        if (curBox == null || wDays == null || wDays.length == 0) return;
+        android.widget.LinearLayout grid = (android.widget.LinearLayout) curBox.getParent();
+        String[] d = wDays[Math.min(selDay, wDays.length - 1)];
+        boolean today = selDay == 0;
+        String type = today ? wType : d[3];
+        String mn = today ? wMn : d[5], mx = today ? wMx : d[4];
+        String hum = today ? wHum : "降水 " + d[11];
+        String wind = today ? wWind : d[7];
+        String press = today ? wPress : "";
+        String vis = today ? wVis : "";
+        String aqi = today ? wAqi : "";
+        String curT = today ? wCurT : "";
         android.widget.LinearLayout cur = new android.widget.LinearLayout(this);
         cur.setOrientation(android.widget.LinearLayout.VERTICAL);
         cur.setBackgroundResource(R.drawable.bg_input_flat);
@@ -963,7 +1003,9 @@ public class MetronomeActivity extends Activity {
         android.widget.LinearLayout meta = new android.widget.LinearLayout(this);
         meta.setOrientation(android.widget.LinearLayout.HORIZONTAL);
         meta.setGravity(android.view.Gravity.CENTER);
-        String[][] ms = {{"湿度", hum}, {"风力", wind}, {"气压", press}, {"能见度", vis}, {"空气", aqi}};
+        String[][] ms = today
+            ? new String[][]{{"湿度", hum}, {"风力", wind}, {"气压", press}, {"能见度", vis}, {"空气", aqi}}
+            : new String[][]{{"降水", d[11]}, {"紫外线", d[8]}, {"日出", d[9]}, {"日落", d[10]}, {"风力", wind}};
         for (String[] m : ms) {
             android.widget.LinearLayout col = new android.widget.LinearLayout(this);
             col.setOrientation(android.widget.LinearLayout.VERTICAL);
@@ -981,7 +1023,12 @@ public class MetronomeActivity extends Activity {
         android.widget.LinearLayout.LayoutParams mp = new android.widget.LinearLayout.LayoutParams(-1, -2);
         mp.setMargins(0, dp(10), 0, 0);
         cur.addView(meta, mp);
-        grid.addView(cur, new android.widget.LinearLayout.LayoutParams(-1, -2));
+        curBox.removeAllViews();
+        curBox.addView(cur, new android.widget.LinearLayout.LayoutParams(-1, -2));
+    }
+
+    private void buildIndices(String[][] indices) {
+        android.widget.LinearLayout grid = (android.widget.LinearLayout) curBox.getParent();
         // 8格生活指数
         String[][] DATA = indices;
         TextView h8 = new TextView(this);
@@ -1154,6 +1201,8 @@ public class MetronomeActivity extends Activity {
         private final android.graphics.Paint txt = new android.graphics.Paint(), emo = new android.graphics.Paint(), sub = new android.graphics.Paint();
         private final java.util.function.IntConsumer onClick;
         private float downX, downY;
+        private int sel = 0;
+        void setSelected(int i) { sel = i; invalidate(); }
         TrendView(android.content.Context c, int cols, int colW, java.util.List<String[]> days, java.util.function.IntConsumer onClick) {
             super(c);
             this.cols = cols; this.colW = colW; this.days = days; this.onClick = onClick;
@@ -1170,6 +1219,12 @@ public class MetronomeActivity extends Activity {
             super.onDraw(cv);
             if (days == null || days.isEmpty()) return;
             int n = Math.min(cols, days.size());
+            if (sel >= 0 && sel < n) { // 选中列: 浅蓝圆角底
+                android.graphics.Paint hl = new android.graphics.Paint();
+                hl.setColor(0xFFE3EEFB); hl.setAntiAlias(true);
+                android.graphics.RectF rf = new android.graphics.RectF(sel * colW + dp(3), 0, (sel + 1) * colW - dp(3), getHeight());
+                cv.drawRoundRect(rf, dp(14), dp(14), hl);
+            }
             float y = dp(10);
             for (int i = 0; i < n; i++) {
                 float cx = i * colW + colW / 2f;
