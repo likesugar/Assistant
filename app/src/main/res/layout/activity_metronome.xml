@@ -64,7 +64,7 @@
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                         android:text="节奏" android:textSize="15sp" android:textStyle="bold" android:tag="title"/>
                     <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:orientation="horizontal" android:gravity="center" android:layout_marginTop="10dp" android:layout_width="match_parent">
+                        android:orientation="horizontal" android:gravity="center" android:layout_marginTop="10dp">
                         <TextView android:id="@+id/bpmDown" android:layout_width="wrap_content" android:layout_height="40dp"
                             android:gravity="center" android:text="☜\uFE0E" android:textSize="17sp" android:textStyle="bold" android:paddingLeft="2dp" android:paddingRight="2dp" android:minWidth="26dp" android:tag="title"/>
                         <EditText android:id="@+id/tvBpm" android:layout_width="52dp" android:layout_height="40dp"
