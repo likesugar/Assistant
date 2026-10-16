@@ -781,7 +781,11 @@ public class MetronomeActivity extends Activity {
                     String bq = java.net.URLEncoder.encode(cname + "天气", "UTF-8");
                     java.net.HttpURLConnection bc = (java.net.HttpURLConnection) new java.net.URL("https://www.baidu.com/s?wd=" + bq).openConnection();
                     bc.setConnectTimeout(8000); bc.setReadTimeout(8000);
-                    bc.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+                    bc.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
+                    bc.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+                    bc.setRequestProperty("Accept-Language", "zh-CN,zh;q=0.9");
+                    bc.setRequestProperty("Upgrade-Insecure-Requests", "1");
+                    bc.setRequestProperty("Cookie", "BAIDUID=" + java.util.UUID.randomUUID().toString().replace("-", "").toUpperCase() + ":FG=1");
                     bc.setRequestProperty("Accept-Encoding", "gzip");
                     java.io.InputStream rawI = bc.getInputStream();
                     if ("gzip".equals(bc.getContentEncoding())) rawI = new java.util.zip.GZIPInputStream(rawI);
