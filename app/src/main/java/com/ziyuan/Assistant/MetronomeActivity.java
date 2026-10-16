@@ -989,7 +989,9 @@ public class MetronomeActivity extends Activity {
             android.widget.HorizontalScrollView hsv = new android.widget.HorizontalScrollView(this);
             hsv.setFillViewport(true);
             hsv.setHorizontalScrollBarEnabled(false);
-            final TrendView tv = new TrendView(this, n, colW, wDays, idx -> { selDay = idx; tv.setSelected(idx); refreshCurCard(); });
+            final TrendView[] tvh = new TrendView[1];
+            TrendView tv = new TrendView(this, n, colW, wDays, idx -> { selDay = idx; if (tvh[0] != null) tvh[0].setSelected(idx); refreshCurCard(); });
+            tvh[0] = tv;
             tv.setLayoutParams(new android.widget.LinearLayout.LayoutParams(colW * n, dp(238)));
             hsv.addView(tv);
             android.widget.LinearLayout.LayoutParams sp = new android.widget.LinearLayout.LayoutParams(-1, -2);
@@ -1322,7 +1324,7 @@ public class MetronomeActivity extends Activity {
             if (e.getAction() == android.view.MotionEvent.ACTION_UP) {
                 if (Math.abs(e.getX() - downX) < dp(10) && Math.abs(e.getY() - downY) < dp(10)) {
                     int col = (int) (e.getX() / colW);
-                    if (col >= 0 && col < Math.min(cols, days.size()) && onClick != null) onClick.accept(col);
+                    if (col >= 0 && col < Math.min(cols, days.length) && onClick != null) onClick.accept(col);
                 }
                 return true;
             }
