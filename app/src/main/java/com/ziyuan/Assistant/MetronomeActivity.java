@@ -767,8 +767,7 @@ public class MetronomeActivity extends Activity {
                 // 15天趋势: 官方 1-7 天 + 8-15 天两页
                 java.util.List<String[]> days = new java.util.ArrayList<>();
                 try { parseDays(httpGet("http://www.weather.com.cn/weather/" + code + ".shtml"), false, days); } catch (Throwable ignored) {}
-                try { parseDays(httpGet("http://www.weather.com.cn/weather15d/" + code + ".shtml"), true, days); } catch (Throwable ignored) {}
-                if (days.size() < 2) { // 页面拿不到 → 官方 d1 fc 5 天兜底
+                if (days.size() < 2) { // 页面拿不到 → 官方 d1 fc 兜底
                     days.clear();
                     try {
                         org.json.JSONArray f = new org.json.JSONObject(extractVar(page, "fc")).getJSONArray("f");
@@ -916,13 +915,13 @@ public class MetronomeActivity extends Activity {
         // ===== 15天预报·趋势 (横滑, 折线) =====
         if (days.size() > 1) {
             TextView h15 = new TextView(this);
-            h15.setText("15天预报");
+            h15.setText("7天预报");
             h15.setTextColor(0xFF1F2329); h15.setTextSize(16); h15.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
             android.widget.LinearLayout.LayoutParams hp0 = new android.widget.LinearLayout.LayoutParams(-2, -2);
             hp0.setMargins(dp(2), 0, 0, dp(6));
             grid.addView(h15, hp0);
             final int colW = dp(78);
-            int n = Math.min(days.size(), 15);
+            int n = Math.min(days.size(), 7);
             android.widget.HorizontalScrollView hsv = new android.widget.HorizontalScrollView(this);
             hsv.setFillViewport(true);
             hsv.setHorizontalScrollBarEnabled(false);
@@ -931,11 +930,11 @@ public class MetronomeActivity extends Activity {
             rows.setMinimumWidth(colW * n);
             // 行1: 星期+日期
             android.widget.LinearLayout r1 = new android.widget.LinearLayout(this);
-            for (int i = 0; i < n; i++) r1.addView(trendCell(days.get(i)[0] + "\n" + days.get(i)[1], colW, 13, true));
+            for (int i = 0; i < n; i++) r1.addView(trendCell(days.get(i)[0] + "\n" + days.get(i)[1], colW, 13, true, i, days));
             rows.addView(r1);
             // 行2: 白天天气 emoji + 天气文字
             android.widget.LinearLayout r2 = new android.widget.LinearLayout(this);
-            for (int i = 0; i < n; i++) r2.addView(trendCell(days.get(i)[2] + "\n" + shortWea(days.get(i)[3]), colW, 11, false));
+            for (int i = 0; i < n; i++) r2.addView(trendCell(days.get(i)[2] + "\n" + shortWea(days.get(i)[3]), colW, 11, false, i, days));
             rows.addView(r2);
             // 行3: 高低温折线 (数字画在线旁)
             TrendView tv = new TrendView(this, n, colW, days);
@@ -943,11 +942,11 @@ public class MetronomeActivity extends Activity {
             rows.addView(tv);
             // 行4: 夜间 emoji
             android.widget.LinearLayout r4 = new android.widget.LinearLayout(this);
-            for (int i = 0; i < n; i++) r4.addView(trendCell(days.get(i)[6], colW, 15, false));
+            for (int i = 0; i < n; i++) r4.addView(trendCell(days.get(i)[6], colW, 15, false, i, days));
             rows.addView(r4);
             // 行5: 风向风力
             android.widget.LinearLayout r5 = new android.widget.LinearLayout(this);
-            for (int i = 0; i < n; i++) r5.addView(trendCell(days.get(i)[7].replace("级", "") + "级", colW, 10, false));
+            for (int i = 0; i < n; i++) r5.addView(trendCell(days.get(i)[7].replace("级", "") + "级", colW, 10, false, i, days));
             rows.addView(r5);
             hsv.addView(rows);
             android.widget.LinearLayout.LayoutParams sp = new android.widget.LinearLayout.LayoutParams(-1, -2);
@@ -1140,56 +1139,19 @@ public class MetronomeActivity extends Activity {
         super.onPause();
     }
 
-    /** 定位未开提醒: 确定去开定位, 取消不打拍 */
+    /** 定位未开提醒: 确定去开定位, 取消不打拍 (最简系统弹窗, 同下载弹窗样式) */
     private void showLocReminder() {
-        int pd = dp(20);
-        android.widget.LinearLayout box = new android.widget.LinearLayout(this);
-        box.setOrientation(android.widget.LinearLayout.VERTICAL);
-        box.setBackgroundResource(R.drawable.bg_dialog_dark_round);
-        box.setPadding(pd, dp(24), pd, dp(16));
-        TextView ti = new TextView(this);
-        ti.setText("提醒");
-        ti.setTextColor(0xFFF2F2F2); ti.setTextSize(19); ti.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        box.addView(ti);
-        TextView msg = new TextView(this);
-        msg.setText("该功能需使用定位服务，是否开启？");
-        msg.setTextColor(0xFFC9C9C9); msg.setTextSize(15.5f);
-        android.widget.LinearLayout.LayoutParams mp = new android.widget.LinearLayout.LayoutParams(-1, -2);
-        mp.setMargins(0, dp(18), 0, dp(20));
-        box.addView(msg, mp);
-        android.widget.LinearLayout row = new android.widget.LinearLayout(this);
-        TextView bNo = new TextView(this);
-        bNo.setText("取消"); bNo.setTextColor(0xFFFF6A1E); bNo.setTextSize(17); bNo.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        bNo.setGravity(android.view.Gravity.CENTER);
-        TextView bYes = new TextView(this);
-        bYes.setText("确定"); bYes.setTextColor(0xFFFF6A1E); bYes.setTextSize(17); bYes.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        bYes.setGravity(android.view.Gravity.CENTER);
-        android.widget.LinearLayout.LayoutParams bp = new android.widget.LinearLayout.LayoutParams(0, -2, 1f);
-        bp.setMargins(0, dp(10), 0, dp(10));
-        row.addView(bNo, bp);
-        View div = new View(this); div.setBackgroundColor(0xFF4A4A4A);
-        row.addView(div, new android.widget.LinearLayout.LayoutParams(dp(1), -2));
-        row.addView(bYes, bp);
-        box.addView(row);
-        final android.app.Dialog dlg = new android.app.Dialog(this);
-        dlg.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
-        dlg.setContentView(box, new android.view.ViewGroup.LayoutParams(
-            (int) (getResources().getDisplayMetrics().widthPixels * 0.84),
-            android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
-        dlg.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(0));
-        bNo.setOnClickListener(v -> dlg.dismiss()); // 取消 = 不打拍
-        bYes.setOnClickListener(v -> {
-            dlg.dismiss();
-            try { startActivity(new android.content.Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)); } catch (Throwable ignored) {}
-        });
-        dlg.show();
-        android.view.WindowManager.LayoutParams rwp = dlg.getWindow().getAttributes();
-        rwp.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.84);
-        rwp.height = android.view.WindowManager.LayoutParams.WRAP_CONTENT;
-        dlg.getWindow().setAttributes(rwp);
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("提醒")
+            .setMessage("该功能需使用定位服务，是否开启？")
+            .setPositiveButton("确定", (d, w) -> {
+                try { startActivity(new android.content.Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)); } catch (Throwable ignored) {}
+            })
+            .setNegativeButton("取消", null)
+            .show();
     }
 
-    private TextView trendCell(String text, int w, float sizeSp, boolean bold) {
+    private TextView trendCell(String text, int w, float sizeSp, boolean bold, int idx, java.util.List<String[]> days) {
         TextView tv = new TextView(this);
         tv.setText(text);
         tv.setTextColor(0xFF1F2329);
@@ -1199,6 +1161,14 @@ public class MetronomeActivity extends Activity {
         tv.setLineSpacing(dp(2), 1f);
         android.widget.LinearLayout.LayoutParams p = new android.widget.LinearLayout.LayoutParams(w, -2);
         p.setMargins(dp(3), dp(6), dp(3), dp(6));
+        if (idx >= 0) tv.setOnClickListener(v -> {
+            String[] d = days.get(idx);
+            new android.app.AlertDialog.Builder(this)
+                .setTitle(d[0] + " " + d[1])
+                .setMessage(d[2] + " " + d[3] + "\n高 " + d[4] + "° / 低 " + d[5] + "°\n夜间 " + d[6] + "\n" + d[7])
+                .setPositiveButton("知道了", null)
+                .show();
+        });
         return tv;
     }
 
