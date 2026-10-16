@@ -349,8 +349,18 @@ public class SettingsPageView extends android.widget.FrameLayout {
                         toast("已上传 (新建gist)");
                     } else {
                         String payload = "{\"files\":{\"config.json\":{\"content\":" + org.json.JSONObject.quote(json.toString()) + "}}}";
-                        ghHttp("https://api.github.com/gists/" + gistId, "PATCH", token, payload);
-                        toast("已更新");
+                        try {
+                            ghHttp("https://api.github.com/gists/" + gistId, "PATCH", token, payload);
+                            toast("已更新");
+                        } catch (Exception pe) {
+                            if (String.valueOf(pe.getMessage()).contains("404")) {
+                                // gist 已不存在(被删/token换了账号): 清掉旧id改新建
+                                sp.edit().putString("ghGistId", "").apply();
+                                String resp = ghHttp("https://api.github.com/gists", "POST", token, payload);
+                                sp.edit().putString("ghGistId", new org.json.JSONObject(resp).getString("id")).apply();
+                                toast("旧gist失效,已新建gist上传");
+                            } else throw pe;
+                        }
                     }
                 } else {
                     String gistId = sp.getString("ghGistId", "");
@@ -367,7 +377,27 @@ public class SettingsPageView extends android.widget.FrameLayout {
                         gistId = found;
                         sp.edit().putString("ghGistId", found).apply();
                     }
-                    String resp = ghHttp("https://api.github.com/gists/" + gistId, "GET", token, null);
+                    String resp;
+                    try {
+                        resp = ghHttp("https://api.github.com/gists/" + gistId, "GET", token, null);
+                    } catch (Exception ge) {
+                        if (String.valueOf(ge.getMessage()).contains("404")) { // gist失效: 清id自动重找
+                            sp.edit().putString("ghGistId", "").apply();
+                            String list = ghHttp("https://api.github.com/gists?per_page=100", "GET", token, null);
+                            org.json.JSONArray arr2 = new org.json.JSONArray(list);
+                            String found2 = "";
+                            for (int i = 0; i < arr2.length() && found2.isEmpty(); i++) {
+                                org.json.JSONObject g2 = arr2.getJSONObject(i);
+                                if (g2.has("files") && g2.getJSONObject("files").has("config.json")) found2 = g2.getString("id");
+                            }
+                            if (found2.isEmpty()) { toast("token名下没有配置gist (404)"); return; }
+                            gistId = found2;
+                            sp.edit().putString("ghGistId", found2).apply();
+                            resp = ghHttp("https://api.github.com/gists/" + gistId, "GET", token, null);
+                        } else if (String.valueOf(ge.getMessage()).contains("401")) { toast("token无效 (401), 请重新粘贴"); return; }
+                        else if (String.valueOf(ge.getMessage()).contains("403")) { toast("token无gist权限 (403)"); return; }
+                        else throw ge;
+                    }
                     org.json.JSONObject files = new org.json.JSONObject(resp).getJSONObject("files");
                     if (!files.has("config.json")) { toast("gist 里没有 config.json"); return; }
                     org.json.JSONObject cfg = new org.json.JSONObject(files.getJSONObject("config.json").getString("content"));
