@@ -811,7 +811,7 @@ public class MetronomeActivity extends Activity {
                             }
                         }
                         for (int i = 0; i < 8; i++) if (!"--".equals(baidu[i][1])) { indices[i][0] = baidu[i][0]; indices[i][1] = baidu[i][1]; }
-                } catch (Throwable ignored4) {}
+                } } catch (Throwable ignored4) {}
                 // 15天: 百度天气数据API (senode"更多天气"页同源, 45天全量, 逐日湿度/紫外线/日出日落)
                 try {
                     String mm = new java.text.SimpleDateFormat("yyyyMM", java.util.Locale.US).format(new java.util.Date());
@@ -848,7 +848,8 @@ public class MetronomeActivity extends Activity {
                                 o.optString("wind_direction_day", "") + o.optString("wind_power_day", ""),
                                 o.optString("uv", "--"),
                                 o.optString("sunriseTime", "--"), o.optString("sunsetTime", "--"),
-                                hum2 >= 0 ? hum2 + "%" : "--"});
+                                hum2 >= 0 ? hum2 + "%" : "--",
+                                o.optString("pressure", "--") + "hPa"});
                             cnt++;
                         }
                     }
