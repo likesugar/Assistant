@@ -811,7 +811,7 @@ public class MetronomeActivity extends Activity {
         org.json.JSONArray rs = new org.json.JSONObject(g).optJSONArray("results");
         if (rs == null || rs.length() == 0) throw new Exception("no geo");
         org.json.JSONObject r = rs.getJSONObject(0);
-        return new double[]{r.getDouble("latitude"), r.getLongitude()};
+        return new double[]{r.getDouble("latitude"), r.getDouble("longitude")};
     }
 
     private String httpGet(String u) throws Throwable {
