@@ -363,7 +363,7 @@ public class SettingsActivity extends Activity {
         for (int id : accents) ((TextView) findViewById(id)).setTextColor(accent);
         int[] cards = {R.id.card1, R.id.card2, R.id.card3, R.id.cardOled, R.id.cardNotify, R.id.cardAbout2};
         for (int id : cards) findViewById(id).setBackgroundResource(dark ? (oled ? R.drawable.bg_card_oled : R.drawable.bg_card_md3_dark) : R.drawable.bg_card_md3);
-        View dv = findViewById(R.id.div3);
+        View dv = null;
         if (dv != null) dv.setBackgroundColor(div);
         TextView tvO = (TextView) findViewById(R.id.tvOled);
         if (tvO != null) tvO.setText(oled ? "开" : "关");
