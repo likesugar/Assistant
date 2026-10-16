@@ -805,7 +805,7 @@ public class MetronomeActivity extends Activity {
                         }
                         for (int i = 0; i < 8; i++) if (!"--".equals(baidu[i][1])) { indices[i][0] = baidu[i][0]; indices[i][1] = baidu[i][1]; }
                         // 同页兜底: dayForecastList / hourInfoData (m站不通时 7天+小时条从这里来)
-                        if (daysB.size() < 2) {
+                        if (days.size() < 2) {
                             int di2 = bhtml.indexOf("\"dayForecastList\":");
                             if (di2 >= 0) {
                                 int j3 = bhtml.indexOf('[', di2);
@@ -821,10 +821,10 @@ public class MetronomeActivity extends Activity {
                                     for (int i = 0; i < arr.length(); i++) {
                                         if ("今天".equals(arr.getJSONObject(i).optString("word"))) { start = i; break; }
                                     }
-                                    daysB.clear();
-                                    for (int i = start; i < arr.length() && daysB.size() < 7; i++) {
+                                    days.clear();
+                                    for (int i = start; i < arr.length() && days.size() < 7; i++) {
                                         org.json.JSONObject o = arr.getJSONObject(i);
-                                        daysB.add(new String[]{
+                                        days.add(new String[]{
                                             o.optString("word", "--"), o.optString("date", "--"),
                                             baiduEmoji(o.optString("dayIconKey", "")), o.optString("weather_day", "--"),
                                             o.optString("temperature_day", "--"), o.optString("temperature_night", "--"),
@@ -837,7 +837,7 @@ public class MetronomeActivity extends Activity {
                                 }
                             }
                         }
-                        if (hoursB.size() == 0) {
+                        if (hours.size() == 0) {
                             int hi3 = bhtml.indexOf("\"hourInfoData\":");
                             if (hi3 >= 0) {
                                 int j4 = bhtml.indexOf('[', hi3);
@@ -853,7 +853,7 @@ public class MetronomeActivity extends Activity {
                                         org.json.JSONObject o = ha.getJSONObject(i);
                                         String pp3 = o.optString("precipitationProbability", "");
                                         String uv3 = o.optString("uv", "");
-                                        hoursB.add(new String[]{o.optString("showHour", "--"),
+                                        hours.add(new String[]{o.optString("showHour", "--"),
                                             String.valueOf(o.optDouble("temperature", 0)) + "°",
                                             o.optString("windDirectionText", "") + o.optString("windPower", ""),
                                             uv3.length() > 0 ? "紫外线" + uv3 : (pp3.length() > 0 && !"0%".equals(pp3) ? "降水" + pp3 : "")});
