@@ -1155,7 +1155,7 @@ public class MetronomeActivity extends Activity {
         // ===== 7天预报·趋势 (单View自绘, 一列一栏, 可点) =====
         if (days.size() > 1) {
             TextView h15 = new TextView(this);
-            h15.setText("15天预报·" + n + "列");
+            h15.setText("15天预报·" + Math.min(days.size(), 15) + "列");
             h15.setTextColor(tc()); h15.setTextSize(16); h15.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
             android.widget.LinearLayout.LayoutParams hp0 = new android.widget.LinearLayout.LayoutParams(-2, -2);
             hp0.setMargins(dp(2), 0, 0, dp(6));
