@@ -1082,12 +1082,10 @@ public class MetronomeActivity extends Activity {
         boolean hasDays = wDays != null && wDays.length > 0;
         String[] d = hasDays ? wDays[Math.min(selDay, wDays.length - 1)] : new String[12];
         boolean today = !hasDays || selDay == 0;
-        String type = today ? wType : d[3];
-        String mn = today ? wMn : d[5], mx = today ? wMx : d[4];
-        String hum = today ? wHum : "降水 " + d[11];
-        String wind = today ? wWind : d[7];
-        String press = today ? wPress : "";
-        String vis = today ? wVis : "";
+        String type = hasDays ? d[3] : wType;
+        String mn = hasDays ? d[5] : wMn, mx = hasDays ? d[4] : wMx;
+        String hum = hasDays ? d[11] : wHum;
+        String wind = hasDays ? d[7] : wWind;
         String aqi = today ? wAqi : "";
         String curT = today ? wCurT : "";
         android.widget.LinearLayout cur = new android.widget.LinearLayout(this);
@@ -1109,9 +1107,9 @@ public class MetronomeActivity extends Activity {
         android.widget.LinearLayout meta = new android.widget.LinearLayout(this);
         meta.setOrientation(android.widget.LinearLayout.HORIZONTAL);
         meta.setGravity(android.view.Gravity.CENTER);
-        String[][] ms = today
-            ? new String[][]{{"湿度", hum}, {"风力", wind}, {"气压", press}, {"能见度", vis}, {"空气", aqi}}
-            : new String[][]{{"湿度", d[11]}, {"紫外线", d[8]}, {"日出", d[9]}, {"日落", d[10]}, {"风力", wind}};
+        String[][] ms = today && !hasDays
+            ? new String[][]{{"湿度", hum}, {"风力", wind}, {"空气", aqi}}
+            : new String[][]{{"湿度", hum}, {"紫外线", d[8]}, {"日出", d[9]}, {"日落", d[10]}, {"风力", wind}};
         for (String[] m : ms) {
             android.widget.LinearLayout col = new android.widget.LinearLayout(this);
             col.setOrientation(android.widget.LinearLayout.VERTICAL);
@@ -1358,8 +1356,8 @@ public class MetronomeActivity extends Activity {
             android.graphics.Path hp = new android.graphics.Path(), lp = new android.graphics.Path();
             for (int i = 0; i < n; i++) {
                 float cx = i * colW + colW / 2f;
-                try { hy[i] = ly0 + lh * (1 - (Float.parseFloat(days[i][4]) - hiMin) / (hiMax - hiMin)); } catch (Throwable e) { hy[i] = ly0; }
-                try { lyy[i] = ly0 + lh * (1 - (Float.parseFloat(days[i][5]) - loMin) / (loMax - loMin)); } catch (Throwable e) { lyy[i] = ly0 + lh; }
+                try { hy[i] = ly0 + lh * 0.5f * (1 - (Float.parseFloat(days[i][4]) - hiMin) / (hiMax - hiMin)); } catch (Throwable e) { hy[i] = ly0; }
+                try { lyy[i] = ly0 + lh * 0.5f + lh * 0.5f * (1 - (Float.parseFloat(days[i][5]) - loMin) / (loMax - loMin)); } catch (Throwable e) { lyy[i] = ly0 + lh; }
                 if (i == 0) { hp.moveTo(cx, hy[i]); lp.moveTo(cx, lyy[i]); }
                 else { hp.lineTo(cx, hy[i]); lp.lineTo(cx, lyy[i]); }
             }
