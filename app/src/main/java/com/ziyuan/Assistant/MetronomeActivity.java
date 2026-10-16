@@ -741,6 +741,8 @@ public class MetronomeActivity extends Activity {
                     code = cityCode(cname);
                     sp.edit().putString("lifeCityCode", code).putString("lifeCityName", cname).apply();
                 }
+                java.util.List<String[]> days = new java.util.ArrayList<>();
+                java.util.List<String[]> hours = new java.util.ArrayList<>();
                 String page = httpGet("http://d1.weather.com.cn/weather_index/" + code + ".html?_=" + System.currentTimeMillis(), "http://www.weather.com.cn/");
                 org.json.JSONObject sk = new org.json.JSONObject(extractVar(page, "dataSK"));
                 org.json.JSONObject dz = new org.json.JSONObject(extractVar(page, "cityDZ")).getJSONObject("weatherinfo");
@@ -775,9 +777,6 @@ public class MetronomeActivity extends Activity {
                     indices[0][1] = h0 >= 30 ? "短袖类" : h0 >= 26 ? "短袖/薄外套" : h0 >= 22 ? "薄外套类"
                         : h0 >= 18 ? "外套类" : h0 >= 12 ? "夹克/风衣" : h0 >= 6 ? "厚外套/毛衣" : "羽绒服类";
                 } catch (Throwable ignored3) {}
-                if (days == null) days = new java.util.ArrayList<>();
-                if (hours == null) hours = new java.util.ArrayList<>();
-                java.util.List<String[]> daysB = days, hoursB = hours;
                 try { // 百度生活服务(电脑模式UA): 成功则整体替换8项
                     String bq = java.net.URLEncoder.encode(cname + "天气", "UTF-8");
                     java.net.HttpURLConnection bc = (java.net.HttpURLConnection) new java.net.URL("https://www.baidu.com/s?wd=" + bq).openConnection();
