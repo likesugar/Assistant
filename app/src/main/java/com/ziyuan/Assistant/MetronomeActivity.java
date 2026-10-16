@@ -1057,16 +1057,8 @@ public class MetronomeActivity extends Activity {
             grid.addView(h15, hp0);
             final int colW = dp(78);
             final int n = Math.min(days.size(), 7);
-            android.widget.HorizontalScrollView hsv = new android.widget.HorizontalScrollView(this);
-            hsv.setFillViewport(true);
-            hsv.setHorizontalScrollBarEnabled(false);
-            final TrendView[] tvh = new TrendView[1];
-            TrendView tv = new TrendView(this, n, colW, wDays, idx -> { selDay = idx; if (tvh[0] != null) tvh[0].setSelected(idx); refreshCurCard(); });
-            tvh[0] = tv;
-            tv.setLayoutParams(new android.widget.LinearLayout.LayoutParams(colW * n, dp(238)));
-            hsv.addView(tv);
-            android.widget.LinearLayout.LayoutParams sp = new android.widget.LinearLayout.LayoutParams(-1, -2);
-            grid.addView(hsv, sp);
+            tv.setLayoutParams(new android.widget.LinearLayout.LayoutParams(-1, dp(238)));
+            grid.addView(tv, new android.widget.LinearLayout.LayoutParams(-1, dp(238)));
         }
         // 当前天气卡 (照图2) — 随选中日刷新
         curBox = new android.widget.LinearLayout(this);
@@ -1319,9 +1311,22 @@ public class MetronomeActivity extends Activity {
             sub.setColor(0xFF9AA0A8); sub.setAntiAlias(true); sub.setTextAlign(android.graphics.Paint.Align.CENTER);
             sub.setTextSize(dp(10));
         }
+        private final android.widget.Scroller sc = new android.widget.Scroller(getContext());
+        private android.view.VelocityTracker vt;
+        private float lastX; private boolean dragging;
+        private int scroll;
+
+        private int maxScroll() { return Math.max(0, colW * Math.min(cols, days == null ? 0 : days.length) - getWidth()); }
+
+        @Override public void computeScroll() {
+            if (sc.computeScrollOffset()) { scroll = sc.getCurrX(); invalidate(); }
+        }
+
         @Override protected void onDraw(android.graphics.Canvas cv) {
             super.onDraw(cv);
-            if (days == null || days.length == 0) return;
+            cv.save();
+            cv.translate(-Math.max(0, Math.min(scroll, maxScroll())), 0);
+            if (days == null || days.length == 0) { cv.restore(); return; }
             int n = Math.min(cols, days.length);
             if (sel >= 0 && sel < n) { // 选中列: 浅蓝圆角底
                 android.graphics.Paint hl = new android.graphics.Paint();
@@ -1388,6 +1393,42 @@ public class MetronomeActivity extends Activity {
                 cv.drawText(w1, i * colW + colW / 2f, wy, sub);
                 cv.drawText(w2, i * colW + colW / 2f, wy + dp(13), sub);
             }
+            cv.restore();
+        }
+
+        @Override public boolean onTouchEvent(android.view.MotionEvent e) {
+            if (vt == null) vt = android.view.VelocityTracker.obtain();
+            vt.addMovement(e);
+            switch (e.getActionMasked()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    downX = e.getX(); downY = e.getY(); lastX = e.getX();
+                    dragging = false; moved = false;
+                    sc.forceFinished(true);
+                    return true;
+                case android.view.MotionEvent.ACTION_MOVE:
+                    if (!dragging && Math.abs(e.getX() - downX) > dp(8)) { dragging = true; sc.forceFinished(true); }
+                    if (dragging) {
+                        moved = true;
+                        scroll = Math.max(0, Math.min(scroll + (int) (lastX - e.getX()), maxScroll()));
+                    }
+                    lastX = e.getX();
+                    invalidate();
+                    return true;
+                case android.view.MotionEvent.ACTION_UP:
+                case android.view.MotionEvent.ACTION_CANCEL: {
+                    if (!dragging && Math.abs(e.getX() - downX) < dp(10) && Math.abs(e.getY() - downY) < dp(10)) {
+                        int col = (int) ((e.getX() + scroll) / colW);
+                        if (col >= 0 && col < Math.min(cols, days.length) && onClick != null) onClick.accept(col);
+                    } else if (dragging) {
+                        vt.computeCurrentVelocity(1000);
+                        sc.fling(scroll, 0, (int) -vt.getXVelocity(), 0, 0, maxScroll(), 0, 0);
+                    }
+                    if (vt != null) { vt.recycle(); vt = null; }
+                    invalidate();
+                    return true;
+                }
+            }
+            return super.onTouchEvent(e);
         }
         @Override public boolean onTouchEvent(android.view.MotionEvent e) {
             if (e.getAction() == android.view.MotionEvent.ACTION_DOWN) { downX = e.getX(); downY = e.getY(); return true; }
