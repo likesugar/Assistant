@@ -1069,11 +1069,12 @@ public class MetronomeActivity extends Activity {
 
     private String httpGet(String u) throws Throwable { return httpGet(u, null); }
 
-    private String[][] wDays, wHours; private String wCity, wType, wCurT, wMn, wMx, wHum, wWind, wPress, wVis, wAqi;
+    private String[][] wDays, wHours, wIndices; private String wCity, wType, wCurT, wMn, wMx, wHum, wWind, wPress, wVis, wAqi;
     private android.widget.LinearLayout curBox; private int selDay = 0;
 
     private void buildWeather(String city, String type, String curT, String mn, String mx, String hum, String wind, String press, String vis, String aqi, String[][] indices, java.util.List<String[]> days, String hum0, String wind0, String press0, String vis0, String aqi0, java.util.List<String[]> hours) {
         wHours = hours.toArray(new String[0][]);
+        wIndices = indices;
         wDays = days.toArray(new String[0][]); wCity = city; wType = type; wCurT = curT; wMn = mn; wMx = mx;
         wHum = hum0; wWind = wind0; wPress = press0; wVis = vis0; wAqi = aqi0; selDay = 0;
         TextView t2 = findViewById(R.id.lifeTemp);
@@ -1152,7 +1153,7 @@ public class MetronomeActivity extends Activity {
             msl.add(new String[]{"湿度", hum}); msl.add(new String[]{"风力", wind}); msl.add(new String[]{"空气", aqi});
         } else {
             msl.add(new String[]{"湿度", hum});
-            msl.add(new String[]{"紫外线", ("--".equals(d[8]) || d[8].length() == 0) && indices.length > 2 ? indices[2][1] : d[8]});
+            msl.add(new String[]{"紫外线", ("--".equals(d[8]) || d[8].length() == 0) && wIndices.length > 2 ? wIndices[2][1] : d[8]});
             if (!"--".equals(d[9]) && d[9].length() > 0) msl.add(new String[]{"日出", d[9]});
             if (!"--".equals(d[10]) && d[10].length() > 0) msl.add(new String[]{"日落", d[10]});
             msl.add(new String[]{"风力", wind});
