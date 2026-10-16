@@ -25,6 +25,7 @@ public class DynaService extends Service {
     public static final String CH = "dynafg2";
     public static final String CHL = "dynafg_low";
     public static final String CHE = "dynaevt2";
+    public static final String CHD = "dynadynevt2";
     private volatile boolean running = false;
     private Thread worker;
 
@@ -259,13 +260,17 @@ public class DynaService extends Service {
         return old != null && !old.equals(cur);
     }
 
-    private void notify(String title, String text, String jump) {
+    /** 开播类通知 → "开播提醒"渠道 */
+    private void notify(String title, String text, String jump) { notifyCh(title, text, jump, CHE, "开播提醒"); }
+    /** 动态类通知 → "平台动态"渠道(独立通知栏, 与开播互不干扰) */
+    private void notifyDyn(String title, String text, String jump) { notifyCh(title, text, jump, CHD, "平台动态"); }
+    private void notifyCh(String title, String text, String jump, String chId, String chName) {
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= 26) {
-            NotificationChannel ch = new NotificationChannel(CHE, "开播提醒", NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationChannel ch = new NotificationChannel(chId, chName, NotificationManager.IMPORTANCE_DEFAULT);
             nm.createNotificationChannel(ch);
         }
-        Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(this, CHE) : new Notification.Builder(this);
+        Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(this, chId) : new Notification.Builder(this);
         b.setSmallIcon(getApplicationInfo().icon).setContentTitle(title).setContentText(text)
                 .setStyle(new Notification.BigTextStyle().bigText(text)).setAutoCancel(true)
                 .setContentIntent(fgPi(jump));
@@ -376,7 +381,7 @@ public class DynaService extends Service {
                     }
                 }
                 if (content.length() > 100) content = content.substring(0, 100) + "...";
-                notify("【B站】【" + uname + "】" + msg, content, "https://www.bilibili.com/opus/" + did);
+                notifyDyn("【B站】【" + uname + "】" + msg, content, "https://www.bilibili.com/opus/" + did);
             }
         } catch (Throwable e) { }
     }
@@ -488,7 +493,7 @@ public class DynaService extends Service {
             String text = mblog.optString("text", "");
             text = text.replaceAll("<[^>]+>", "");
             if (text.length() > 100) text = text.substring(0, 100) + "...";
-            notify("【微博】【" + uname + "】发微博了", text, "https://m.weibo.cn/u/" + uid);
+            notifyDyn("【微博】【" + uname + "】发微博了", text, "https://m.weibo.cn/u/" + uid);
         }
     }
 }
