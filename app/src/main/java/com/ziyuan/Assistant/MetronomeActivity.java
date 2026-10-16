@@ -1118,7 +1118,7 @@ public class MetronomeActivity extends Activity {
         boolean today = !hasDays || selDay == 0;
         String type = hasDays ? d[3] : wType;
         String mn = hasDays ? d[5] : wMn, mx = hasDays ? d[4] : wMx;
-        String hum = hasDays ? d[11] : wHum;
+        String hum = hasDays ? (d[11] == null || d[11].length() == 0 || d[11].equals("--") ? (today ? wHum : d[11]) : d[11]) : wHum;
         String wind = hasDays ? d[7] : wWind;
         String aqi = today ? wAqi : "";
         String curT = today ? wCurT : "";
@@ -1351,6 +1351,21 @@ public class MetronomeActivity extends Activity {
             sub.setTextSize(dp(10));
         }
         private int maxScroll() { return Math.max(0, colW * hs.length - getWidth()); }
+        private void drawScrollBar(android.graphics.Canvas cv) {
+            int max = maxScroll();
+            if (max <= 0) return;
+            float tw = getWidth() - dp(48);
+            float trackY = getHeight() - dp(5);
+            android.graphics.Paint p = new android.graphics.Paint();
+            p.setAntiAlias(true);
+            p.setColor(0xFFE3E6EA);
+            cv.drawRoundRect(new android.graphics.RectF(dp(24), trackY, dp(24) + tw, trackY + dp(3)), dp(2), dp(2), p);
+            float frac = getWidth() / (float) (getWidth() + max);
+            float tw2 = Math.max(dp(36), tw * frac);
+            float pos = dp(24) + (tw - tw2) * (scroll / (float) max);
+            p.setColor(0xFFB8C0CC);
+            cv.drawRoundRect(new android.graphics.RectF(pos, trackY, pos + tw2, trackY + dp(3)), dp(2), dp(2), p);
+        }
         @Override public void computeScroll() { if (sc.computeScrollOffset()) { scroll = sc.getCurrX(); invalidate(); } }
         @Override protected void onDraw(android.graphics.Canvas cv) {
             super.onDraw(cv);
@@ -1365,6 +1380,7 @@ public class MetronomeActivity extends Activity {
                 if (pp != null && pp.length() > 0) cv.drawText(pp, cx, dp(78), sub);
             }
             cv.restore();
+            drawScrollBar(cv);
         }
         @Override public boolean onTouchEvent(android.view.MotionEvent e) {
             if (vt == null) vt = android.view.VelocityTracker.obtain();
