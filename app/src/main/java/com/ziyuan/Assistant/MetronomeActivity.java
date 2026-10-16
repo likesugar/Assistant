@@ -736,7 +736,7 @@ public class MetronomeActivity extends Activity {
                 String html = b2.toString();
                 // 3. 温度
                 String temp = "";
-                java.util.regex.Matcher mt = java.util.regex.Pattern.compile("\"temperature\":\"(-?\d+)\"").matcher(html);
+                java.util.regex.Matcher mt = java.util.regex.Pattern.compile("\"temperature\":\"(-?\\d+)\"").matcher(html);
                 if (mt.find()) temp = mt.group(1) + "°";
                 // 4. 生活指数: 按 item_name 切窗口取 level + icon
                 java.util.Map<String, String[]> items = new java.util.LinkedHashMap<>();
