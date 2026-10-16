@@ -725,16 +725,25 @@ public class MetronomeActivity extends Activity {
                 java.util.regex.Matcher mc = java.util.regex.Pattern.compile("\"city\":\"([^\"]+?)市?\"").matcher(sb);
                 if (mc.find()) city = mc.group(1);
                 if (city.length() == 0) { uiTick.post(() -> lifeFetched = false); return; }
-                // 2. 百度天气页
+                // 2. 百度天气页 (www + m 双路兜底, 带随机 BAIDUID 防验证码)
                 String q = java.net.URLEncoder.encode(city + "天气", "UTF-8");
-                java.net.HttpURLConnection c2 = (java.net.HttpURLConnection) new java.net.URL("https://www.baidu.com/s?wd=" + q).openConnection();
-                c2.setConnectTimeout(8000); c2.setReadTimeout(8000);
-                c2.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
-                java.io.BufferedReader r2 = new java.io.BufferedReader(new java.io.InputStreamReader(c2.getInputStream(), "UTF-8"));
-                StringBuilder b2 = new StringBuilder();
-                while ((line = r2.readLine()) != null) b2.append(line);
-                r2.close();
-                String html = b2.toString();
+                String[] urls = {"https://www.baidu.com/s?wd=" + q, "https://m.baidu.com/s?word=" + q};
+                String html = "";
+                for (String u : urls) {
+                    try {
+                        java.net.HttpURLConnection c2 = (java.net.HttpURLConnection) new java.net.URL(u).openConnection();
+                        c2.setConnectTimeout(8000); c2.setReadTimeout(8000);
+                        c2.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13; RMX3823) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
+                        c2.setRequestProperty("Cookie", "BAIDUID=" + java.util.UUID.randomUUID().toString().replace("-", "").toUpperCase() + ":FG=1");
+                        java.io.BufferedReader r2 = new java.io.BufferedReader(new java.io.InputStreamReader(c2.getInputStream(), "UTF-8"));
+                        StringBuilder b2 = new StringBuilder();
+                        while ((line = r2.readLine()) != null) b2.append(line);
+                        r2.close();
+                        String h = b2.toString();
+                        if (h.contains("item_name")) { html = h; break; }
+                    } catch (Throwable ignored) {}
+                }
+                if (html.length() == 0) { uiTick.post(() -> lifeFetched = false); return; }
                 // 3. 温度
                 String temp = "";
                 java.util.regex.Matcher mt = java.util.regex.Pattern.compile("\"temperature\":\"(-?\\d+)\"").matcher(html);
@@ -876,7 +885,8 @@ public class MetronomeActivity extends Activity {
         box.addView(row);
         final android.app.Dialog dlg = new android.app.Dialog(this);
         dlg.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
-        dlg.setContentView(box);
+        dlg.setContentView(box, new android.view.ViewGroup.LayoutParams(
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
         dlg.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(0));
         android.view.WindowManager.LayoutParams wp = dlg.getWindow().getAttributes();
         wp.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.82);
