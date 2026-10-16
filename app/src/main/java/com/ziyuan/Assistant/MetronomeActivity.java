@@ -954,6 +954,7 @@ public class MetronomeActivity extends Activity {
                             tv.setText(nm);
                             tv.setTextColor(0xFFF2F2F2); tv.setTextSize(15);
                             tv.setPadding(dp(8), dp(12), dp(8), dp(12));
+                            double la; double lo;
                             try { la = o.getDouble("latitude"); lo = o.getDouble("longitude"); } catch (Throwable ignored2) { continue; }
                             String cn = o.optString("name");
                             tv.setOnClickListener(v -> {
