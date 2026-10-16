@@ -664,10 +664,11 @@ public class MetronomeActivity extends Activity {
             playing = svc;
             findViewById(R.id.metroCardDots).setVisibility(playing ? View.VISIBLE : View.GONE);
             btnPlay.setText(playing ? "■ 停止" : "▶ 开始打拍");
-            if (playing) refreshLifeCard(); else findViewById(R.id.lifeCard).setVisibility(View.GONE);
+            if (playing) refreshLifeCard();
             if (playing) uiTick.post(tickRun); else { uiTick.removeCallbacks(tickRun); for (View d : dots) d.setBackgroundResource(R.drawable.bg_dot_off); }
         }
         refreshBgList();
+        refreshLifeCard();
         hideNavBar();
         applyKeepScreen();
     }
@@ -707,7 +708,7 @@ public class MetronomeActivity extends Activity {
     private void refreshLifeCard() {
         boolean on = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroLifeService", false);
         android.widget.LinearLayout lc = findViewById(R.id.lifeCard);
-        if (!on || !playing) { lc.setVisibility(View.GONE); return; }
+        if (!on) { lc.setVisibility(View.GONE); return; }
         lc.setVisibility(View.VISIBLE);
         if (lifeFetched) return;
         lifeFetched = true;
@@ -880,7 +881,10 @@ public class MetronomeActivity extends Activity {
         android.view.WindowManager.LayoutParams wp = dlg.getWindow().getAttributes();
         wp.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.82);
         wp.height = android.view.WindowManager.LayoutParams.WRAP_CONTENT;
+        wp.gravity = android.view.Gravity.BOTTOM;
+        wp.y = dp(80);
         dlg.getWindow().setAttributes(wp);
+        dlg.getWindow().setWindowAnimations(android.R.style.Animation_Activity);
         bNo.setOnClickListener(v -> dlg.dismiss());
         bYes.setOnClickListener(v -> {
             dlg.dismiss();
