@@ -832,6 +832,19 @@ public class MetronomeActivity extends Activity {
                         days.add(new String[]{label, date, wEmoji(String.format("d%02d", wc)), wea, hi, lo, nightEmoji(wc), wd, uv, rise, sett, pp});
                     }
                 } catch (Throwable ignored) {}
+                if (days.size() < 2) { // open-meteo 不通 → 官方 d1 fc 兜底 (5天)
+                    days.clear();
+                    try {
+                        org.json.JSONArray f = new org.json.JSONObject(extractVar(page, "fc")).getJSONArray("f");
+                        for (int i = 0; i < f.length(); i++) {
+                            org.json.JSONObject o = f.getJSONObject(i);
+                            days.add(new String[]{o.optString("fj"), o.optString("fi"),
+                                wEmoji("d" + o.optString("fa", "99")), wCode(safeInt(o.optString("fa"))),
+                                o.optString("fc"), o.optString("fd"), nightEmoji(safeInt(o.optString("fb"))),
+                                o.optString("fe") + o.optString("fg"), "--", "--", "--", "--"});
+                        }
+                    } catch (Throwable ignored2) {}
+                }
                 final java.util.List<String[]> fdays = days;
                 final String fcity = city, ftype = type, fcur = curT, fmx = mx, fmn = mn;
                 final String fh = hum, fw = wind, fp = press, fv = vis, fa = aqi;
@@ -885,6 +898,10 @@ public class MetronomeActivity extends Activity {
         if (c <= 82) return "阵雨";
         if (c <= 86) return "阵雪";
         return "雷雨";
+    }
+
+    private static int safeInt(String v) {
+        try { return Integer.parseInt(v.trim()); } catch (Throwable e) { return 99; }
     }
 
     private static String nightEmoji(int wc) {
