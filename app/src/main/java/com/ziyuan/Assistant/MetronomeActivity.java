@@ -726,6 +726,7 @@ public class MetronomeActivity extends Activity {
                 if (code.length() == 0) {
                     cname = ipCity();
                     code = cityCode(cname);
+                    sp.edit().putString("lifeCityCode", code).putString("lifeCityName", cname).apply();
                 }
                 String page = httpGet("http://d1.weather.com.cn/weather_index/" + code + ".html?_=" + System.currentTimeMillis(), "http://www.weather.com.cn/");
                 org.json.JSONObject sk = new org.json.JSONObject(extractVar(page, "dataSK"));
@@ -766,7 +767,7 @@ public class MetronomeActivity extends Activity {
                 final java.util.List<String[]> fdays = days;
                 uiTick.post(() -> buildWeather(fcity, ftype, fcur, fmn, fmx, fh, fw, fp, fv, fa, fi, fdays));
             } catch (Throwable e) {
-                uiTick.post(() -> { ((TextView) findViewById(R.id.lifeTemp)).setText("获取失败:" + e.getClass().getSimpleName() + " 点击重试"); lifeFetched = false; lastWeatherAt = 0; });
+                String msg = e.getMessage(); uiTick.post(() -> { ((TextView) findViewById(R.id.lifeTemp)).setText("获取失败:" + (msg == null || msg.length() == 0 ? e.getClass().getSimpleName() : msg) + " 点击重试"); lifeFetched = false; lastWeatherAt = 0; });
             }
         }, "weather").start();
     }
@@ -782,16 +783,25 @@ public class MetronomeActivity extends Activity {
         return mc.find() ? mc.group(1) : "杭州";
     }
 
-    /** 中国天气网搜索: 城市名 → 101 开头的 9 位代码 */
+    /** 中国天气网搜索: 城市名 → 101 开头的 9 位代码 (双源+后缀重试) */
     private String cityCode(String name) throws Throwable {
-        String g = httpGet("http://toy1.weather.com.cn/search?cityname=" + java.net.URLEncoder.encode(name, "UTF-8"));
-        java.util.regex.Matcher mr = java.util.regex.Pattern.compile("(101\\d{6})~[^~]*~([^~]+)~").matcher(g);
-        while (mr.find()) {
-            if (mr.group(2).equals(name)) return mr.group(1);
+        String[] names = {name, name + "市"};
+        String[] urls = {"http://toy1.weather.com.cn/search?cityname=",
+                         "http://search.weather.com.cn/wap/searchData.php?cityname="};
+        for (String nm : names) {
+            for (String base : urls) {
+                try {
+                    String g = httpGet(base + java.net.URLEncoder.encode(nm, "UTF-8"), "http://www.weather.com.cn/");
+                    java.util.regex.Matcher mr = java.util.regex.Pattern.compile("(101\\d{6})~[^~]*~([^~]+)~").matcher(g);
+                    while (mr.find()) {
+                        if (mr.group(2).equals(nm) || mr.group(2).equals(name)) return mr.group(1);
+                    }
+                    mr.reset();
+                    if (mr.find()) return mr.group(1);
+                } catch (Throwable ignored) {}
+            }
         }
-        mr.reset();
-        if (mr.find()) return mr.group(1);
-        throw new Exception("no code");
+        throw new Exception("no code for " + name);
     }
 
     private static String wEmoji(String code) {
