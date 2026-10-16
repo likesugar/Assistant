@@ -1224,8 +1224,35 @@ public class MetronomeActivity extends Activity {
             android.widget.LinearLayout.LayoutParams tp2 = new android.widget.LinearLayout.LayoutParams(-2, -2);
             tp2.setMargins(0, dp(4), 0, 0);
             cell.addView(tv2, tp2);
+            final int fi2 = i;
+            if (fi2 == 0) cell.setOnClickListener(v -> showDress());
             grow.addView(cell, cp);
         }
+    }
+
+    /** 穿衣推荐: 按选中日高低温给上衣/裤子/外套 */
+    private void showDress() {
+        double hi = 25, lo = 18;
+        try {
+            if (wDays != null && wDays.length > 0) {
+                String[] d = wDays[Math.min(selDay, wDays.length - 1)];
+                hi = Double.parseDouble(d[4]); lo = Double.parseDouble(d[5]);
+            } else { hi = Double.parseDouble(wMx); lo = Double.parseDouble(wMn); }
+        } catch (Throwable ignored) {}
+        String top, pants, coat;
+        if (hi >= 30)      { top = "短袖T恤 / 背心";    pants = "短裤或薄长裤";   coat = "无需外套"; }
+        else if (hi >= 26) { top = "短袖";              pants = "薄长裤";         coat = "备一件薄外套"; }
+        else if (hi >= 22) { top = "短袖或衬衫";        pants = "长裤";           coat = "薄外套"; }
+        else if (hi >= 18) { top = "长袖 / 薄衬衫";     pants = "长裤";           coat = "夹克"; }
+        else if (hi >= 12) { top = "长袖 + 毛衣";       pants = "厚长裤";         coat = "风衣 / 夹克"; }
+        else if (hi >= 6)  { top = "毛衣 / 卫衣";       pants = "厚长裤";         coat = "大衣 / 厚外套"; }
+        else               { top = "厚毛衣 / 加绒卫衣"; pants = "加绒裤";         coat = "羽绒服"; }
+        String extra = lo <= 10 && hi - lo >= 10 ? "\n早晚温差大，注意加件外套" : "";
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("穿衣推荐 · " + String.format("%.0f", lo) + "~" + String.format("%.0f", hi) + "°C")
+            .setMessage("上衣：" + top + "\n裤子：" + pants + "\n外套：" + coat + extra)
+            .setPositiveButton("知道了", null)
+            .show();
     }
 
     private void pickCity() {
