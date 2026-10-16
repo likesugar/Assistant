@@ -800,6 +800,7 @@ public class MetronomeActivity extends Activity {
                 } catch (Throwable ignored4) {}
                 // 7天趋势: 百度天气 dayForecastList (与百度页面同源同口径)
                 java.util.List<String[]> days = new java.util.ArrayList<>();
+                java.util.List<String[]> hours = new java.util.ArrayList<>();
                 try {
                     String bq = java.net.URLEncoder.encode(cname + "天气", "UTF-8");
                     java.net.HttpURLConnection bc = (java.net.HttpURLConnection) new java.net.URL("https://m.baidu.com/s?from=1022282z&word=" + bq).openConnection();
@@ -841,7 +842,6 @@ public class MetronomeActivity extends Activity {
                             }
                         }
                     }
-                java.util.List<String[]> hours = new java.util.ArrayList<>();
                 try {
                     int hi2 = bh.indexOf("\"hourInfoData\":");
                     if (hi2 >= 0) {
@@ -1530,17 +1530,6 @@ public class MetronomeActivity extends Activity {
                     invalidate();
                     return true;
                 }
-            }
-            return super.onTouchEvent(e);
-        }
-        @Override public boolean onTouchEvent(android.view.MotionEvent e) {
-            if (e.getAction() == android.view.MotionEvent.ACTION_DOWN) { downX = e.getX(); downY = e.getY(); return true; }
-            if (e.getAction() == android.view.MotionEvent.ACTION_UP) {
-                if (Math.abs(e.getX() - downX) < dp(10) && Math.abs(e.getY() - downY) < dp(10)) {
-                    int col = (int) (e.getX() / colW);
-                    if (col >= 0 && col < Math.min(cols, days.length) && onClick != null) onClick.accept(col);
-                }
-                return true;
             }
             return super.onTouchEvent(e);
         }
