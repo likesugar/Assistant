@@ -786,7 +786,7 @@ public class MetronomeActivity extends Activity {
             }
             android.widget.LinearLayout cell = new android.widget.LinearLayout(this);
             cell.setOrientation(android.widget.LinearLayout.VERTICAL);
-            cell.setGravity(View.CENTER);
+            cell.setGravity(android.view.Gravity.CENTER);
             cell.setBackgroundResource(R.drawable.bg_input_flat);
             int pd = dp(10); cell.setPadding(pd, dp(12), pd, dp(10));
             android.widget.LinearLayout.LayoutParams cp = new android.widget.LinearLayout.LayoutParams(0, -2, 1f);
@@ -797,12 +797,12 @@ public class MetronomeActivity extends Activity {
             TextView tv = new TextView(this);
             tv.setText(it[1].length() > 0 ? it[1] : w);
             tv.setTextColor(0xFF1F2329); tv.setTextSize(13); tv.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-            tv.setGravity(View.CENTER); tv.setSingleLine(true);
+            tv.setGravity(android.view.Gravity.CENTER); tv.setSingleLine(true);
             android.widget.LinearLayout.LayoutParams tp = new android.widget.LinearLayout.LayoutParams(-2, -2);
             tp.setMargins(0, dp(8), 0, 0);
             cell.addView(tv, tp);
             TextView tv2 = new TextView(this);
-            tv2.setText(w); tv2.setTextColor(0xFF9AA0A8); tv2.setTextSize(12); tv2.setGravity(View.CENTER);
+            tv2.setText(w); tv2.setTextColor(0xFF9AA0A8); tv2.setTextSize(12); tv2.setGravity(android.view.Gravity.CENTER);
             android.widget.LinearLayout.LayoutParams tp2 = new android.widget.LinearLayout.LayoutParams(-2, -2);
             tp2.setMargins(0, dp(2), 0, 0);
             cell.addView(tv2, tp2);
