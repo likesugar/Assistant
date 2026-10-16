@@ -1006,10 +1006,11 @@ public class MetronomeActivity extends Activity {
     }
 
     private void refreshCurCard() {
-        if (curBox == null || wDays == null || wDays.length == 0) return;
+        if (curBox == null) return;
         android.widget.LinearLayout grid = (android.widget.LinearLayout) curBox.getParent();
-        String[] d = wDays[Math.min(selDay, wDays.length - 1)];
-        boolean today = selDay == 0;
+        boolean hasDays = wDays != null && wDays.length > 0;
+        String[] d = hasDays ? wDays[Math.min(selDay, wDays.length - 1)] : new String[12];
+        boolean today = !hasDays || selDay == 0;
         String type = today ? wType : d[3];
         String mn = today ? wMn : d[5], mx = today ? wMx : d[4];
         String hum = today ? wHum : "降水 " + d[11];
