@@ -104,6 +104,9 @@ public class MetroSettingsActivity extends Activity {
             prefs.edit().putBoolean("metroKeepScreen", on).apply();
             MetronomeActivity.notifySettingChanged(this);
         }));
+        card2.addView(switchRow("生活服务", "打拍页显示百度天气生活指数 (开启才联网)", prefs.getBoolean("metroLifeService", false), (on) -> {
+            prefs.edit().putBoolean("metroLifeService", on).apply();
+        }));
         card2.addView(switchRow("音量增强", "所有拍子加大音量", prefs.getBoolean("metroBooster", false), (on) -> {
             prefs.edit().putBoolean("metroBooster", on).apply();
             MetronomeActivity.notifySettingChanged(this);

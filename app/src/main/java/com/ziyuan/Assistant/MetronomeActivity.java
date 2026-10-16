@@ -664,6 +664,7 @@ public class MetronomeActivity extends Activity {
             playing = svc;
             findViewById(R.id.metroCardDots).setVisibility(playing ? View.VISIBLE : View.GONE);
             btnPlay.setText(playing ? "■ 停止" : "▶ 开始打拍");
+            if (playing) refreshLifeCard(); else findViewById(R.id.lifeCard).setVisibility(View.GONE);
             if (playing) uiTick.post(tickRun); else { uiTick.removeCallbacks(tickRun); for (View d : dots) d.setBackgroundResource(R.drawable.bg_dot_off); }
         }
         refreshBgList();
@@ -697,6 +698,128 @@ public class MetronomeActivity extends Activity {
                     android.net.Uri.fromParts("package", getPackageName(), null))))
                 .setNegativeButton("取消", null)
                 .show();
+        }
+    }
+
+    // ===== 生活服务 (百度天气生活指数, 开关开启才联网) =====
+    private boolean lifeFetched = false;
+
+    private void refreshLifeCard() {
+        boolean on = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroLifeService", false);
+        android.widget.LinearLayout lc = findViewById(R.id.lifeCard);
+        if (!on || !playing) { lc.setVisibility(View.GONE); return; }
+        lc.setVisibility(View.VISIBLE);
+        if (lifeFetched) return;
+        lifeFetched = true;
+        new Thread(() -> {
+            try {
+                // 1. IP 定位城市
+                java.net.HttpURLConnection c1 = (java.net.HttpURLConnection) new java.net.URL("https://whois.pconline.com.cn/ipJson.jsp?json=true").openConnection();
+                c1.setConnectTimeout(6000); c1.setReadTimeout(6000);
+                String city = "";
+                java.io.BufferedReader r1 = new java.io.BufferedReader(new java.io.InputStreamReader(c1.getInputStream(), "GBK"));
+                String line; StringBuilder sb = new StringBuilder();
+                while ((line = r1.readLine()) != null) sb.append(line);
+                r1.close();
+                java.util.regex.Matcher mc = java.util.regex.Pattern.compile("\"city\":\"([^\"]+?)市?\"").matcher(sb);
+                if (mc.find()) city = mc.group(1);
+                if (city.length() == 0) { uiTick.post(() -> lifeFetched = false); return; }
+                // 2. 百度天气页
+                String q = java.net.URLEncoder.encode(city + "天气", "UTF-8");
+                java.net.HttpURLConnection c2 = (java.net.HttpURLConnection) new java.net.URL("https://www.baidu.com/s?wd=" + q).openConnection();
+                c2.setConnectTimeout(8000); c2.setReadTimeout(8000);
+                c2.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
+                java.io.BufferedReader r2 = new java.io.BufferedReader(new java.io.InputStreamReader(c2.getInputStream(), "UTF-8"));
+                StringBuilder b2 = new StringBuilder();
+                while ((line = r2.readLine()) != null) b2.append(line);
+                r2.close();
+                String html = b2.toString();
+                // 3. 温度
+                String temp = "";
+                java.util.regex.Matcher mt = java.util.regex.Pattern.compile("\"temperature\":\"(-?\d+)\"").matcher(html);
+                if (mt.find()) temp = mt.group(1) + "°";
+                // 4. 生活指数: 按 item_name 切窗口取 level + icon
+                java.util.Map<String, String[]> items = new java.util.LinkedHashMap<>();
+                java.util.regex.Matcher mn = java.util.regex.Pattern.compile("\"item_name\":\"([^\"]+)\"").matcher(html);
+                java.util.List<int[]> pos = new java.util.ArrayList<>();
+                java.util.List<String> names = new java.util.ArrayList<>();
+                while (mn.find()) { pos.add(new int[]{mn.start(), mn.end()}); names.add(mn.group(1)); }
+                String[] want = {"穿衣", "运动", "紫外线", "旅游", "化妆", "钓鱼", "感冒", "洗车"};
+                for (String w : want) {
+                    for (int i = 0; i < names.size(); i++) {
+                        if (!names.get(i).equals(w)) continue;
+                        int from = Math.max(0, pos.get(i)[0] - 1600), to = Math.min(html.length(), pos.get(i)[1] + 1600);
+                        String seg = html.substring(from, to);
+                        String[] out = {w, ""};
+                        java.util.regex.Matcher ml = java.util.regex.Pattern.compile("\"item_level\":\"([^\"]+)\"").matcher(seg);
+                        if (ml.find()) out[1] = ml.group(1);
+                        java.util.regex.Matcher mi = java.util.regex.Pattern.compile("\"item_icon\":\"([^\"]+)\"").matcher(seg);
+                        if (mi.find()) out = new String[]{w, out[1], mi.group(1)};
+                        items.put(w, out);
+                        break;
+                    }
+                }
+                final String fTemp = temp; final String fCity = city;
+                uiTick.post(() -> buildLifeGrid(fCity, fTemp, items));
+            } catch (Throwable e) {
+                uiTick.post(() -> lifeFetched = false);
+            }
+        }, "life-fetch").start();
+    }
+
+    private void buildLifeGrid(String city, String temp, java.util.Map<String, String[]> items) {
+        TextView t1 = findViewById(R.id.lifeTitle), t2 = findViewById(R.id.lifeTemp);
+        t1.setText("生活服务");
+        t2.setText(city + (temp.length() > 0 ? "  " + temp : ""));
+        android.widget.LinearLayout grid = findViewById(R.id.lifeGrid);
+        grid.removeAllViews();
+        if (items.isEmpty()) { lifeFetched = false; return; }
+        int col = 0;
+        android.widget.LinearLayout row = null;
+        for (String w : new String[]{"穿衣", "运动", "紫外线", "旅游", "化妆", "钓鱼", "感冒", "洗车"}) {
+            String[] it = items.get(w);
+            if (it == null) continue;
+            if (col % 4 == 0) {
+                row = new android.widget.LinearLayout(this);
+                row.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+                grid.addView(row, new android.widget.LinearLayout.LayoutParams(-1, -2));
+            }
+            android.widget.LinearLayout cell = new android.widget.LinearLayout(this);
+            cell.setOrientation(android.widget.LinearLayout.VERTICAL);
+            cell.setGravity(View.CENTER);
+            cell.setBackgroundResource(R.drawable.bg_input_flat);
+            int pd = dp(10); cell.setPadding(pd, dp(12), pd, dp(10));
+            android.widget.LinearLayout.LayoutParams cp = new android.widget.LinearLayout.LayoutParams(0, -2, 1f);
+            cp.setMargins(dp(4), dp(4), dp(4), dp(4));
+            android.widget.ImageView iv = new android.widget.ImageView(this);
+            iv.setLayoutParams(new android.widget.LinearLayout.LayoutParams(dp(30), dp(30)));
+            cell.addView(iv);
+            TextView tv = new TextView(this);
+            tv.setText(it[1].length() > 0 ? it[1] : w);
+            tv.setTextColor(0xFF1F2329); tv.setTextSize(13); tv.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            tv.setGravity(View.CENTER); tv.setSingleLine(true);
+            android.widget.LinearLayout.LayoutParams tp = new android.widget.LinearLayout.LayoutParams(-2, -2);
+            tp.setMargins(0, dp(8), 0, 0);
+            cell.addView(tv, tp);
+            TextView tv2 = new TextView(this);
+            tv2.setText(w); tv2.setTextColor(0xFF9AA0A8); tv2.setTextSize(12); tv2.setGravity(View.CENTER);
+            android.widget.LinearLayout.LayoutParams tp2 = new android.widget.LinearLayout.LayoutParams(-2, -2);
+            tp2.setMargins(0, dp(2), 0, 0);
+            cell.addView(tv2, tp2);
+            row.addView(cell, cp);
+            col++;
+            // 异步加载图标
+            if (it.length > 2 && it[2].startsWith("http")) {
+                String url = it[2];
+                new Thread(() -> {
+                    try {
+                        java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
+                        c.setConnectTimeout(6000); c.setReadTimeout(6000);
+                        final android.graphics.Bitmap bm = android.graphics.BitmapFactory.decodeStream(c.getInputStream());
+                        if (bm != null) uiTick.post(() -> iv.setImageBitmap(bm));
+                    } catch (Throwable ignored) {}
+                }, "life-icon").start();
+            }
         }
     }
 
@@ -756,6 +879,7 @@ public class MetronomeActivity extends Activity {
         dlg.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(0));
         android.view.WindowManager.LayoutParams wp = dlg.getWindow().getAttributes();
         wp.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.82);
+        wp.height = android.view.WindowManager.LayoutParams.WRAP_CONTENT;
         dlg.getWindow().setAttributes(wp);
         bNo.setOnClickListener(v -> dlg.dismiss());
         bYes.setOnClickListener(v -> {
