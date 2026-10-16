@@ -775,6 +775,9 @@ public class MetronomeActivity extends Activity {
                     indices[0][1] = h0 >= 30 ? "短袖类" : h0 >= 26 ? "短袖/薄外套" : h0 >= 22 ? "薄外套类"
                         : h0 >= 18 ? "外套类" : h0 >= 12 ? "夹克/风衣" : h0 >= 6 ? "厚外套/毛衣" : "羽绒服类";
                 } catch (Throwable ignored3) {}
+                if (days == null) days = new java.util.ArrayList<>();
+                if (hours == null) hours = new java.util.ArrayList<>();
+                java.util.List<String[]> daysB = days, hoursB = hours;
                 try { // 百度生活服务(电脑模式UA): 成功则整体替换8项
                     String bq = java.net.URLEncoder.encode(cname + "天气", "UTF-8");
                     java.net.HttpURLConnection bc = (java.net.HttpURLConnection) new java.net.URL("https://www.baidu.com/s?wd=" + bq).openConnection();
@@ -803,7 +806,7 @@ public class MetronomeActivity extends Activity {
                         }
                         for (int i = 0; i < 8; i++) if (!"--".equals(baidu[i][1])) { indices[i][0] = baidu[i][0]; indices[i][1] = baidu[i][1]; }
                         // 同页兜底: dayForecastList / hourInfoData (m站不通时 7天+小时条从这里来)
-                        if (days.size() < 2) {
+                        if (daysB.size() < 2) {
                             int di2 = bhtml.indexOf("\"dayForecastList\":");
                             if (di2 >= 0) {
                                 int j3 = bhtml.indexOf('[', di2);
@@ -819,10 +822,10 @@ public class MetronomeActivity extends Activity {
                                     for (int i = 0; i < arr.length(); i++) {
                                         if ("今天".equals(arr.getJSONObject(i).optString("word"))) { start = i; break; }
                                     }
-                                    days.clear();
-                                    for (int i = start; i < arr.length() && days.size() < 7; i++) {
+                                    daysB.clear();
+                                    for (int i = start; i < arr.length() && daysB.size() < 7; i++) {
                                         org.json.JSONObject o = arr.getJSONObject(i);
-                                        days.add(new String[]{
+                                        daysB.add(new String[]{
                                             o.optString("word", "--"), o.optString("date", "--"),
                                             baiduEmoji(o.optString("dayIconKey", "")), o.optString("weather_day", "--"),
                                             o.optString("temperature_day", "--"), o.optString("temperature_night", "--"),
@@ -835,7 +838,7 @@ public class MetronomeActivity extends Activity {
                                 }
                             }
                         }
-                        if (hours.size() == 0) {
+                        if (hoursB.size() == 0) {
                             int hi3 = bhtml.indexOf("\"hourInfoData\":");
                             if (hi3 >= 0) {
                                 int j4 = bhtml.indexOf('[', hi3);
@@ -851,7 +854,7 @@ public class MetronomeActivity extends Activity {
                                         org.json.JSONObject o = ha.getJSONObject(i);
                                         String pp3 = o.optString("precipitationProbability", "");
                                         String uv3 = o.optString("uv", "");
-                                        hours.add(new String[]{o.optString("showHour", "--"),
+                                        hoursB.add(new String[]{o.optString("showHour", "--"),
                                             String.valueOf(o.optDouble("temperature", 0)) + "°",
                                             o.optString("windDirectionText", "") + o.optString("windPower", ""),
                                             uv3.length() > 0 ? "紫外线" + uv3 : (pp3.length() > 0 && !"0%".equals(pp3) ? "降水" + pp3 : "")});
