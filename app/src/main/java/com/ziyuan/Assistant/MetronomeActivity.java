@@ -764,9 +764,14 @@ public class MetronomeActivity extends Activity {
                     }
                 }
                 for (int i = 0; i < 8; i++) if (indices[i][0] == null) { indices[i][0] = want[i]; indices[i][1] = "--"; }
+                try { // 穿衣: 提示穿什么衣服 (按今日高温)
+                    double h0 = Double.parseDouble(mx);
+                    indices[0][1] = h0 >= 30 ? "短袖类" : h0 >= 26 ? "短袖/薄外套" : h0 >= 22 ? "薄外套类"
+                        : h0 >= 18 ? "外套类" : h0 >= 12 ? "夹克/风衣" : h0 >= 6 ? "厚外套/毛衣" : "羽绒服类";
+                } catch (Throwable ignored3) {}
                 // 15天趋势: 官方 1-7 天 + 8-15 天两页
                 java.util.List<String[]> days = new java.util.ArrayList<>();
-                try { parseDays(httpGet("http://www.weather.com.cn/weather/" + code + ".shtml"), false, days); } catch (Throwable ignored) {}
+                try { parseDays(httpGet("https://www.weather.com.cn/weather/" + code + ".shtml"), false, days); } catch (Throwable ignored) {}
                 if (days.size() < 2) { // 页面拿不到 → 官方 d1 fc 兜底
                     days.clear();
                     try {
@@ -933,7 +938,7 @@ public class MetronomeActivity extends Activity {
                     .setPositiveButton("知道了", null)
                     .show();
             });
-            tv.setLayoutParams(new android.widget.LinearLayout.LayoutParams(colW * n, dp(300)));
+            tv.setLayoutParams(new android.widget.LinearLayout.LayoutParams(colW * n, dp(238)));
             hsv.addView(tv);
             android.widget.LinearLayout.LayoutParams sp = new android.widget.LinearLayout.LayoutParams(-1, -2);
             grid.addView(hsv, sp);
