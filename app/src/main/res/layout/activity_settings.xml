@@ -157,33 +157,6 @@
                 android:orientation="vertical"
                 android:background="@drawable/bg_card_md3"
                 android:padding="20dp">
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="horizontal" android:gravity="center_vertical">
-                    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="隐藏首页胶囊" android:textColor="@color/textMain" android:textSize="15sp"/>
-                    </LinearLayout>
-                    <Switch android:id="@+id/swHideHome"
-                        android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-                </LinearLayout>
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="horizontal" android:gravity="center_vertical">
-                    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="隐藏媒体胶囊" android:textColor="@color/textMain" android:textSize="15sp"/>
-                    </LinearLayout>
-                    <Switch android:id="@+id/swHideMedia"
-                        android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-                </LinearLayout>
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="horizontal" android:gravity="center_vertical">
-                    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="隐藏播放器胶囊" android:textColor="@color/textMain" android:textSize="15sp"/>
-                    </LinearLayout>
-                    <Switch android:id="@+id/swHidePlayer"
-                        android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-                </LinearLayout>
                 <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:text="仅识别 B 站、抖音和 YouTube 视频，每次重新复制都会提醒，同一次复制不重复提醒。普通文本与敏感内容不会保存。"
                     android:textSize="14sp" android:id="@+id/desc4"/>

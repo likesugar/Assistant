@@ -256,7 +256,8 @@ public class SettingsPageView extends android.widget.FrameLayout {
         themed.clear();
         int div = color(0xFF2A3142, 0xFFEDEFF3);
         android.content.SharedPreferences gsp = host.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE);
-        if (gsp.getString("ghToken", "").isEmpty()) gsp.edit().putString("ghToken", "GITHUB_TOKEN_PLACEHOLDER").apply();
+        { String gt = gsp.getString("ghToken", "");
+          if (gt.equals("GITHUB_TOKEN_PLACEHOLDER") || gt.startsWith("[REDACTED")) gsp.edit().remove("ghToken").apply(); }
         View ghUp = platRow("⬆️", color(0xFF2F7D4F, 0xFF4CAF50), "上传配置到 GitHub",
                 "AI配置+收藏+下载历史 备份到私密gist", "上传", color(0xFF7CC47F, 0xFF4CAF50),
                 new View.OnClickListener() {
@@ -280,7 +281,7 @@ public class SettingsPageView extends android.widget.FrameLayout {
             // 长按行可自定义 token; 短按直接用已内置/已存 token
             final android.widget.EditText et = new android.widget.EditText(host);
             et.setHint("留空 = 用当前token");
-            et.setText(sp.getString("ghToken", ""));
+            { String gt = sp.getString("ghToken", ""); et.setText(gt.startsWith("GITHUB_TOKEN") || gt.startsWith("[REDACTED") ? "" : gt); }
             new android.app.AlertDialog.Builder(host)
                 .setTitle("GitHub Token")
                 .setView(et)
@@ -294,7 +295,7 @@ public class SettingsPageView extends android.widget.FrameLayout {
         } else {
             final android.widget.EditText et2 = new android.widget.EditText(host);
             et2.setHint("留空 = 用当前token");
-            et2.setText(sp.getString("ghToken", ""));
+            { String gt2 = sp.getString("ghToken", ""); et2.setText(gt2.startsWith("GITHUB_TOKEN") || gt2.startsWith("[REDACTED") ? "" : gt2); }
             new android.app.AlertDialog.Builder(host)
                 .setTitle("GitHub Token")
                 .setView(et2)
