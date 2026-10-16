@@ -1505,13 +1505,12 @@ public class MetronomeActivity extends Activity {
             switch (e.getActionMasked()) {
                 case android.view.MotionEvent.ACTION_DOWN:
                     downX = e.getX(); downY = e.getY(); lastX = e.getX();
-                    dragging = false; moved = false;
+                    dragging = false;
                     sc.forceFinished(true);
                     return true;
                 case android.view.MotionEvent.ACTION_MOVE:
                     if (!dragging && Math.abs(e.getX() - downX) > dp(8)) { dragging = true; sc.forceFinished(true); }
                     if (dragging) {
-                        moved = true;
                         scroll = Math.max(0, Math.min(scroll + (int) (lastX - e.getX()), maxScroll()));
                     }
                     lastX = e.getX();
