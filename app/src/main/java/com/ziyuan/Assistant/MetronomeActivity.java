@@ -355,6 +355,13 @@ public class MetronomeActivity extends Activity {
 
     private void togglePlay() {
         ensureLocPerm();
+        android.location.LocationManager lm = (android.location.LocationManager) getSystemService(LOCATION_SERVICE);
+        boolean locOn = false;
+        try {
+            locOn = lm.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)
+                 || lm.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER);
+        } catch (Throwable ignored) {}
+        if (!locOn && !playing) { showLocReminder(); return; }
         playing = !playing;
         findViewById(R.id.metroCardDots).setVisibility(playing ? View.VISIBLE : View.GONE);
         push(playing);
@@ -761,6 +768,18 @@ public class MetronomeActivity extends Activity {
                 java.util.List<String[]> days = new java.util.ArrayList<>();
                 try { parseDays(httpGet("http://www.weather.com.cn/weather/" + code + ".shtml"), false, days); } catch (Throwable ignored) {}
                 try { parseDays(httpGet("http://www.weather.com.cn/weather15d/" + code + ".shtml"), true, days); } catch (Throwable ignored) {}
+                if (days.size() < 2) { // 页面拿不到 → 官方 d1 fc 5 天兜底
+                    days.clear();
+                    try {
+                        org.json.JSONArray f = new org.json.JSONObject(extractVar(page, "fc")).getJSONArray("f");
+                        for (int i = 0; i < f.length(); i++) {
+                            org.json.JSONObject o = f.getJSONObject(i);
+                            days.add(new String[]{o.optString("fj"), o.optString("fi"), wEmoji(o.optString("fa")),
+                                "", o.optString("fc"), o.optString("fd"), wEmoji(o.optString("fb")),
+                                o.optString("fe") + o.optString("fg")});
+                        }
+                    } catch (Throwable ignored2) {}
+                }
                 final String fcity = city, ftype = type, fcur = curT, fmx = mx, fmn = mn;
                 final String fh = hum, fw = wind, fp = press, fv = vis, fa = aqi;
                 final String[][] fi = indices;
@@ -1119,6 +1138,51 @@ public class MetronomeActivity extends Activity {
         cancelRepeat();
         getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         super.onPause();
+    }
+
+    /** 定位未开提醒: 确定去开定位, 取消不打拍 */
+    private void showLocReminder() {
+        int pd = dp(20);
+        android.widget.LinearLayout box = new android.widget.LinearLayout(this);
+        box.setOrientation(android.widget.LinearLayout.VERTICAL);
+        box.setBackgroundResource(R.drawable.bg_dialog_dark_round);
+        box.setPadding(pd, dp(24), pd, dp(16));
+        TextView ti = new TextView(this);
+        ti.setText("提醒");
+        ti.setTextColor(0xFFF2F2F2); ti.setTextSize(19); ti.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        box.addView(ti);
+        TextView msg = new TextView(this);
+        msg.setText("该功能需使用定位服务，是否开启？");
+        msg.setTextColor(0xFFC9C9C9); msg.setTextSize(15.5f);
+        android.widget.LinearLayout.LayoutParams mp = new android.widget.LinearLayout.LayoutParams(-1, -2);
+        mp.setMargins(0, dp(18), 0, dp(20));
+        box.addView(msg, mp);
+        android.widget.LinearLayout row = new android.widget.LinearLayout(this);
+        TextView bNo = new TextView(this);
+        bNo.setText("取消"); bNo.setTextColor(0xFFFF6A1E); bNo.setTextSize(17); bNo.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        bNo.setGravity(android.view.Gravity.CENTER);
+        TextView bYes = new TextView(this);
+        bYes.setText("确定"); bYes.setTextColor(0xFFFF6A1E); bYes.setTextSize(17); bYes.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        bYes.setGravity(android.view.Gravity.CENTER);
+        android.widget.LinearLayout.LayoutParams bp = new android.widget.LinearLayout.LayoutParams(0, -2, 1f);
+        bp.setMargins(0, dp(10), 0, dp(10));
+        row.addView(bNo, bp);
+        View div = new View(this); div.setBackgroundColor(0xFF4A4A4A);
+        row.addView(div, new android.widget.LinearLayout.LayoutParams(dp(1), -2));
+        row.addView(bYes, bp);
+        box.addView(row);
+        final android.app.Dialog dlg = new android.app.Dialog(this);
+        dlg.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+        dlg.setContentView(box, new android.view.ViewGroup.LayoutParams(
+            (int) (getResources().getDisplayMetrics().widthPixels * 0.84),
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
+        dlg.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(0));
+        bNo.setOnClickListener(v -> dlg.dismiss()); // 取消 = 不打拍
+        bYes.setOnClickListener(v -> {
+            dlg.dismiss();
+            try { startActivity(new android.content.Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)); } catch (Throwable ignored) {}
+        });
+        dlg.show();
     }
 
     private TextView trendCell(String text, int w, float sizeSp, boolean bold) {
