@@ -709,6 +709,11 @@ public class MetronomeActivity extends Activity {
         }
     }
 
+
+    private int tc() { return dark() ? 0xFFF2F2F2 : tc(); }
+    private int sc2() { return dark() ? 0xFF939DA8 : sc2(); }
+    private int cellBg() { return dark() ? R.drawable.bg_input_dark : cellBg(); }
+    private int hlBg() { return dark() ? 0xFF26374E : hlBg(); }
     // ===== 天气+生活服务 (中国天气网气象源, 默认IP定位城市) =====
     private boolean lifeFetched = false;
     private long lastWeatherAt = 0;
@@ -717,6 +722,7 @@ public class MetronomeActivity extends Activity {
         boolean on = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroLifeService", false);
         android.widget.LinearLayout lc = findViewById(R.id.lifeCard);
         if (!on) { lc.setVisibility(View.GONE); return; }
+        lc.setBackgroundResource(dark() ? R.drawable.bg_card_md3_dark : R.drawable.bg_card_md3);
         lc.setVisibility(View.VISIBLE);
         long now = android.os.SystemClock.elapsedRealtime();
         if (lifeFetched && now - lastWeatherAt < 10 * 60 * 1000) return;
@@ -804,7 +810,7 @@ public class MetronomeActivity extends Activity {
                 try {
                     String bq = java.net.URLEncoder.encode(cname + "天气", "UTF-8");
                     java.net.HttpURLConnection bc = (java.net.HttpURLConnection) new java.net.URL("https://m.baidu.com/s?from=1022282z&word=" + bq).openConnection();
-                    bc.setConnectTimeout(10000); bc.setReadTimeout(10000);
+                    bc.setConnectTimeout(15000); bc.setReadTimeout(25000);
                     bc.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13; RMX3823) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
                     bc.setRequestProperty("Cookie", "BAIDUID=" + java.util.UUID.randomUUID().toString().replace("-", "").toUpperCase() + ":FG=1");
                     java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(bc.getInputStream(), "UTF-8"));
@@ -1078,7 +1084,7 @@ public class MetronomeActivity extends Activity {
         if (wHours != null && wHours.length > 0) {
             TextView hh = new TextView(this);
             hh.setText("24小时预报");
-            hh.setTextColor(0xFF1F2329); hh.setTextSize(16); hh.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            hh.setTextColor(tc()); hh.setTextSize(16); hh.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
             android.widget.LinearLayout.LayoutParams hh0 = new android.widget.LinearLayout.LayoutParams(-2, -2);
             hh0.setMargins(dp(2), 0, 0, dp(6));
             grid.addView(hh, hh0);
@@ -1090,7 +1096,7 @@ public class MetronomeActivity extends Activity {
         if (days.size() > 1) {
             TextView h15 = new TextView(this);
             h15.setText("7天预报");
-            h15.setTextColor(0xFF1F2329); h15.setTextSize(16); h15.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            h15.setTextColor(tc()); h15.setTextSize(16); h15.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
             android.widget.LinearLayout.LayoutParams hp0 = new android.widget.LinearLayout.LayoutParams(-2, -2);
             hp0.setMargins(dp(2), 0, 0, dp(6));
             grid.addView(h15, hp0);
@@ -1124,37 +1130,45 @@ public class MetronomeActivity extends Activity {
         String curT = today ? wCurT : "";
         android.widget.LinearLayout cur = new android.widget.LinearLayout(this);
         cur.setOrientation(android.widget.LinearLayout.VERTICAL);
-        cur.setBackgroundResource(R.drawable.bg_input_flat);
+        cur.setBackgroundResource(cellBg());
         int pd = dp(12); cur.setPadding(pd, pd, pd, pd);
         android.widget.LinearLayout big = new android.widget.LinearLayout(this);
         big.setOrientation(android.widget.LinearLayout.HORIZONTAL);
         big.setGravity(android.view.Gravity.CENTER_VERTICAL);
         TextView tw = new TextView(this);
         tw.setText(type + " " + mn + "~" + mx + "°C");
-        tw.setTextColor(0xFF1F2329); tw.setTextSize(22); tw.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        tw.setTextColor(tc()); tw.setTextSize(22); tw.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         big.addView(tw);
         TextView tnow = new TextView(this);
         tnow.setText("  当前 " + curT + "°");
-        tnow.setTextColor(0xFF9AA0A8); tnow.setTextSize(15);
+        tnow.setTextColor(sc2()); tnow.setTextSize(15);
         big.addView(tnow);
         cur.addView(big);
         android.widget.LinearLayout meta = new android.widget.LinearLayout(this);
         meta.setOrientation(android.widget.LinearLayout.HORIZONTAL);
         meta.setGravity(android.view.Gravity.CENTER);
-        String[][] ms = today && !hasDays
-            ? new String[][]{{"湿度", hum}, {"风力", wind}, {"空气", aqi}}
-            : new String[][]{{"湿度", hum}, {"紫外线", d[8]}, {"日出", d[9]}, {"日落", d[10]}, {"风力", wind}};
+        java.util.List<String[]> msl = new java.util.ArrayList<>();
+        if (today && !hasDays) {
+            msl.add(new String[]{"湿度", hum}); msl.add(new String[]{"风力", wind}); msl.add(new String[]{"空气", aqi});
+        } else {
+            msl.add(new String[]{"湿度", hum});
+            msl.add(new String[]{"紫外线", ("--".equals(d[8]) || d[8].length() == 0) && indices.length > 2 ? indices[2][1] : d[8]});
+            if (!"--".equals(d[9]) && d[9].length() > 0) msl.add(new String[]{"日出", d[9]});
+            if (!"--".equals(d[10]) && d[10].length() > 0) msl.add(new String[]{"日落", d[10]});
+            msl.add(new String[]{"风力", wind});
+        }
+        String[][] ms = msl.toArray(new String[0][]);
         for (String[] m : ms) {
             android.widget.LinearLayout col = new android.widget.LinearLayout(this);
             col.setOrientation(android.widget.LinearLayout.VERTICAL);
             col.setGravity(android.view.Gravity.CENTER);
             android.widget.LinearLayout.LayoutParams cp = new android.widget.LinearLayout.LayoutParams(0, -2, 1f);
             TextView v = new TextView(this);
-            v.setText(m[1]); v.setTextColor(0xFF1F2329); v.setTextSize(13); v.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            v.setText(m[1]); v.setTextColor(tc()); v.setTextSize(13); v.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
             v.setGravity(android.view.Gravity.CENTER);
             col.addView(v);
             TextView k = new TextView(this);
-            k.setText(m[0]); k.setTextColor(0xFF9AA0A8); k.setTextSize(11); k.setGravity(android.view.Gravity.CENTER);
+            k.setText(m[0]); k.setTextColor(sc2()); k.setTextSize(11); k.setGravity(android.view.Gravity.CENTER);
             col.addView(k);
             meta.addView(col, cp);
         }
@@ -1171,7 +1185,7 @@ public class MetronomeActivity extends Activity {
         String[][] DATA = indices;
         TextView h8 = new TextView(this);
         h8.setText("生活指数");
-        h8.setTextColor(0xFF1F2329); h8.setTextSize(16); h8.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        h8.setTextColor(tc()); h8.setTextSize(16); h8.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         android.widget.LinearLayout.LayoutParams hp = new android.widget.LinearLayout.LayoutParams(-2, -2);
         hp.setMargins(dp(2), dp(14), 0, dp(6));
         grid.addView(h8, hp);
@@ -1185,17 +1199,17 @@ public class MetronomeActivity extends Activity {
             android.widget.LinearLayout cell = new android.widget.LinearLayout(this);
             cell.setOrientation(android.widget.LinearLayout.VERTICAL);
             cell.setGravity(android.view.Gravity.CENTER);
-            cell.setBackgroundResource(R.drawable.bg_input_flat);
+            cell.setBackgroundResource(cellBg());
             int cpd = dp(10); cell.setPadding(cpd, dp(12), cpd, dp(10));
             android.widget.LinearLayout.LayoutParams cp = new android.widget.LinearLayout.LayoutParams(0, -2, 1f);
             cp.setMargins(dp(3), dp(3), dp(3), dp(3));
             TextView tv = new TextView(this);
             tv.setText(DATA[i][0]);
-            tv.setTextColor(0xFF1F2329); tv.setTextSize(13); tv.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            tv.setTextColor(tc()); tv.setTextSize(13); tv.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
             tv.setGravity(android.view.Gravity.CENTER); tv.setSingleLine(true);
             cell.addView(tv);
             TextView tv2 = new TextView(this);
-            tv2.setText(DATA[i][1]); tv2.setTextColor(0xFF9AA0A8); tv2.setTextSize(12);
+            tv2.setText(DATA[i][1]); tv2.setTextColor(sc2()); tv2.setTextSize(12);
             tv2.setGravity(android.view.Gravity.CENTER);
             android.widget.LinearLayout.LayoutParams tp2 = new android.widget.LinearLayout.LayoutParams(-2, -2);
             tp2.setMargins(0, dp(4), 0, 0);
