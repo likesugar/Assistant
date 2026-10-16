@@ -772,6 +772,8 @@ public class MetronomeActivity extends Activity {
                 // 7天趋势: open-meteo daily (手机端稳定可达), 逐日天气/温度/紫外线/日出日落/降水概率/风
                 java.util.List<String[]> days = new java.util.ArrayList<>();
                 try {
+                    double[] ll = geocode(cname);
+                    double lat = ll[0], lon = ll[1];
                     String dj = httpGet("https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon
                         + "&daily=weather_code,temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset,precipitation_probability_max,wind_speed_10m_max,wind_direction_dominant"
                         + "&timezone=auto&forecast_days=7");
@@ -908,6 +910,21 @@ public class MetronomeActivity extends Activity {
                 out.add(new String[]{label, date, wEmoji(dc.substring(1)), wea, hi, lo, wEmoji(nc.substring(1)), wind});
             } catch (Throwable ignored) {}
         }
+    }
+
+    private double[] geocode(String name) throws Throwable {
+        String[] tries = {name, name + "市"};
+        for (String t : tries) {
+            try {
+                String g = httpGet("https://geocoding-api.open-meteo.com/v1/search?name=" + java.net.URLEncoder.encode(t, "UTF-8") + "&count=1&language=zh&format=json");
+                org.json.JSONArray rs = new org.json.JSONObject(g).optJSONArray("results");
+                if (rs != null && rs.length() > 0) {
+                    org.json.JSONObject r = rs.getJSONObject(0);
+                    return new double[]{r.getDouble("latitude"), r.getDouble("longitude")};
+                }
+            } catch (Throwable ignored) {}
+        }
+        throw new Exception("no geo " + name);
     }
 
     private static String extractVar(String page, String name) {
