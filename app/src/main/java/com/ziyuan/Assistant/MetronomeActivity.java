@@ -841,20 +841,6 @@ public class MetronomeActivity extends Activity {
                             }
                         }
                     }
-                } catch (Throwable ignored) {}
-                if (days.size() < 2) { // 百度不通 → 官方 d1 fc 兜底
-                    days.clear();
-                    try {
-                        org.json.JSONArray f = new org.json.JSONObject(extractVar(page, "fc")).getJSONArray("f");
-                        for (int i = 0; i < f.length(); i++) {
-                            org.json.JSONObject o = f.getJSONObject(i);
-                            days.add(new String[]{o.optString("fj"), o.optString("fi"),
-                                wEmoji("d" + o.optString("fa", "99")), wCode(safeInt(o.optString("fa"))),
-                                o.optString("fc"), o.optString("fd"), nightEmoji(safeInt(o.optString("fb"))),
-                                o.optString("fe") + o.optString("fg"), "--", "--", "--", "--"});
-                        }
-                    } catch (Throwable ignored2) {}
-                }
                 java.util.List<String[]> hours = new java.util.ArrayList<>();
                 try {
                     int hi2 = bh.indexOf("\"hourInfoData\":");
@@ -878,6 +864,20 @@ public class MetronomeActivity extends Activity {
                         }
                     }
                 } catch (Throwable ignored5) {}
+                } catch (Throwable ignored) {}
+                if (days.size() < 2) { // 百度不通 → 官方 d1 fc 兜底
+                    days.clear();
+                    try {
+                        org.json.JSONArray f = new org.json.JSONObject(extractVar(page, "fc")).getJSONArray("f");
+                        for (int i = 0; i < f.length(); i++) {
+                            org.json.JSONObject o = f.getJSONObject(i);
+                            days.add(new String[]{o.optString("fj"), o.optString("fi"),
+                                wEmoji("d" + o.optString("fa", "99")), wCode(safeInt(o.optString("fa"))),
+                                o.optString("fc"), o.optString("fd"), nightEmoji(safeInt(o.optString("fb"))),
+                                o.optString("fe") + o.optString("fg"), "--", "--", "--", "--"});
+                        }
+                    } catch (Throwable ignored2) {}
+                }
                 final java.util.List<String[]> fhours = hours;
                 final java.util.List<String[]> fdays = days;
                 final String fcity = city, ftype = type, fcur = curT, fmx = mx, fmn = mn;
