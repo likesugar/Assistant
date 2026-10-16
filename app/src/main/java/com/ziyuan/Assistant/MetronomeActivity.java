@@ -989,7 +989,7 @@ public class MetronomeActivity extends Activity {
             android.widget.HorizontalScrollView hsv = new android.widget.HorizontalScrollView(this);
             hsv.setFillViewport(true);
             hsv.setHorizontalScrollBarEnabled(false);
-            TrendView tv = new TrendView(this, n, colW, wDays, idx -> { selDay = idx; tv.setSelected(idx); refreshCurCard(); });
+            final TrendView tv = new TrendView(this, n, colW, wDays, idx -> { selDay = idx; tv.setSelected(idx); refreshCurCard(); });
             tv.setLayoutParams(new android.widget.LinearLayout.LayoutParams(colW * n, dp(238)));
             hsv.addView(tv);
             android.widget.LinearLayout.LayoutParams sp = new android.widget.LinearLayout.LayoutParams(-1, -2);
@@ -1260,13 +1260,13 @@ public class MetronomeActivity extends Activity {
             float y = dp(10);
             for (int i = 0; i < n; i++) {
                 float cx = i * colW + colW / 2f;
-                String[] d = days.get(i);
+                String[] d = days[i];
                 cv.drawText(d[0], cx, y + dp(12), txt);
                 cv.drawText(d[1], cx, y + dp(28), sub);
             }
             float emojiY = y + dp(52);
             for (int i = 0; i < n; i++) {
-                String[] d = days.get(i);
+                String[] d = days[i];
                 emo.setTextSize(dp(20));
                 cv.drawText(d[2], i * colW + colW / 2f, emojiY, emo);
             }
