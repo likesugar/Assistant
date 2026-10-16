@@ -1228,14 +1228,14 @@ public class MetronomeActivity extends Activity {
     /** 7天趋势卡: 画布全自绘 (列对位精确, 点击按坐标取列) */
     private class TrendView extends android.view.View {
         private final int cols, colW;
-        private final java.util.List<String[]> days;
+        private final String[][] days;
         private final android.graphics.Paint line = new android.graphics.Paint(), dot = new android.graphics.Paint();
         private final android.graphics.Paint txt = new android.graphics.Paint(), emo = new android.graphics.Paint(), sub = new android.graphics.Paint();
         private final java.util.function.IntConsumer onClick;
         private float downX, downY;
         private int sel = 0;
         void setSelected(int i) { sel = i; invalidate(); }
-        TrendView(android.content.Context c, int cols, int colW, java.util.List<String[]> days, java.util.function.IntConsumer onClick) {
+        TrendView(android.content.Context c, int cols, int colW, String[][] days, java.util.function.IntConsumer onClick) {
             super(c);
             this.cols = cols; this.colW = colW; this.days = days; this.onClick = onClick;
             line.setStyle(android.graphics.Paint.Style.STROKE);
@@ -1249,8 +1249,8 @@ public class MetronomeActivity extends Activity {
         }
         @Override protected void onDraw(android.graphics.Canvas cv) {
             super.onDraw(cv);
-            if (days == null || days.isEmpty()) return;
-            int n = Math.min(cols, days.size());
+            if (days == null || days.length == 0) return;
+            int n = Math.min(cols, days.length);
             if (sel >= 0 && sel < n) { // 选中列: 浅蓝圆角底
                 android.graphics.Paint hl = new android.graphics.Paint();
                 hl.setColor(0xFFE3EEFB); hl.setAntiAlias(true);
@@ -1274,8 +1274,8 @@ public class MetronomeActivity extends Activity {
             float ly0 = emojiY + dp(16), lh = dp(74);
             float hiMin = Float.MAX_VALUE, hiMax = -Float.MAX_VALUE, loMin = hiMin, loMax = hiMax;
             for (int i = 0; i < n; i++) {
-                try { float v = Float.parseFloat(days.get(i)[4]); hiMin = Math.min(hiMin, v); hiMax = Math.max(hiMax, v); } catch (Throwable ignored) {}
-                try { float v = Float.parseFloat(days.get(i)[5]); loMin = Math.min(loMin, v); loMax = Math.max(loMax, v); } catch (Throwable ignored) {}
+                try { float v = Float.parseFloat(days[i][4]); hiMin = Math.min(hiMin, v); hiMax = Math.max(hiMax, v); } catch (Throwable ignored) {}
+                try { float v = Float.parseFloat(days[i][5]); loMin = Math.min(loMin, v); loMax = Math.max(loMax, v); } catch (Throwable ignored) {}
             }
             if (hiMin == Float.MAX_VALUE || loMin == Float.MAX_VALUE) return;
             if (hiMax == hiMin) hiMax += 1;
@@ -1284,8 +1284,8 @@ public class MetronomeActivity extends Activity {
             android.graphics.Path hp = new android.graphics.Path(), lp = new android.graphics.Path();
             for (int i = 0; i < n; i++) {
                 float cx = i * colW + colW / 2f;
-                try { hy[i] = ly0 + lh * (1 - (Float.parseFloat(days.get(i)[4]) - hiMin) / (hiMax - hiMin)); } catch (Throwable e) { hy[i] = ly0; }
-                try { lyy[i] = ly0 + lh * (1 - (Float.parseFloat(days.get(i)[5]) - loMin) / (loMax - loMin)); } catch (Throwable e) { lyy[i] = ly0 + lh; }
+                try { hy[i] = ly0 + lh * (1 - (Float.parseFloat(days[i][4]) - hiMin) / (hiMax - hiMin)); } catch (Throwable e) { hy[i] = ly0; }
+                try { lyy[i] = ly0 + lh * (1 - (Float.parseFloat(days[i][5]) - loMin) / (loMax - loMin)); } catch (Throwable e) { lyy[i] = ly0 + lh; }
                 if (i == 0) { hp.moveTo(cx, hy[i]); lp.moveTo(cx, lyy[i]); }
                 else { hp.lineTo(cx, hy[i]); lp.lineTo(cx, lyy[i]); }
             }
@@ -1295,22 +1295,22 @@ public class MetronomeActivity extends Activity {
                 float cx = i * colW + colW / 2f;
                 dot.setColor(0xFFFF8A3C); cv.drawCircle(cx, hy[i], dp(3), dot);
                 txt.setTextSize(dp(12)); txt.setColor(0xFFE5762A); txt.setFakeBoldText(false);
-                cv.drawText(days.get(i)[4] + "°", cx, hy[i] - dp(7), txt);
+                cv.drawText(days[i][4] + "°", cx, hy[i] - dp(7), txt);
                 dot.setColor(0xFF5BA8F5); cv.drawCircle(cx, lyy[i], dp(3), dot);
                 txt.setColor(0xFF4A90D9);
-                cv.drawText(days.get(i)[5] + "°", cx, lyy[i] + dp(16), txt);
+                cv.drawText(days[i][5] + "°", cx, lyy[i] + dp(16), txt);
                 txt.setFakeBoldText(true);
             }
             // 夜间 emoji
             float ny = ly0 + lh + dp(26);
             for (int i = 0; i < n; i++) {
                 emo.setTextSize(dp(16));
-                cv.drawText(days.get(i)[6], i * colW + colW / 2f, ny, emo);
+                cv.drawText(days[i][6], i * colW + colW / 2f, ny, emo);
             }
             // 风向风力两行
             float wy = ny + dp(16);
             for (int i = 0; i < n; i++) {
-                String w = days.get(i)[7];
+                String w = days[i][7];
                 String w1 = w.replaceAll("[<≤]?\\d+级$", "");
                 String w2 = w.substring(Math.min(w1.length(), w.length()));
                 cv.drawText(w1, i * colW + colW / 2f, wy, sub);
