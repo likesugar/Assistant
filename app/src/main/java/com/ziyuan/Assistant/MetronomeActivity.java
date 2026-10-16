@@ -802,6 +802,63 @@ public class MetronomeActivity extends Activity {
                             }
                         }
                         for (int i = 0; i < 8; i++) if (!"--".equals(baidu[i][1])) { indices[i][0] = baidu[i][0]; indices[i][1] = baidu[i][1]; }
+                        // 同页兜底: dayForecastList / hourInfoData (m站不通时 7天+小时条从这里来)
+                        if (days.size() < 2) {
+                            int di2 = bhtml.indexOf("\"dayForecastList\":");
+                            if (di2 >= 0) {
+                                int j3 = bhtml.indexOf('[', di2);
+                                int dp3 = 0, end3 = -1;
+                                for (int k = j3; k < bhtml.length(); k++) {
+                                    char ch = bhtml.charAt(k);
+                                    if (ch == '[') dp3++;
+                                    else if (ch == ']') { dp3--; if (dp3 == 0) { end3 = k + 1; break; } }
+                                }
+                                if (end3 > 0) {
+                                    org.json.JSONArray arr = new org.json.JSONArray(bhtml.substring(j3, end3));
+                                    int start = 0;
+                                    for (int i = 0; i < arr.length(); i++) {
+                                        if ("今天".equals(arr.getJSONObject(i).optString("word"))) { start = i; break; }
+                                    }
+                                    days.clear();
+                                    for (int i = start; i < arr.length() && days.size() < 7; i++) {
+                                        org.json.JSONObject o = arr.getJSONObject(i);
+                                        days.add(new String[]{
+                                            o.optString("word", "--"), o.optString("date", "--"),
+                                            baiduEmoji(o.optString("dayIconKey", "")), o.optString("weather_day", "--"),
+                                            o.optString("temperature_day", "--"), o.optString("temperature_night", "--"),
+                                            baiduEmoji(o.optString("nightIconKey", "")),
+                                            o.optString("wind_direction", "") + o.optString("wind_power", ""),
+                                            o.optString("uv", "--"),
+                                            o.optString("sunriseTime", "--"), o.optString("sunsetTime", "--"),
+                                            o.optJSONObject("humidity") == null ? "--" : o.getJSONObject("humidity").optString("text", "--") + "%"});
+                                    }
+                                }
+                            }
+                        }
+                        if (hours.size() == 0) {
+                            int hi3 = bhtml.indexOf("\"hourInfoData\":");
+                            if (hi3 >= 0) {
+                                int j4 = bhtml.indexOf('[', hi3);
+                                int dp4 = 0, end4 = -1;
+                                for (int k = j4; k < bhtml.length(); k++) {
+                                    char ch = bhtml.charAt(k);
+                                    if (ch == '[') dp4++;
+                                    else if (ch == ']') { dp4--; if (dp4 == 0) { end4 = k + 1; break; } }
+                                }
+                                if (end4 > 0) {
+                                    org.json.JSONArray ha = new org.json.JSONArray(bhtml.substring(j4, end4));
+                                    for (int i = 0; i < ha.length() && i < 24; i++) {
+                                        org.json.JSONObject o = ha.getJSONObject(i);
+                                        String pp3 = o.optString("precipitationProbability", "");
+                                        String uv3 = o.optString("uv", "");
+                                        hours.add(new String[]{o.optString("showHour", "--"),
+                                            String.valueOf(o.optDouble("temperature", 0)) + "°",
+                                            o.optString("windDirectionText", "") + o.optString("windPower", ""),
+                                            uv3.length() > 0 ? "紫外线" + uv3 : (pp3.length() > 0 && !"0%".equals(pp3) ? "降水" + pp3 : "")});
+                                    }
+                                }
+                            }
+                        }
                     }
                 } catch (Throwable ignored4) {}
                 // 7天趋势: 百度天气 dayForecastList (与百度页面同源同口径)
