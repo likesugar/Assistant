@@ -154,7 +154,9 @@ public class SkipAdActivity extends Activity {
         return c;
     }
 
-    private View rowSwitch(String title, String sub, boolean on, java.util.function.BooleanConsumer cb) {
+    private interface BoolCB { void accept(boolean v); }
+
+    private View rowSwitch(String title, String sub, boolean on, BoolCB cb) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
