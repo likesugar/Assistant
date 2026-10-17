@@ -184,7 +184,6 @@ public class AdSkipServiceImpl {
                     if (!(inList2 || emptyList2)) {
                         break;
                     }
-                    if (!skipProcessRunning) startSkipAdProcess(); // 内容变化也拉起扫描窗口
                     AccessibilityNodeInfo src = event.getSource();
                     if (src != null) executeSkipTask(src);
                     else executeSkipTask(service.getRootInActiveWindow());
@@ -308,8 +307,12 @@ public class AdSkipServiceImpl {
     // ===== 李跳跳规则执行 =====
     /** 屏上出现 id 条件 → 执行 action。id/action 支持: 文本(包含), +包含, -排除, &与, =精确,
      *  l,t,r,b 坐标, viewId, action=GLOBAL_ACTION_BACK */
+    private long lastPop = 0;
     private void handlePopups(AccessibilityNodeInfo root) {
         if (root == null) return;
+        long now = SystemClock.elapsedRealtime();
+        if (now - lastPop < 500) return; // 节流, 防常驻吃CPU
+        lastPop = now;
         for (String[] r : simplePopups) {
             if (findCond(root, r[0], false, 0) != null) {
                 AccessibilityNodeInfo btn = findCond(root, r[1], false, 0);
