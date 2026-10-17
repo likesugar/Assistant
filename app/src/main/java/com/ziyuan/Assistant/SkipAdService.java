@@ -28,6 +28,60 @@ public class SkipAdService extends AccessibilityService {
     private WindowManager wm;
     private String lastPkg = "";
 
+    // ===== SKIP 式自定义配置 (popup_rules): {"popup_rules":[{"id":"青少年模式","action":"知道了"}]} =====
+    private String cfgRaw = null;
+    private long cfgFetchedAt = 0;
+    private final java.util.ArrayList<String[]> popupRules = new java.util.ArrayList<>(); // [idText, actionText]
+    private final java.util.ArrayList<String[]> skipRules = new java.util.ArrayList<>();  // [keyword] 全局
+
+    private void ensureCfg() {
+        try {
+            String raw = getSharedPreferences("settings", MODE_PRIVATE).getString("skipAdCfg", "");
+            boolean isUrl = raw != null && (raw.startsWith("http://") || raw.startsWith("https://"));
+            if (isUrl) {
+                long now = SystemClock.elapsedRealtime();
+                if (raw.equals(cfgRaw) && now - cfgFetchedAt < 600000) return; // URL 10 分钟刷新
+                cfgRaw = raw; cfgFetchedAt = now;
+                final String url = raw;
+                new Thread(() -> {
+                    try {
+                        java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
+                        c.setConnectTimeout(8000); c.setReadTimeout(8000);
+                        java.io.BufferedReader r = new java.io.BufferedReader(
+                                new java.io.InputStreamReader(c.getInputStream(), "UTF-8"));
+                        StringBuilder sb = new StringBuilder(); String line;
+                        while ((line = r.readLine()) != null) sb.append(line).append('\n');
+                        r.close();
+                        parseCfg(sb.toString());
+                    } catch (Throwable ignored) { }
+                }, "skipad-cfg").start();
+                return;
+            }
+            if (raw != null && raw.equals(cfgRaw)) return;
+            cfgRaw = raw;
+            parseCfg(raw);
+        } catch (Throwable ignored) { }
+    }
+
+    private void parseCfg(String text) {
+        popupRules.clear(); skipRules.clear();
+        if (text == null || text.trim().isEmpty()) return;
+        try {
+            JSONObject o = new JSONObject(text);
+            JSONArray pr = o.optJSONArray("popup_rules");
+            if (pr != null) for (int i = 0; i < pr.length(); i++) {
+                JSONObject r = pr.getJSONObject(i);
+                String id = r.optString("id", ""), act = r.optString("action", "");
+                if (!id.isEmpty() && !act.isEmpty()) popupRules.add(new String[]{id, act});
+            }
+            JSONArray st = o.optJSONArray("skip_texts");
+            if (st != null) for (int i = 0; i < st.length(); i++) {
+                String k = st.optString(i, "");
+                if (!k.isEmpty()) skipRules.add(new String[]{k});
+            }
+        } catch (Throwable ignored) { }
+    }
+
     public static boolean isRunning() { return inst != null; }
     public static void startCheck(long ms) {
         if (inst != null) { inst.checkUntil = SystemClock.elapsedRealtime() + ms; inst.clearOverlays(); }
@@ -50,10 +104,68 @@ public class SkipAdService extends AccessibilityService {
         lastTick = now;
         try {
             if (check) { clearOverlays(); inspect(getRootInActiveWindow(), 0); return; }
-            clearOverlays();
+            ensureCfg();
             AccessibilityNodeInfo root = getRootInActiveWindow();
-            if (root != null) dfs(root, 0);
+            if (root == null) return;
+            if (!popupRules.isEmpty()) handlePopups(root);
+            if (!skipRules.isEmpty()) dfsGlobal(root, 0);
+            dfs(root, 0);
         } catch (Throwable ignored) { }
+    }
+
+    /** SKIP popup_rules: 屏上出现 id 文案的弹窗 → 点击 action 文案按钮 */
+    private void handlePopups(AccessibilityNodeInfo root) {
+        for (String[] r : popupRules) {
+            if (findText(root, r[0], 0, 0) != null) { // 弹窗在屏
+                AccessibilityNodeInfo btn = findText(root, r[1], 0, 0);
+                if (btn != null) {
+                    AccessibilityNodeInfo c = btn;
+                    for (int i = 0; i < 4 && c != null && !c.isClickable(); i++) c = c.getParent();
+                    boolean ok = c != null && c.isClickable() && c.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                    if (!ok) gestureTap(btn);
+                }
+            }
+        }
+    }
+
+    private AccessibilityNodeInfo findText(AccessibilityNodeInfo n, String kw, int depth, int[] counter) {
+        return findText(n, kw, depth, 0);
+    }
+
+    private AccessibilityNodeInfo findText(AccessibilityNodeInfo n, String kw, int depth, int dummy) {
+        if (n == null || depth > 22) return null;
+        CharSequence t = n.getText();
+        if (t != null && t.toString().contains(kw)) return n;
+        CharSequence d = n.getContentDescription();
+        if (d != null && d.toString().contains(kw)) return n;
+        for (int i = 0; i < n.getChildCount(); i++) {
+            try {
+                AccessibilityNodeInfo r = findText(n.getChild(i), kw, depth + 1, dummy);
+                if (r != null) return r;
+            } catch (Throwable ignored) { }
+        }
+        return null;
+    }
+
+    /** 自定义配置里的全局 skip_texts 关键词 */
+    private void dfsGlobal(AccessibilityNodeInfo n, int depth) {
+        if (n == null || depth > 25) return;
+        CharSequence[] ts = { n.getText(), n.getContentDescription() };
+        for (CharSequence t : ts) {
+            if (t == null) continue;
+            String s = t.toString().trim().toLowerCase();
+            for (String[] k : skipRules) {
+                if (!s.isEmpty() && s.contains(k[0].toLowerCase())) {
+                    AccessibilityNodeInfo c = n;
+                    for (int i = 0; i < 4 && c != null && !c.isClickable(); i++) c = c.getParent();
+                    if (c != null && c.isClickable()) { c.performAction(AccessibilityNodeInfo.ACTION_CLICK); return; }
+                    if (gestureTap(n)) return;
+                }
+            }
+        }
+        for (int i = 0; i < n.getChildCount(); i++) {
+            try { dfsGlobal(n.getChild(i), depth + 1); } catch (Throwable ignored) { }
+        }
     }
 
     private void dfs(AccessibilityNodeInfo n, int depth) {

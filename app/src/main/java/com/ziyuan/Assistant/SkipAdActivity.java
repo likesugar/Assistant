@@ -122,6 +122,23 @@ public class SkipAdActivity extends Activity {
         cardC.addView(btnCk);
         root.addView(cardC);
 
+        // ===== 自定义配置 (SKIP: URL链接 / JSON文本) =====
+        LinearLayout cardCfg = card(dark);
+        TextView cf0 = new TextView(this);
+        cf0.setText("自定义配置"); cf0.setTextSize(15); cf0.setTextColor(fg); cf0.setTypeface(null, Typeface.BOLD);
+        cardCfg.addView(cf0);
+        TextView cf1 = new TextView(this);
+        cf1.setText("URL链接 / JSON文本 · 例：\n{\"popup_rules\":[{\"id\":\"青少年模式\",\"action\":\"知道了\"}]}");
+        cf1.setTextSize(12); cf1.setTextColor(sub);
+        cf1.setPadding(0, (int) (4 * getResources().getDisplayMetrics().density), 0, (int) (10 * getResources().getDisplayMetrics().density));
+        cardCfg.addView(cf1);
+        TextView btnCfg = new TextView(this);
+        btnCfg.setText("✎ 编辑配置");
+        btnCfg.setTextSize(14); btnCfg.setTextColor(0xFF2F7CF6); btnCfg.setTypeface(null, Typeface.BOLD);
+        btnCfg.setOnClickListener(v -> showCfgDialog());
+        cardCfg.addView(btnCfg);
+        root.addView(cardCfg);
+
         // ===== 自定义规则 =====
         LinearLayout cardR = card(dark);
         TextView r0 = new TextView(this);
@@ -178,6 +195,25 @@ public class SkipAdActivity extends Activity {
         wrap.addView(row);
         wrap.addView(d);
         return wrap;
+    }
+
+    private void showCfgDialog() {
+        boolean dark = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", false);
+        final EditText et = new EditText(this);
+        et.setMinLines(6);
+        et.setText(getSharedPreferences("settings", MODE_PRIVATE).getString("skipAdCfg", ""));
+        if (dark) { et.setTextColor(0xFFF2F2F2); et.setHintTextColor(0xFF777777); et.setBackgroundResource(R.drawable.bg_input_dark); }
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        int p = (int) (20 * getResources().getDisplayMetrics().density);
+        box.setPadding(p, p, p, 0);
+        box.addView(et);
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("自定义配置 (URL / JSON)")
+                .setView(box)
+                .setPositiveButton("保存", (d, w) -> getSharedPreferences("settings", MODE_PRIVATE)
+                        .edit().putString("skipAdCfg", et.getText().toString().trim()).apply())
+                .setNegativeButton("取消", null).show();
     }
 
     private void showAddRule() {
