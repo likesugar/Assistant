@@ -152,14 +152,13 @@ public class FartlekActivity extends Activity {
     private void toggle() {
         if (running) {
             running = false;
+            handler.removeCallbacks(tick);
         } else {
             if (elapsed >= totalDuration()) elapsed = 0;
             running = true;
             if (elapsed == 0) { walking = false; cycle = 1; play(true); }
             handler.removeCallbacks(tick);
             handler.postDelayed(tick, 1000);
-        } else {
-            handler.removeCallbacks(tick);
         }
         refresh();
     }
