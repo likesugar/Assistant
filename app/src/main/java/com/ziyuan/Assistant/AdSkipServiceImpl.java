@@ -81,6 +81,7 @@ public class AdSkipServiceImpl {
                         if (isActivity) {
                             currentPackageName = actionPackageName;
                             stopSkipAdProcess();
+                            logClick("WIN " + actionPackageName + " " + actionClassname);
                             if (installPackages.contains(actionPackageName)) {
                                 startSkipAdProcess();
                             }
@@ -156,9 +157,10 @@ public class AdSkipServiceImpl {
         node.getBoundsInScreen(br);
         int sw = service.getResources().getDisplayMetrics().widthPixels;
         int sh = service.getResources().getDisplayMetrics().heightPixels;
-        if (br.isEmpty()) return false;
-        if (br.width() > sw * 0.5f || br.height() > sh * 0.2f) return false;
-        if (br.top > sh * 0.5f) return false;
+        if (br.isEmpty()) { logClick("SKIP-CAND empty " + node); return false; }
+        logClick("CAND " + node.getText() + " rect=" + br);
+        if (br.width() > sw * 0.5f || br.height() > sh * 0.2f) { logClick("CAND-REJ size"); return false; }
+        if (br.top > sh * 0.5f) { logClick("CAND-REJ pos"); return false; }
         String nodeDesc = SkipUtil.generateNodeDescribe(node);
         if (!nodeDescribes.contains(nodeDesc)) {
             // 先 performAction; 失败(123网盘等不可点击节点)改用坐标手势点击, 失败不记账可重试
@@ -199,14 +201,18 @@ public class AdSkipServiceImpl {
 
     private void logClick(String msg) {
         try {
-            java.io.FileOutputStream out = service.openFileOutput("skipad_log.txt",
-                    android.content.Context.MODE_APPEND);
+            java.io.File dir = service.getExternalFilesDir(null);
+            if (dir == null) return;
+            java.io.File f = new java.io.File(dir, "skipad_log.txt");
+            if (f.length() > 200000) f.delete(); // 防膨胀
+            java.io.FileOutputStream out = new java.io.FileOutputStream(f, true);
             out.write((System.currentTimeMillis() + " " + msg + "\n").getBytes("UTF-8"));
             out.close();
         } catch (Throwable ignored) { }
     }
 
     public void startSkipAdProcess() {
+        logClick("SCAN-START " + currentPackageName);
         skipProcessRunning = true;
         nodeDescribes.clear();
         processActionHandler.removeMessages(ProcessAction.ACTION_STOP_SKIP_PROCESS);
