@@ -40,6 +40,7 @@ public class AdSkipServiceImpl {
         try {
             currentPackageName = "PackageName";
             installPackages = getInstallPackages();
+            logClick("CONNECTED pkgs=" + (installPackages == null ? -1 : installPackages.size()));
             nodeDescribes = new HashSet<>();
             initActionHandler();
             taskExecutorService = Executors.newSingleThreadScheduledExecutor();
@@ -83,8 +84,12 @@ public class AdSkipServiceImpl {
                         if (isActivity) {
                             currentPackageName = actionPackageName;
                             stopSkipAdProcess();
-                            logClick("WIN " + actionPackageName + " " + actionClassname);
-                            if (installPackages.contains(actionPackageName)) {
+                            logClick("WIN " + actionPackageName + " " + actionClassname
+                                    + " inList=" + (installPackages != null && installPackages.contains(actionPackageName)));
+                            // 名单包含该应用, 或名单为空(包可见性受限兜底)=扫所有非桌面应用
+                            boolean inList = installPackages != null && installPackages.contains(actionPackageName);
+                            boolean emptyList = installPackages == null || installPackages.isEmpty();
+                            if (inList || (emptyList && !actionPackageName.equals("com.android.launcher"))) {
                                 startSkipAdProcess();
                             }
                         }
