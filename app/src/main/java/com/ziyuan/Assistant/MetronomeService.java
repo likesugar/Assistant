@@ -68,6 +68,21 @@ public class MetronomeService extends Service {
         } catch (Throwable t) { }
     }
 
+    private android.media.MediaPlayer fkVoice;
+
+    /** 阶段语音播报: 资产 tianyi/xxx.wav (与洛天依语音同机制) */
+    private void fkVoicePlay(String id) {
+        try {
+            if (fkVoice != null) { try { fkVoice.stop(); fkVoice.release(); } catch (Throwable ignored) {} fkVoice = null; }
+            android.content.res.AssetFileDescriptor fd = getAssets().openFd("tianyi/" + id + ".wav");
+            fkVoice = new android.media.MediaPlayer();
+            fkVoice.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
+            fd.close();
+            fkVoice.prepare();
+            fkVoice.start();
+        } catch (Throwable t) { }
+    }
+
     private void fkBroadcast(String phase) {
         android.content.Intent i = new android.content.Intent(ACT_FK);
         i.putExtra("phase", phase);
@@ -89,6 +104,7 @@ public class MetronomeService extends Service {
         fkTotal = (fkRun + fkWalk) * fkCycles; fkRemain = fkRun;
         if (engine != null) engine.play();
         fkCue(true);
+        fkVoicePlay("paobu"); // 跑步开始
         fkBroadcast("run");
         fkHandler.removeCallbacks(fkTick);
         fkHandler.postDelayed(fkTick, 1000);
@@ -109,16 +125,19 @@ public class MetronomeService extends Service {
                     fkPhase = "walk"; fkRemain = fkWalk;
                     if (engine != null) engine.pause();
                     fkCue(false);
+                    fkVoicePlay("kuaizou"); // 快走开始
                 } else {
                     fkCycle++;
                     if (fkCycle > fkCycles) {
                         stopFartlek();
                         if (engine != null) engine.pause();
+                        fkVoicePlay("wancheng"); // 训练完成
                         return;
                     }
                     fkPhase = "run"; fkRemain = fkRun;
                     if (engine != null) engine.play();
                     fkCue(true);
+                    fkVoicePlay("paobu"); // 跑步开始
                 }
             }
             fkBroadcast(fkPhase);
@@ -271,6 +290,7 @@ tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyi
     public void onDestroy() {
         stopFartlek();
         if (fkCueTrack != null) { try { fkCueTrack.stop(); fkCueTrack.release(); } catch (Throwable ignored) {} fkCueTrack = null; }
+        if (fkVoice != null) { try { fkVoice.stop(); fkVoice.release(); } catch (Throwable ignored) {} fkVoice = null; }
         if (tianyi != null) { tianyi.stop(); tianyi = null; }
         if (gpsMgr != null) { gpsMgr.stop(); gpsMgr = null; }
         if (stepMgr != null) { stepMgr.stop(); stepMgr = null; }
