@@ -819,28 +819,6 @@ public class HomeActivity extends Activity {
 
     }
 
-    /** 跳过广告服务是否已启用: 服务静态实例优先(AdSkipHelper 方式), 系统接口兜底 */
-    static boolean skipAdEnabled(android.content.Context c) {
-        if (SkipAdService.isRunning()) return true;
-        try {
-            android.view.accessibility.AccessibilityManager am = (android.view.accessibility.AccessibilityManager)
-                    c.getSystemService(ACCESSIBILITY_SERVICE);
-            if (am != null) {
-                for (android.accessibilityservice.AccessibilityServiceInfo i
-                        : am.getEnabledAccessibilityServiceList(android.accessibilityservice.AccessibilityServiceInfo.FEEDBACK_GENERIC)) {
-                    String id = i.getId();
-                    if (id != null && id.endsWith(".SkipAdService") && id.contains(c.getPackageName())) return true;
-                }
-            }
-        } catch (Throwable ignored) { }
-        try {
-            String e = android.provider.Settings.Secure.getString(
-                    c.getContentResolver(), android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
-            if (e != null && e.contains(".SkipAdService")) return true;
-        } catch (Throwable ignored) { }
-        return false;
-    }
-
     @Override
     protected void onResume() {
         super.onResume();

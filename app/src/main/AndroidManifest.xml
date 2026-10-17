@@ -51,7 +51,7 @@
         <activity android:name=".ChatActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".TapperActivity" android:exported="false"/>
         <activity android:name=".MetronomeActivity" android:exported="false"/>
-        <service android:name=".SkipAdService"
+        <service android:name=".AdSkipService"
             android:exported="true"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:label="跳过广告">
