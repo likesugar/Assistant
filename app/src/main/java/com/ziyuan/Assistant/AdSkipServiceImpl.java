@@ -12,6 +12,9 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
+import android.graphics.Path;
+import android.graphics.Rect;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -31,6 +34,76 @@ public class AdSkipServiceImpl {
     private String currentPackageName;
     private Set<String> installPackages;
     private Set<String> nodeDescribes;
+    // ===== 李跳跳式自定义规则 (skipAdCfg) =====
+    private String cfgRaw = null;
+    private final java.util.ArrayList<org.json.JSONObject> lttPopup = new java.util.ArrayList<>();
+    private final java.util.ArrayList<String> lttKeywords = new java.util.ArrayList<>();
+    private final java.util.ArrayList<String[]> simplePopups = new java.util.ArrayList<>();
+
+    private void ensureCfg() {
+        try {
+            String raw = getSharedPreferences("settings", MODE_PRIVATE)
+                    .getString("skipAdCfg", "");
+            if (raw != null && raw.equals(cfgRaw)) return;
+            cfgRaw = raw;
+            parseCfg(raw);
+        } catch (Throwable ignored) { }
+    }
+
+    private void parseCfg(String text) {
+        lttPopup.clear(); lttKeywords.clear(); simplePopups.clear();
+        if (text == null || text.trim().isEmpty()) return;
+        try {
+            String t = text.trim();
+            // 李跳跳整包导入: 外层 [{"hash":"{rules}"},...]
+            if (t.startsWith("[{")) {
+                JSONArray outer = new JSONArray(t);
+                StringBuilder merged = new StringBuilder();
+                for (int i = 0; i < outer.length(); i++) {
+                    JSONObject o = outer.optJSONObject(i);
+                    if (o == null) continue;
+                    java.util.Iterator<String> ks = o.keys();
+                    while (ks.hasNext()) {
+                        String k = ks.next();
+                        if (k.equals("popup_rules") || k.equals("keywords") || k.equals("keywords_append")) continue;
+                        String v = o.optString(k, "");
+                        if (v.startsWith("{") && v.contains("popup_rules")) {
+                            if (merged.length() > 0) merged.append(',');
+                            merged.append(v);
+                        }
+                    }
+                }
+                if (merged.length() > 0) t = "[" + merged + "]";
+            }
+            if (t.startsWith("[")) {
+                JSONArray arr = new JSONArray(t);
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject o = arr.optJSONObject(i);
+                    if (o == null) continue;
+                    JSONArray pr = o.optJSONArray("popup_rules");
+                    if (pr != null) for (int j = 0; j < pr.length(); j++) {
+                        JSONObject r = pr.optJSONObject(j);
+                        if (r != null) lttPopup.add(r);
+                    }
+                    for (String kn : new String[]{"keywords", "keywords_append"}) {
+                        JSONArray kw = o.optJSONArray(kn);
+                        if (kw != null) for (int j = 0; j < kw.length(); j++) {
+                            String k = kw.optString(j, "");
+                            if (!k.isEmpty()) lttKeywords.add(k);
+                        }
+                    }
+                }
+            } else {
+                JSONObject o = new JSONObject(t);
+                JSONArray pr = o.optJSONArray("popup_rules");
+                if (pr != null) for (int i = 0; i < pr.length(); i++) {
+                    JSONObject r = pr.getJSONObject(i);
+                    String id = r.optString("id", ""), act = r.optString("action", "");
+                    if (!id.isEmpty() && !act.isEmpty()) simplePopups.add(new String[]{id, act});
+                }
+            }
+        } catch (Throwable ignored) { }
+    }
 
     public AdSkipServiceImpl(AccessibilityService service) {
         this.service = service;
@@ -94,9 +167,14 @@ public class AdSkipServiceImpl {
                             }
                         }
                     }
+                    ensureCfg();
+                    if (!lttPopup.isEmpty() || !simplePopups.isEmpty()) {
+                        handlePopups(service.getRootInActiveWindow());
+                    }
                     executeSkipTask(service.getRootInActiveWindow());
                     break;
                 case AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED:
+                    ensureCfg();
                     if (!installPackages.contains(actionPackageName)) {
                         break;
                     }
@@ -156,7 +234,19 @@ public class AdSkipServiceImpl {
     }
 
     private boolean clickSkipNode(AccessibilityNodeInfo node) {
-        if (!SkipUtil.isKeywords(node, Constant.SCAN_KEYWORD)) {
+        boolean hit = SkipUtil.isKeywords(node, Constant.SCAN_KEYWORD);
+        if (!hit && !lttKeywords.isEmpty()) {
+            CharSequence[] ts = { node.getText(), node.getContentDescription() };
+            for (CharSequence t : ts) {
+                if (t == null) continue;
+                String ls = t.toString().trim().toLowerCase();
+                for (String k : lttKeywords) {
+                    if (!ls.isEmpty() && ls.contains(k.toLowerCase())) { hit = true; break; }
+                }
+                if (hit) break;
+            }
+        }
+        if (!hit) {
             return false;
         }
         // 按钮形状过滤: 跳过按钮一定是小控件且在屏幕上半区, 防止命中横跨全屏的大容器(点错拽下通知栏)
@@ -204,6 +294,115 @@ public class AdSkipServiceImpl {
             }
             return ok[0];
         } catch (Throwable t) { return false; }
+    }
+
+    // ===== 李跳跳规则执行 =====
+    /** 屏上出现 id 条件 → 执行 action。id/action 支持: 文本(包含), +包含, -排除, &与, =精确,
+     *  l,t,r,b 坐标, viewId, action=GLOBAL_ACTION_BACK */
+    private void handlePopups(AccessibilityNodeInfo root) {
+        if (root == null) return;
+        for (String[] r : simplePopups) {
+            if (findCond(root, r[0], false, 0) != null) {
+                AccessibilityNodeInfo btn = findCond(root, r[1], false, 0);
+                if (btn != null) clickNode(btn);
+            }
+        }
+        for (int ri = 0; ri < lttPopup.size(); ri++) {
+            JSONObject r = lttPopup.get(ri);
+            String id = r.optString("id", ""), act = r.optString("action", "");
+            if (id.isEmpty() || act.isEmpty()) continue;
+            if (!lttIdMatched(root, id)) continue;
+            int delay = r.optInt("delay", 0);
+            if (delay > 0) {
+                try { Thread.sleep(Math.min(delay, 800)); } catch (InterruptedException ignored) { }
+            }
+            doLttAction(root, act);
+        }
+    }
+
+    private boolean lttIdMatched(AccessibilityNodeInfo root, String id) {
+        if (id.matches("\\d+,\\d+,\\d+,\\d+")) {
+            return boundsExists(root, parseBounds(id), 0);
+        }
+        boolean requireAll = id.contains("&");
+        String[] parts = id.split("&");
+        for (String part : parts) {
+            boolean positive = true, exact = false;
+            String cond = part;
+            if (cond.startsWith("+")) cond = cond.substring(1);
+            else if (cond.startsWith("-")) { positive = false; cond = cond.substring(1); }
+            if (cond.startsWith("=")) { exact = true; cond = cond.substring(1); }
+            boolean found = cond.matches("\\d+,\\d+,\\d+,\\d+")
+                    ? boundsExists(root, parseBounds(cond), 0)
+                    : findCond(root, cond, exact, 0) != null;
+            if (requireAll && !found) return false;
+            if (!requireAll && !positive && found) return false;
+        }
+        return true;
+    }
+
+    private Rect parseBounds(String s) {
+        String[] p = s.split(",");
+        return new Rect(Integer.parseInt(p[0].trim()), Integer.parseInt(p[1].trim()),
+                Integer.parseInt(p[2].trim()), Integer.parseInt(p[3].trim()));
+    }
+
+    private boolean boundsExists(AccessibilityNodeInfo n, Rect want, int depth) {
+        if (n == null || depth > 20) return false;
+        Rect r = new Rect();
+        n.getBoundsInScreen(r);
+        if (r.equals(want) || (r.left == want.left && r.top == want.top
+                && Math.abs(r.width() - want.width()) <= 40)) return true;
+        for (int i = 0; i < n.getChildCount(); i++) {
+            try { if (boundsExists(n.getChild(i), want, depth + 1)) return true; } catch (Throwable ignored) { }
+        }
+        return false;
+    }
+
+    private AccessibilityNodeInfo findCond(AccessibilityNodeInfo n, String kw, boolean exact, int depth) {
+        if (n == null || depth > 20) return null;
+        CharSequence[] ts = { n.getText(), n.getContentDescription() };
+        for (CharSequence t : ts) {
+            if (t == null) continue;
+            String sv = t.toString();
+            if (exact ? sv.trim().equals(kw) : sv.contains(kw)) return n;
+        }
+        CharSequence vid = n.getViewIdResourceName();
+        if (vid != null && vid.toString().contains(kw)) return n;
+        for (int i = 0; i < n.getChildCount(); i++) {
+            try {
+                AccessibilityNodeInfo r = findCond(n.getChild(i), kw, exact, depth + 1);
+                if (r != null) return r;
+            } catch (Throwable ignored) { }
+        }
+        return null;
+    }
+
+    private void doLttAction(AccessibilityNodeInfo root, String act) {
+        try {
+            if (act.equals("GLOBAL_ACTION_BACK")) {
+                service.performGlobalAction(GLOBAL_ACTION_BACK);
+                return;
+            }
+            if (act.matches("\\d+,\\d+,\\d+,\\d+")) {
+                Rect r = parseBounds(act);
+                Path path = new Path();
+                path.moveTo(r.exactCenterX(), r.exactCenterY());
+                GestureDescription.Builder gb = new GestureDescription.Builder();
+                gb.addStroke(new GestureDescription.StrokeDescription(path, 0, 40));
+                service.dispatchGesture(gb.build(), null, null);
+                return;
+            }
+            AccessibilityNodeInfo btn = findCond(root, act.replace("=", ""), false, 0);
+            if (btn != null) clickNode(btn);
+        } catch (Throwable ignored) { }
+    }
+
+    private void clickNode(AccessibilityNodeInfo btn) {
+        AccessibilityNodeInfo c = btn;
+        for (int i = 0; i < 4 && c != null && !c.isClickable(); i++) c = c.getParent();
+        boolean ok = c != null && c.isClickable() && c.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+        if (!ok) gestureTap(btn);
     }
 
     private void logClick(String msg) {
