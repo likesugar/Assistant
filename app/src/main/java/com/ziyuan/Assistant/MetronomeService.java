@@ -83,6 +83,35 @@ public class MetronomeService extends Service {
         } catch (Throwable t) { }
     }
 
+    private static final String[][] FK_CHEERS = {
+            {"jiayou", "加油加油！保持节奏！"},
+            {"jianchi", "坚持住，你最棒！"},
+            {"huxi", "调整呼吸，稳住节奏～"},
+            {"zaiyici", "再来一次，没问题！"},
+            {"henbang", "好棒好棒！就是这样！"},
+            {"chongya", "冲呀！胜利在望！"},
+    };
+    private final Runnable fkCheer = new Runnable() {
+        @Override public void run() {
+            if (!fkOn || !"walk".equals(fkPhase)) return;
+            String[] c = FK_CHEERS[(int) (Math.random() * FK_CHEERS.length)];
+            fkVoicePlay(c[0]);
+            try {
+                android.content.Intent ci = new android.content.Intent("tianyi.sub");
+                ci.setPackage(getPackageName());
+                ci.putExtra("text", "洛天依：" + c[1]);
+                sendBroadcast(ci);
+            } catch (Throwable ignored) {}
+            fkScheduleCheer(); // 继续下一个 15-35s 随机点
+        }
+    };
+
+    private void fkScheduleCheer() {
+        fkHandler.removeCallbacks(fkCheer);
+        long delay = 15000 + (long) (Math.random() * 20000); // 15-35 秒随机
+        fkHandler.postDelayed(fkCheer, delay);
+    }
+
     private void fkBroadcast(String phase) {
         android.content.Intent i = new android.content.Intent(ACT_FK);
         i.putExtra("phase", phase);
@@ -113,6 +142,7 @@ public class MetronomeService extends Service {
     private void stopFartlek() {
         fkOn = false;
         fkHandler.removeCallbacks(fkTick);
+        fkHandler.removeCallbacks(fkCheer);
         fkBroadcast("done");
     }
 
@@ -123,12 +153,14 @@ public class MetronomeService extends Service {
             if (fkRemain <= 0) {
                 if ("run".equals(fkPhase)) {
                     fkPhase = "walk"; fkRemain = fkWalk;
-                    if (engine != null) engine.pause();
+                    // 步行阶段节拍器继续开着, 只降音量感(不停拍)
                     fkCue(false);
                     fkVoicePlay("kuaizou"); // 快走开始
+                    fkScheduleCheer();
                 } else {
                     fkCycle++;
                     if (fkCycle > fkCycles) {
+                        fkHandler.removeCallbacks(fkCheer);
                         stopFartlek();
                         if (engine != null) engine.pause();
                         fkVoicePlay("wancheng"); // 训练完成
@@ -138,6 +170,7 @@ public class MetronomeService extends Service {
                     if (engine != null) engine.play();
                     fkCue(true);
                     fkVoicePlay("paobu"); // 跑步开始
+                    fkHandler.removeCallbacks(fkCheer);
                 }
             }
             fkBroadcast(fkPhase);
