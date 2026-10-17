@@ -241,6 +241,16 @@ public class AdSkipServiceImpl {
         homeAppPackages.add(service.getPackageName());
         homeAppPackages.add("com.android.settings");
         installPackages.removeAll(homeAppPackages);
+        // 用户自定义名单: 勾选了才扫, 未勾选=扫全部
+        try {
+            JSONArray sel = new JSONArray(service.getSharedPreferences("settings",
+                    android.content.Context.MODE_PRIVATE).getString("skipAdPkgs", "[]"));
+            if (sel.length() > 0) {
+                Set<String> allow = new HashSet<>();
+                for (int i = 0; i < sel.length(); i++) allow.add(sel.getString(i));
+                installPackages.retainAll(allow);
+            }
+        } catch (Throwable ignored) { }
         return installPackages;
     }
 }
