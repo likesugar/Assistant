@@ -86,6 +86,36 @@ public class SkipAdActivity extends Activity {
         cardP.addView(btnAddPkg);
         root.addView(cardP);
 
+        // ===== 自定义配置 (李跳跳 popup_rules / URL / JSON) =====
+        LinearLayout cardCfg = new LinearLayout(this);
+        cardCfg.setOrientation(LinearLayout.VERTICAL);
+        cardCfg.setBackgroundResource(dark ? R.drawable.bg_card_md3_dark : R.drawable.bg_card_md3);
+        int cc = (int) (14 * getResources().getDisplayMetrics().density);
+        cardCfg.setPadding(cc, cc, cc, cc);
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(-1, -2);
+        clp.topMargin = (int) (16 * getResources().getDisplayMetrics().density);
+        cardCfg.setLayoutParams(clp);
+        TextView cf0 = new TextView(this);
+        cf0.setText("自定义配置 (李跳跳规则)"); cf0.setTextSize(15); cf0.setTextColor(fg); cf0.setTypeface(null, android.graphics.Typeface.BOLD);
+        cardCfg.addView(cf0);
+        TextView cf1 = new TextView(this);
+        cf1.setText("支持粘贴李跳跳整包规则 / 单条 JSON / URL 订阅。例：\n{\"popup_rules\":[{\"id\":\"青少年模式\",\"action\":\"知道了\"}]}");
+        cf1.setTextSize(12); cf1.setTextColor(sub);
+        cf1.setPadding(0, (int) (6 * getResources().getDisplayMetrics().density), 0, (int) (10 * getResources().getDisplayMetrics().density));
+        cardCfg.addView(cf1);
+        TextView cfgState = new TextView(this);
+        String cfgNow = getSharedPreferences("settings", MODE_PRIVATE).getString("skipAdCfg", "");
+        cfgState.setText(cfgNow.isEmpty() ? "○ 未配置" : "● 已配置 " + cfgNow.length() + " 字");
+        cfgState.setTextSize(11); cfgState.setTextColor(cfgNow.isEmpty() ? 0xFFF5A623 : 0xFF34C759);
+        cardCfg.addView(cfgState);
+        TextView btnCfg = new TextView(this);
+        btnCfg.setText("✎ 编辑配置");
+        btnCfg.setTextSize(14); btnCfg.setTextColor(0xFF2F7CF6); btnCfg.setTypeface(null, android.graphics.Typeface.BOLD);
+        btnCfg.setPadding(0, (int) (10 * getResources().getDisplayMetrics().density), 0, 0);
+        btnCfg.setOnClickListener(v -> showCfgDialog());
+        cardCfg.addView(btnCfg);
+        root.addView(cardCfg);
+
         android.widget.ScrollView sc = new android.widget.ScrollView(this);
         sc.setFillViewport(true);
         sc.addView(root);
