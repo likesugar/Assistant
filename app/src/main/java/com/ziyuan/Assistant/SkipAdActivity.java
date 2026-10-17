@@ -164,6 +164,28 @@ public class SkipAdActivity extends Activity {
         } catch (Throwable ignored) { }
     }
 
+    private void showCfgDialog() {
+        boolean dark = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", false);
+        final EditText et = new EditText(this);
+        et.setMinLines(6);
+        et.setText(getSharedPreferences("settings", MODE_PRIVATE).getString("skipAdCfg", ""));
+        if (dark) { et.setTextColor(0xFFF2F2F2); et.setHintTextColor(0xFF777777); et.setBackgroundResource(R.drawable.bg_input_dark); }
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        int p = (int) (20 * getResources().getDisplayMetrics().density);
+        box.setPadding(p, p, p, 0);
+        box.addView(et);
+        new AlertDialog.Builder(this)
+                .setTitle("自定义配置 (URL / JSON / 李跳跳规则)")
+                .setView(box)
+                .setPositiveButton("保存", (d, w) -> {
+                    getSharedPreferences("settings", MODE_PRIVATE)
+                            .edit().putString("skipAdCfg", et.getText().toString().trim()).apply();
+                    recreate();
+                })
+                .setNegativeButton("取消", null).show();
+    }
+
     /** 打开无障碍权限提示 (AdSkipHelper 同款) */
     private void showOpenAccessibilityDialog() {
         AlertDialog dialog = new AlertDialog.Builder(this)
