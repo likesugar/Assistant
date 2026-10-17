@@ -79,16 +79,25 @@ public class MetroEngine extends Thread {
             if (playing && audioTrack != null) {
                 if (changed) { loadSamples(); changed = false; }
                 if (beat1 == null) { try { sleep(50); } catch (InterruptedException ignored) {} continue; }
-                if (resync) { // 暂停恢复: 清掉半截残音, 对齐小节头干净起拍
-                    resync = false;
-                    try { audioTrack.pause(); audioTrack.flush(); } catch (Throwable ignored) {}
-                    try { audioTrack.play(); } catch (Throwable ignored) {}
-                    tickIndex = 0;
-                }
                 // 一个细分 tick 一个 period: 60s/bpm/sub, 换算成字节
                 int subN = Math.max(1, sub);
                 int periodFrames = MetroConstant.SampleRate * 60 / Math.max(1, bpm) / subN;
                 int periodBytes = periodFrames * 2;
+                if (resync) { // 暂停恢复: 清残音, 先预填第一个整拍再起播(杜绝空缓冲欠载卡顿)
+                    resync = false;
+                    try { audioTrack.pause(); audioTrack.flush(); } catch (Throwable ignored) {}
+                    tickIndex = 0;
+                    writeAll(beat1, 0, Math.min(beat1.length, periodBytes));
+                    int filled0 = Math.min(beat1.length, periodBytes);
+                    while (filled0 < periodBytes && !quit) {
+                        int n0 = Math.min(SILENCE_CHUNK, periodBytes - filled0);
+                        audioTrack.write(SILENCE, 0, n0);
+                        filled0 += n0;
+                    }
+                    try { audioTrack.play(); } catch (Throwable ignored) {}
+                    tickIndex = 1 % Math.max(1, notes * subN);
+                    continue;
+                }
                 // 1) 本 tick 声音: 小节头=downbeat, 整拍=upbeat, 细分弱位=upbeat*0.6
                 byte[] tick;
                 if (tickIndex % notes == 0) tick = beat1;
