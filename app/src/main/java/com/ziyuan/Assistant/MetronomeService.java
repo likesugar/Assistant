@@ -82,9 +82,13 @@ public class MetronomeService extends Service {
             fkVoice.prepare();
             final long durMs = fkVoice.getDuration() + 300;
             fkVoice.start();
-            // 播完(或兜底超时)后恢复节拍
+            // 播完(或兜底超时): 先阶段鼓点, 鼓点落定后节拍进场(两阶段都恢复, 修快走无拍)
             Runnable resume = () -> {
-                if (fkOn && fkVoice != null && "run".equals(fkPhase)) { if (engine != null) engine.play(); }
+                if (!fkOn) return;
+                fkCue("run".equals(fkPhase));
+                fkHandler.postDelayed(() -> {
+                    if (fkOn && engine != null && !engine.isPlaying()) engine.play();
+                }, 400);
             };
             fkVoice.setOnCompletionListener(mp -> { if (fkOn) resume.run(); });
             fkHandler.postDelayed(resume, Math.max(1200, durMs));
@@ -141,8 +145,7 @@ public class MetronomeService extends Service {
         fkCycles = Math.max(1, p.getInt("fartlekCycles", 5));
         fkOn = true; fkPhase = "run"; fkCycle = 1; fkElapsed = 0;
         fkTotal = (fkRun + fkWalk) * fkCycles; fkRemain = fkRun;
-        fkCue(true);
-        fkVoicePlay("paobu"); // 跑步开始(播完自动起节拍)
+        fkVoicePlay("paobu"); // 跑步开始 → 语音后鼓点 → 节拍
         fkBroadcast("run");
         fkHandler.removeCallbacks(fkTick);
         fkHandler.postDelayed(fkTick, 1000);
@@ -162,9 +165,7 @@ public class MetronomeService extends Service {
             if (fkRemain <= 0) {
                 if ("run".equals(fkPhase)) {
                     fkPhase = "walk"; fkRemain = fkWalk;
-                    // 步行阶段节拍器继续开着, 只降音量感(不停拍)
-                    fkCue(false);
-                    fkVoicePlay("kuaizou"); // 快走开始
+                    fkVoicePlay("kuaizou"); // 快走开始 → 语音后鼓点 → 节拍继续
                     fkScheduleCheer();
                 } else {
                     fkCycle++;
@@ -176,8 +177,7 @@ public class MetronomeService extends Service {
                         return;
                     }
                     fkPhase = "run"; fkRemain = fkRun;
-                    fkCue(true);
-                    fkVoicePlay("paobu"); // 跑步开始(播完自动起节拍)
+                    fkVoicePlay("paobu"); // 跑步开始 → 语音后鼓点 → 节拍
                     fkHandler.removeCallbacks(fkCheer);
                 }
             }
