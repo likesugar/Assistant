@@ -269,10 +269,15 @@ public class AdSkipServiceImpl {
         String nodeDesc = SkipUtil.generateNodeDescribe(node);
         if (!nodeDescribes.contains(nodeDesc)) {
             // 先 performAction; 失败(123网盘等不可点击节点)改用坐标手势点击, 失败不记账可重试
+            long now = SystemClock.elapsedRealtime();
+            if (clickCount >= 3) { stopSkipAdProcess(); return false; } // 达上限停扫
+            if (now - lastClickAt < 1500) return false; // 间隔≥1.5s
             boolean clicked = node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
             if (!clicked) clicked = gestureTap(node);
             logClick(nodeDesc + " act=" + clicked + " rect=" + br);
             if (clicked) {
+                clickCount++;
+                lastClickAt = now;
                 nodeDescribes.add(nodeDesc);
                 return true;
             }
@@ -308,6 +313,8 @@ public class AdSkipServiceImpl {
     /** 屏上出现 id 条件 → 执行 action。id/action 支持: 文本(包含), +包含, -排除, &与, =精确,
      *  l,t,r,b 坐标, viewId, action=GLOBAL_ACTION_BACK */
     private long lastPop = 0;
+    private long lastClickAt = 0;
+    private int clickCount = 0; // 本窗口点击次数, 防无限点击循环
     private void handlePopups(AccessibilityNodeInfo root) {
         if (root == null) return;
         long now = SystemClock.elapsedRealtime();
@@ -411,10 +418,14 @@ public class AdSkipServiceImpl {
     }
 
     private void clickNode(AccessibilityNodeInfo btn) {
+        long now = SystemClock.elapsedRealtime();
+        if (clickCount >= 3) return; // 每窗口最多3次
+        if (now - lastClickAt < 1500) return; // 间隔≥1.5s
         AccessibilityNodeInfo c = btn;
         for (int i = 0; i < 4 && c != null && !c.isClickable(); i++) c = c.getParent();
         boolean ok = c != null && c.isClickable() && c.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-        if (!ok) gestureTap(btn);
+        if (!ok) ok = gestureTap(btn);
+        if (ok) { clickCount++; lastClickAt = now; logClick("CLICKED #" + clickCount); }
     }
 
     private void logClick(String msg) {
@@ -432,6 +443,8 @@ public class AdSkipServiceImpl {
     public void startSkipAdProcess() {
         logClick("SCAN-START " + currentPackageName);
         skipProcessRunning = true;
+        clickCount = 0;
+        lastClickAt = 0;
         nodeDescribes.clear();
         processActionHandler.removeMessages(ProcessAction.ACTION_STOP_SKIP_PROCESS);
         processActionHandler.sendEmptyMessageDelayed(ProcessAction.ACTION_STOP_SKIP_PROCESS, Constant.SCAN_TIME);
