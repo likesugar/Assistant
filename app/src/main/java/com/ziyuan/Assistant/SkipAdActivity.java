@@ -25,6 +25,21 @@ public class SkipAdActivity extends Activity {
 
     private boolean enabled() { return HomeActivity.skipAdEnabled(this); }
 
+    /** 引导开启: 依次点击路径提示 → 跳系统无障碍设置 (AdSkipHelper 同款交互) */
+    private void showEnableGuide() {
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("开启跳过广告")
+                .setMessage("依次点击：无障碍 → 已下载的应用 → Assistant → 开启「跳过广告」")
+                .setPositiveButton("取消", null)
+                .setNeutralButton("好的", (d, w) -> {
+                    try {
+                        Intent i = new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+                        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(i);
+                    } catch (Throwable ignored) { }
+                }).show();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,10 +79,7 @@ public class SkipAdActivity extends Activity {
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.addView(lab, llp);
         sw = new Switch(this);
-        sw.setOnClickListener(v -> {
-            try { startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)); }
-            catch (Throwable ignored) { }
-        });
+        sw.setOnClickListener(v -> showEnableGuide());
         row.addView(sw);
         card.addView(row);
         status = new TextView(this);
@@ -112,10 +124,7 @@ public class SkipAdActivity extends Activity {
         btnCk.setBackgroundResource(R.drawable.bg_btn_md3);
         btnCk.setPadding(0, (int) (10 * getResources().getDisplayMetrics().density), 0, (int) (10 * getResources().getDisplayMetrics().density));
         btnCk.setOnClickListener(v -> {
-            if (!SkipAdService.isRunning()) {
-                Toast(this, "请先开启无障碍开关");
-                return;
-            }
+            if (!SkipAdService.isRunning()) { showEnableGuide(); return; }
             SkipAdService.startCheck(10000);
             Toast(this, "10 秒内切到广告页, 红框即候选按钮");
         });
@@ -242,10 +251,10 @@ public class SkipAdActivity extends Activity {
     }
 
     private void refresh() {
-        boolean on = enabled();
+        boolean on = SkipAdService.isRunning() || enabled();
         sw.setChecked(on);
         if (on) {
-            status.setText("● 已开启，运行中");
+            status.setText("● 已开启，服务运行中");
             status.setTextColor(0xFF34C759);
         } else {
             status.setText("○ 未开启，点上方开关去系统无障碍设置打开");

@@ -819,8 +819,9 @@ public class HomeActivity extends Activity {
 
     }
 
-    /** 跳过广告服务是否已启用: AccessibilityManager 权威接口 + Settings 字符串双通道 */
+    /** 跳过广告服务是否已启用: 服务静态实例优先(AdSkipHelper 方式), 系统接口兜底 */
     static boolean skipAdEnabled(android.content.Context c) {
+        if (SkipAdService.isRunning()) return true;
         try {
             android.view.accessibility.AccessibilityManager am = (android.view.accessibility.AccessibilityManager)
                     c.getSystemService(ACCESSIBILITY_SERVICE);
