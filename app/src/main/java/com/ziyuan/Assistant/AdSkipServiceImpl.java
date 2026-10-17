@@ -1,6 +1,7 @@
 package com.ziyuan.Assistant;
 
 import android.accessibilityservice.AccessibilityService;
+import android.accessibilityservice.GestureDescription;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -22,6 +23,7 @@ public class AdSkipServiceImpl {
 
     private final AccessibilityService service;
     public Handler processActionHandler;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private ScheduledExecutorService taskExecutorService;
     private volatile boolean skipProcessRunning;
     private String currentPackageName;
@@ -151,12 +153,40 @@ public class AdSkipServiceImpl {
         }
         String nodeDesc = SkipUtil.generateNodeDescribe(node);
         if (!nodeDescribes.contains(nodeDesc)) {
-            nodeDescribes.add(nodeDesc);
-            node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-            Log.d("AdSkip", "try to click " + nodeDesc);
-            return true;
+            // 先 performAction; 失败(123网盘等不可点击节点)改用坐标手势点击, 失败不记账可重试
+            boolean clicked = node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+            if (!clicked) clicked = gestureTap(node);
+            Log.d("AdSkip", "try to click " + nodeDesc + " act=" + clicked);
+            if (clicked) {
+                nodeDescribes.add(nodeDesc);
+                return true;
+            }
         }
         return false;
+    }
+
+    /** 坐标手势点击按钮中心 (必须主线程) */
+    private boolean gestureTap(AccessibilityNodeInfo node) {
+        try {
+            final android.graphics.Rect r = new android.graphics.Rect();
+            node.getBoundsInScreen(r);
+            if (r.isEmpty() || r.width() <= 0 || r.height() <= 0) return false;
+            final boolean[] ok = {false};
+            mainHandler.post(() -> {
+                try {
+                    android.graphics.Path path = new android.graphics.Path();
+                    path.moveTo(r.exactCenterX(), r.exactCenterY());
+                    GestureDescription.Builder gb = new GestureDescription.Builder();
+                    gb.addStroke(new GestureDescription.StrokeDescription(path, 0, 40));
+                    ok[0] = service.dispatchGesture(gb.build(), null, null);
+                } catch (Throwable ignored) { }
+            });
+            // 等 dispatchGesture 排队结果(最多200ms)
+            for (int i = 0; i < 20 && !ok[0]; i++) {
+                try { Thread.sleep(10); } catch (InterruptedException ignored) { }
+            }
+            return ok[0];
+        } catch (Throwable t) { return false; }
     }
 
     public void startSkipAdProcess() {
