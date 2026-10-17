@@ -238,8 +238,9 @@ public class SkipAdActivity extends Activity {
                 del.setPadding((int) (12 * getResources().getDisplayMetrics().density), 0, 0, 0);
                 del.setOnClickListener(v -> {
                     try {
+                        final int idx = i;
                         JSONArray na = new JSONArray();
-                        for (int j = 0; j < arr.length(); j++) if (j != i) na.put(arr.getJSONObject(j));
+                        for (int j = 0; j < arr.length(); j++) if (j != idx) na.put(arr.getJSONObject(j));
                         getSharedPreferences("settings", MODE_PRIVATE).edit()
                                 .putString("skipAdRules", na.toString()).apply();
                         refresh();
