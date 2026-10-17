@@ -784,6 +784,19 @@ public class HomeActivity extends Activity {
                 startActivity(lv);
             }
         });
+        // ===== 跳过广告: 卡片/开关点击 → 系统无障碍设置(开关状态由 onResume 刷新) =====
+        View skipCard = findViewById(R.id.cardSkipAd);
+        final android.widget.Switch swSkip = (android.widget.Switch) findViewById(R.id.swSkipAd);
+        View.OnClickListener openA11y = new View.OnClickListener() {
+            public void onClick(View v) {
+                try { startActivity(new android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)); }
+                catch (Throwable e) { Toast.makeText(HomeActivity.this, "无法打开无障碍设置", Toast.LENGTH_SHORT).show(); }
+            }
+        };
+        skipCard.setOnClickListener(openA11y);
+        swSkip.setOnClickListener(openA11y); // Switch 状态无法程序化改, 点击引导去系统设置
+        refreshSkipAdSwitch(swSkip);
+
         findViewById(R.id.cardTapper).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, TapperActivity.class)); }
         });
@@ -815,7 +828,23 @@ public class HomeActivity extends Activity {
     }
 
     @Override
+    private void refreshSkipAdSwitch(android.widget.Switch sw) {
+        try {
+            String enabled = android.provider.Settings.Secure.getString(
+                    getContentResolver(), android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+            boolean on = enabled != null && (enabled.contains(getPackageName() + "/.SkipAdService")
+                    || enabled.contains("com.ziyuan.Assistant.SkipAdService"));
+            sw.setOnCheckedChangeListener(null);
+            sw.setChecked(on);
+            sw.setOnCheckedChangeListener((b, v) -> {
+                try { startActivity(new android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)); }
+                catch (Throwable ignored) { }
+            });
+        } catch (Throwable ignored) { }
+    }
+
     protected void onResume() {
+        try { refreshSkipAdSwitch((android.widget.Switch) findViewById(R.id.swSkipAd)); } catch (Throwable ignored) {}
         super.onResume();
         android.content.SharedPreferences spc = getSharedPreferences("settings", MODE_PRIVATE);
         String sig = spc.getBoolean("hideHome", false) + "|" + spc.getBoolean("hideMedia", false) + "|" + spc.getBoolean("hidePan", false) + "|" + spc.getBoolean("hidePlayer", false);
