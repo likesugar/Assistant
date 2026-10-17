@@ -17,7 +17,8 @@ public class SkipAdService extends AccessibilityService {
         if (t != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
                 && t != AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) return;
         long now = SystemClock.elapsedRealtime();
-        if (now - lastTick < 300) return; // 节流
+        int throttle = (t == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) ? 100 : 400;
+        if (now - lastTick < throttle) return;
         lastTick = now;
         try {
             AccessibilityNodeInfo root = getRootInActiveWindow();
@@ -31,10 +32,24 @@ public class SkipAdService extends AccessibilityService {
         if (isSkipButton(n)) {
             AccessibilityNodeInfo c = n;
             for (int i = 0; i < 4 && c != null && !c.isClickable(); i++) c = c.getParent();
-            if (c != null && c.isClickable()) {
-                c.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                return;
+            boolean clicked = false;
+            if (c != null && c.isClickable()) clicked = c.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+            if (!clicked) { // performClick 失败(如123网盘): 改用坐标手势点按钮中心
+                android.graphics.Rect r = new android.graphics.Rect();
+                n.getBoundsInScreen(r);
+                if (!r.isEmpty() && r.width() > 0 && r.height() > 0) {
+                    try {
+                        android.graphics.Path path = new android.graphics.Path();
+                        path.moveTo(r.exactCenterX(), r.exactCenterY());
+                        android.accessibilityservice.GestureDescription.Builder gb =
+                                new android.accessibilityservice.GestureDescription.Builder();
+                        gb.addStroke(new android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 40));
+                        dispatchGesture(gb.build(), null, null);
+                        clicked = true;
+                    } catch (Throwable ignored) { }
+                }
             }
+            if (clicked) return;
         }
         for (int i = 0; i < n.getChildCount(); i++) {
             try { dfs(n.getChild(i), depth + 1); } catch (Throwable ignored) { }
@@ -50,8 +65,9 @@ public class SkipAdService extends AccessibilityService {
         if (x == null) return false;
         String s = x.toString().trim().toLowerCase();
         if (s.isEmpty()) return false;
-        return s.contains("跳过") || s.contains("跳過") || s.contains("关闭广告")
-                || s.equals("skip") || s.contains("skip ad");
+        if (s.contains("跳过") || s.contains("跳過") || s.contains("关闭广告")
+                || s.equals("skip") || s.contains("skip ad") || s.contains("点击跳过")) return true;
+        return s.matches("跳过\\s*\\d{1,2}秒?") || s.matches("skip\\s*\\d{1,2}"); // "跳过 3" 带倒计时
     }
 
     @Override public void onInterrupt() { }

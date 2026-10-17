@@ -60,6 +60,7 @@
             </intent-filter>
             <meta-data android:name="android.accessibilityservice" android:resource="@xml/skip_ad_service_config"/>
         </service>
+        <activity android:name=".SkipAdActivity" android:exported="false"/>
         <activity android:name=".MetroSettingsActivity" android:exported="false"/>
         <service android:name=".MetronomeService" android:exported="false" android:foregroundServiceType="mediaPlayback"/>
         <activity android:name=".PanViewerActivity" android:exported="false" android:configChanges="orientation|screenSize|keyboardHidden"/>

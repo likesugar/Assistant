@@ -787,14 +787,11 @@ public class HomeActivity extends Activity {
         // ===== 跳过广告: 卡片/开关点击 → 系统无障碍设置(开关状态由 onResume 刷新) =====
         View skipCard = findViewById(R.id.cardSkipAd);
         final android.widget.Switch swSkip = (android.widget.Switch) findViewById(R.id.swSkipAd);
-        View.OnClickListener openA11y = new View.OnClickListener() {
-            public void onClick(View v) {
-                try { startActivity(new android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)); }
-                catch (Throwable e) { Toast.makeText(HomeActivity.this, "无法打开无障碍设置", Toast.LENGTH_SHORT).show(); }
-            }
+        View.OnClickListener openPage = new View.OnClickListener() {
+            public void onClick(View v) { startActivity(new android.content.Intent(HomeActivity.this, SkipAdActivity.class)); }
         };
-        skipCard.setOnClickListener(openA11y);
-        swSkip.setOnClickListener(openA11y); // Switch 状态无法程序化改, 点击引导去系统设置
+        skipCard.setOnClickListener(openPage);
+        swSkip.setOnClickListener(openPage);
         refreshSkipAdSwitch(swSkip);
 
         findViewById(R.id.cardTapper).setOnClickListener(new View.OnClickListener() {
