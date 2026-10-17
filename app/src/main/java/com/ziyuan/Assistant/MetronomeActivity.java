@@ -78,6 +78,7 @@ public class MetronomeActivity extends Activity {
         accentFirst = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroAccent", false);
         tvBpm = (TextView) findViewById(R.id.tvBpm);
         btnPlay = (TextView) findViewById(R.id.btnPlay);
+        buildFartlekCard();
         findViewById(R.id.metroMenu).setOnClickListener(v -> startActivity(new Intent(this, MetroSettingsActivity.class)));
         buildBpmPresets();
         btnPlay.setOnClickListener(v -> togglePlay());
@@ -624,6 +625,86 @@ public class MetronomeActivity extends Activity {
             .show();
     }
 
+    // ===== 法特莱克横幅 (设置开关打开后显示在运动卡下方, 训练状态实时刷新) =====
+    private android.widget.LinearLayout fkCard;
+    private TextView fkState, fkTime, fkCycleTv;
+    private android.widget.ProgressBar fkProg;
+
+    private void buildFartlekCard() {
+        android.content.SharedPreferences p = getSharedPreferences("settings", MODE_PRIVATE);
+        fkCard = new android.widget.LinearLayout(this);
+        fkCard.setOrientation(android.widget.LinearLayout.VERTICAL);
+        fkCard.setBackgroundResource(R.drawable.bg_card_md3);
+        int pad = (int) (14 * getResources().getDisplayMetrics().density);
+        fkCard.setPadding(pad, pad, pad, pad);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = (int) (10 * getResources().getDisplayMetrics().density);
+        fkCard.setLayoutParams(lp);
+
+        fkState = new TextView(this);
+        fkState.setTextSize(13); fkState.setTextColor(0xFFF5A623); fkState.setTypeface(null, android.graphics.Typeface.BOLD);
+        fkCard.addView(fkState);
+
+        fkTime = new TextView(this);
+        fkTime.setTextSize(40); fkTime.setTypeface(null, android.graphics.Typeface.BOLD);
+        fkTime.setTextColor(0xFF1F2329);
+        fkCard.addView(fkTime);
+
+        fkCycleTv = new TextView(this);
+        fkCycleTv.setTextSize(13); fkCycleTv.setTextColor(0xFF8A94A6);
+        fkCard.addView(fkCycleTv);
+
+        fkProg = new android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        fkProg.setMax(100); fkProg.setProgress(0);
+        android.graphics.drawable.Drawable d = fkProg.getProgressDrawable();
+        if (d != null) android.graphics.drawable.DrawableCompat.setTint(d, 0xFFF5A623);
+        LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, (int) (8 * getResources().getDisplayMetrics().density));
+        plp.topMargin = (int) (8 * getResources().getDisplayMetrics().density);
+        fkProg.setLayoutParams(plp);
+        fkCard.addView(fkProg);
+
+        ViewGroup root = (ViewGroup) findViewById(R.id.sportCard).getParent();
+        root.addView(fkCard, root.indexOfChild(findViewById(R.id.sportCard)) + 1);
+        fkCard.setVisibility(p.getBoolean("fartlekOn", false) ? View.VISIBLE : View.GONE);
+        fkIdle();
+    }
+
+    private void fkIdle() {
+        android.content.SharedPreferences p = getSharedPreferences("settings", MODE_PRIVATE);
+        int r = p.getInt("fartlekRun", 60), w = p.getInt("fartlekWalk", 30), c = p.getInt("fartlekCycles", 5);
+        fkState.setText("⏱ 法特莱克训练 · 已开启");
+        fkTime.setText(String.format("%02d:%02d", (r + w) * c / 60, (r + w) * c % 60));
+        fkCycleTv.setText("跑步 " + r + "s · 步行 " + w + "s · " + c + " 轮 · 点开始打拍启动");
+        fkProg.setProgress(0);
+    }
+
+    private final android.content.BroadcastReceiver fkRx = new android.content.BroadcastReceiver() {
+        @Override public void onReceive(android.content.Context c, android.content.Intent i) {
+            String ph = i.getStringExtra("phase");
+            int remain = i.getIntExtra("remain", 0), cycle = i.getIntExtra("cycle", 1)
+                    , cycles = i.getIntExtra("cycles", 5), elapsed = i.getIntExtra("elapsed", 0), total = i.getIntExtra("total", 1);
+            if ("done".equals(ph)) {
+                fkState.setText("✅ 训练完成");
+                fkTime.setText("00:00");
+                fkCycleTv.setText(cycles + " 轮 · " + fmtTotal(total));
+                fkProg.setProgress(100);
+                btnPlay.setText("▶ 开始打拍");
+                return;
+            }
+            boolean run = "run".equals(ph);
+            fkState.setText(run ? "🏃 跑步阶段" : "🚶 步行阶段");
+            fkTime.setText(String.format("%02d:%02d", remain / 60, remain % 60));
+            fkCycleTv.setText("第 " + cycle + " / " + cycles + " 轮 · 总进度 " + fmtTotal(total - elapsed));
+            fkProg.setProgress((int) (elapsed * 100L / Math.max(1, total)));
+        }
+    };
+
+    private String fmtTotal(int s) {
+        return String.format("%02d:%02d", s / 60, s % 60);
+    }
+
     private void push(boolean start) {
         getSharedPreferences("settings", MODE_PRIVATE).edit()
             .putInt("metroBpm", bpm).putInt("metroNotes", notes).putString("metroAudio", audioKey).apply();
@@ -636,6 +717,8 @@ public class MetronomeActivity extends Activity {
         it.putExtra(MetronomeService.EXTRA_ACCENT, accentFirst);
         it.putExtra(MetronomeService.EXTRA_SUB, sub);
         it.putExtra(MetronomeService.EXTRA_TIMER, timerMin);
+        it.putExtra(MetronomeService.EXTRA_FARTLEK,
+                getSharedPreferences("settings", MODE_PRIVATE).getBoolean("fartlekOn", false));
         if (start) startForegroundService(it); else startService(it);
         btnPlay.setText(playing ? "■ 停止" : "▶ 开始打拍");
     }
@@ -682,6 +765,7 @@ public class MetronomeActivity extends Activity {
 
     @Override
     protected void onResume() {
+        try { registerReceiver(fkRx, new android.content.IntentFilter(MetronomeService.ACT_FK)); } catch (Throwable ignored) {}
         super.onResume();
         registerReceiver(settingsRx, new android.content.IntentFilter(MetronomeService.ACTION_UPDATE));
         registerReceiver(tianyiRx, new android.content.IntentFilter("tianyi.sub"));
@@ -707,6 +791,11 @@ public class MetronomeActivity extends Activity {
         refreshLifeCard();
         hideNavBar();
         applyKeepScreen();
+        if (fkCard != null) {
+            boolean on = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("fartlekOn", false);
+            fkCard.setVisibility(on ? View.VISIBLE : View.GONE);
+            if (on && !MetronomeService.isRunning()) fkIdle();
+        }
     }
 
     @Override
@@ -1387,7 +1476,7 @@ public class MetronomeActivity extends Activity {
 
     @Override
     protected void onPause() {
-        try { unregisterReceiver(settingsRx); } catch (Throwable ignored) {}
+        try { unregisterReceiver(fkRx); } catch (Throwable ignored) {}
         try { unregisterReceiver(tianyiRx); } catch (Throwable ignored) {}
         cancelRepeat();
         getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);

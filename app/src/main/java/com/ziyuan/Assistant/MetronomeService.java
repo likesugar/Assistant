@@ -42,6 +42,92 @@ public class MetronomeService extends Service {
     private StepCadenceManager stepMgr;
     private MetroAudioManager audioManager;
     private final android.os.Handler stopHandler = new android.os.Handler();
+    // ===== 法特莱克训练 (跑步/步行循环, 阶段切换邦戈鼓提示) =====
+    public final static String EXTRA_FARTLEK = "fartlek";
+    public final static String ACT_FK = "fartlek.tick";
+    private final android.os.Handler fkHandler = new android.os.Handler();
+    private boolean fkOn = false;
+    private String fkPhase = "run";
+    private int fkRun = 60, fkWalk = 30, fkCycles = 5, fkRemain = 0, fkCycle = 1, fkElapsed = 0, fkTotal = 0;
+    private android.media.SoundPool fkSp;
+    private int fkSidHard, fkSidSoft;
+
+    private void fkInitSound() {
+        if (fkSp != null) return;
+        try {
+            fkSp = new android.media.SoundPool.Builder()
+                    .setMaxStreams(2)
+                    .setAudioAttributes(new android.media.AudioAttributes.Builder()
+                            .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
+                    .build();
+            fkSidHard = fkSp.load(getAssets().openFd("audios/bongo_drum_hard.mp3"), 1);
+            fkSidSoft = fkSp.load(getAssets().openFd("audios/bongo_drum_soft.mp3"), 1);
+        } catch (Throwable t) { fkSp = null; }
+    }
+
+    private void fkCue(boolean hard) {
+        fkInitSound();
+        if (fkSp != null) { try { fkSp.play(hard ? fkSidHard : fkSidSoft, 1f, 1f, 1, 0, 1f); } catch (Throwable ignored) {} }
+    }
+
+    private void fkBroadcast(String phase) {
+        android.content.Intent i = new android.content.Intent(ACT_FK);
+        i.putExtra("phase", phase);
+        i.putExtra("remain", fkRemain);
+        i.putExtra("cycle", fkCycle);
+        i.putExtra("cycles", fkCycles);
+        i.putExtra("elapsed", fkElapsed);
+        i.putExtra("total", fkTotal);
+        i.setPackage(getPackageName());
+        sendBroadcast(i);
+    }
+
+    private void startFartlek() {
+        android.content.SharedPreferences p = getSharedPreferences("settings", MODE_PRIVATE);
+        fkRun = Math.max(5, p.getInt("fartlekRun", 60));
+        fkWalk = Math.max(5, p.getInt("fartlekWalk", 30));
+        fkCycles = Math.max(1, p.getInt("fartlekCycles", 5));
+        fkOn = true; fkPhase = "run"; fkCycle = 1; fkElapsed = 0;
+        fkTotal = (fkRun + fkWalk) * fkCycles; fkRemain = fkRun;
+        if (engine != null) engine.play();
+        fkCue(true);
+        fkBroadcast("run");
+        fkHandler.removeCallbacks(fkTick);
+        fkHandler.postDelayed(fkTick, 1000);
+    }
+
+    private void stopFartlek() {
+        fkOn = false;
+        fkHandler.removeCallbacks(fkTick);
+        fkBroadcast("done");
+    }
+
+    private final Runnable fkTick = new Runnable() {
+        @Override public void run() {
+            if (!fkOn) return;
+            fkElapsed++; fkRemain--;
+            if (fkRemain <= 0) {
+                if ("run".equals(fkPhase)) {
+                    fkPhase = "walk"; fkRemain = fkWalk;
+                    if (engine != null) engine.pause();
+                    fkCue(false);
+                } else {
+                    fkCycle++;
+                    if (fkCycle > fkCycles) {
+                        stopFartlek();
+                        if (engine != null) engine.pause();
+                        return;
+                    }
+                    fkPhase = "run"; fkRemain = fkRun;
+                    if (engine != null) engine.play();
+                    fkCue(true);
+                }
+            }
+            fkBroadcast(fkPhase);
+            fkHandler.postDelayed(this, 1000);
+        }
+    };
 
     @Override
     public void onCreate() {
@@ -93,6 +179,7 @@ tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyi
         int sub = intent.getIntExtra(EXTRA_SUB, 1);
         String text = bpm + " BPM · " + notes + "拍";
         if (ACTION_STOP.equals(action)) {
+            stopFartlek();
             final TianyiController t = tianyi;
             if (t != null && t.isRunning()) {
                 if (engine != null) engine.pause(); // 节拍先停
@@ -135,6 +222,15 @@ tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyi
         } else {
             startForeground(0x1, buildNote(text));
         }
+        boolean fk = intent.getBooleanExtra(EXTRA_FARTLEK, false);
+        if (fk && !fkOn) startFartlek();
+        else if (fk && fkOn) {
+            // 参数变更: 重读配置, 当前阶段按时继续
+            android.content.SharedPreferences p = getSharedPreferences("settings", MODE_PRIVATE);
+            fkRun = Math.max(5, p.getInt("fartlekRun", 60));
+            fkWalk = Math.max(5, p.getInt("fartlekWalk", 30));
+            fkCycles = Math.max(1, p.getInt("fartlekCycles", 5));
+        } else if (!fk && fkOn) stopFartlek();
         boolean introPending = false;
         if (tianyiOn) {
             if (tianyi == null || !tianyi.isRunning()) {
@@ -176,6 +272,8 @@ tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyi
 
     @Override
     public void onDestroy() {
+        stopFartlek();
+        if (fkSp != null) { fkSp.release(); fkSp = null; }
         if (tianyi != null) { tianyi.stop(); tianyi = null; }
         if (gpsMgr != null) { gpsMgr.stop(); gpsMgr = null; }
         if (stepMgr != null) { stepMgr.stop(); stepMgr = null; }

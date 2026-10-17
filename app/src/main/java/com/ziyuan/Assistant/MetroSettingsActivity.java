@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Switch;
@@ -106,13 +107,13 @@ public class MetroSettingsActivity extends Activity {
         // ===== 法特莱克 =====
         root.addView(sectionTitle("法特莱克"));
         LinearLayout cardF = card();
-        android.widget.Switch[] fkSw = new android.widget.Switch[1];
-        View fkRow = switchRow("法特莱克跑训练器", "跑步/步行循环训练 + 实时倒计时", false, (on) -> {
-            if (on) startActivity(new Intent(this, FartlekActivity.class));
-            if (fkSw[0] != null) fkSw[0].setChecked(false);
-        });
-        fkSw[0] = findSwitchInRow(fkRow);
-        cardF.addView(fkRow);
+        cardF.addView(switchRow("法特莱克跑训练器", "打拍页顶部显示训练横幅, 跑步打拍/步行静音, 阶段切换邦戈鼓提示", prefs.getBoolean("fartlekOn", false), (on) -> {
+            prefs.edit().putBoolean("fartlekOn", on).apply();
+            MetronomeActivity.notifySettingChanged(this);
+        }));
+        cardF.addView(choiceRow("训练参数",
+                "跑步 " + prefs.getInt("fartlekRun", 60) + "s · 步行 " + prefs.getInt("fartlekWalk", 30)
+                        + "s · " + prefs.getInt("fartlekCycles", 5) + " 轮", v -> showFartlekDialog()));
         root.addView(cardF);
 
         // ===== 我的 =====
@@ -202,6 +203,39 @@ public class MetroSettingsActivity extends Activity {
         tv.setTag("sub");
         tv.setPadding(dp(4), dp(18), dp(4), dp(8));
         return tv;
+    }
+
+    private void showFartlekDialog() {
+        android.content.SharedPreferences p = getSharedPreferences("settings", MODE_PRIVATE);
+        final EditText[] ets = new EditText[3];
+        String[] labs = {"跑步秒数", "步行秒数", "循环次数"};
+        int[] vals = {p.getInt("fartlekRun", 60), p.getInt("fartlekWalk", 30), p.getInt("fartlekCycles", 5)};
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        int pad = (int) (20 * getResources().getDisplayMetrics().density);
+        box.setPadding(pad, pad, pad, 0);
+        for (int i = 0; i < 3; i++) {
+            TextView l = new TextView(this); l.setText(labs[i]); l.setTextSize(12);
+            box.addView(l);
+            EditText e = new EditText(this);
+            e.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+            e.setText(String.valueOf(vals[i]));
+            box.addView(e); ets[i] = e;
+        }
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("训练参数")
+                .setView(box)
+                .setPositiveButton("保存", (d, w) -> {
+                    try {
+                        p.edit()
+                                .putInt("fartlekRun", Math.max(5, Integer.parseInt(ets[0].getText().toString())))
+                                .putInt("fartlekWalk", Math.max(5, Integer.parseInt(ets[1].getText().toString())))
+                                .putInt("fartlekCycles", Math.max(1, Integer.parseInt(ets[2].getText().toString())))
+                                .apply();
+                    } catch (Throwable ignored) {}
+                    recreate();
+                })
+                .setNegativeButton("取消", null).show();
     }
 
     private android.widget.Switch findSwitchInRow(View row) {
