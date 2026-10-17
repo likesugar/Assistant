@@ -224,6 +224,7 @@ public class SkipAdActivity extends Activity {
             JSONArray arr = new JSONArray(getSharedPreferences("settings", MODE_PRIVATE).getString("skipAdRules", "[]"));
             boolean dark = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", false);
             for (int i = 0; i < arr.length(); i++) {
+                final int idx = i;
                 final JSONObject o = arr.getJSONObject(i);
                 LinearLayout row = new LinearLayout(this);
                 row.setOrientation(LinearLayout.HORIZONTAL);
@@ -238,7 +239,6 @@ public class SkipAdActivity extends Activity {
                 del.setPadding((int) (12 * getResources().getDisplayMetrics().density), 0, 0, 0);
                 del.setOnClickListener(v -> {
                     try {
-                        final int idx = i;
                         JSONArray na = new JSONArray();
                         for (int j = 0; j < arr.length(); j++) if (j != idx) na.put(arr.getJSONObject(j));
                         getSharedPreferences("settings", MODE_PRIVATE).edit()
