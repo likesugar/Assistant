@@ -784,15 +784,10 @@ public class HomeActivity extends Activity {
                 startActivity(lv);
             }
         });
-        // ===== 跳过广告: 卡片/开关 → 进入跳过广告管理页(页内确认开启) =====
-        View skipCard = findViewById(R.id.cardSkipAd);
-        final android.widget.Switch swSkip = (android.widget.Switch) findViewById(R.id.swSkipAd);
-        View.OnClickListener openPage = new View.OnClickListener() {
+        // ===== 跳过广告: 点卡片进入管理页(页内确认开启) =====
+        findViewById(R.id.cardSkipAd).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new android.content.Intent(HomeActivity.this, SkipAdActivity.class)); }
-        };
-        skipCard.setOnClickListener(openPage);
-        swSkip.setOnClickListener(openPage);
-        refreshSkipAdSwitch(swSkip);
+        });
 
         findViewById(R.id.cardTapper).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, TapperActivity.class)); }
@@ -845,21 +840,8 @@ public class HomeActivity extends Activity {
         return false;
     }
 
-    private void refreshSkipAdSwitch(android.widget.Switch sw) {
-        boolean on = skipAdEnabled(this);
-        sw.setOnCheckedChangeListener(null);
-        sw.setChecked(on);
-        sw.setOnCheckedChangeListener((b, v) -> {
-            // 开关状态只能系统设置改, 这里只做入口
-            try { startActivity(new android.content.Intent(this, SkipAdActivity.class)); }
-            catch (Throwable ignored) { }
-        });
-        sw.invalidate();
-    }
-
     @Override
     protected void onResume() {
-        try { refreshSkipAdSwitch((android.widget.Switch) findViewById(R.id.swSkipAd)); } catch (Throwable ignored) {}
         super.onResume();
         android.content.SharedPreferences spc = getSharedPreferences("settings", MODE_PRIVATE);
         String sig = spc.getBoolean("hideHome", false) + "|" + spc.getBoolean("hideMedia", false) + "|" + spc.getBoolean("hidePan", false) + "|" + spc.getBoolean("hidePlayer", false);
