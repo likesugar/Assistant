@@ -175,10 +175,19 @@ public class AdSkipServiceImpl {
                     break;
                 case AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED:
                     ensureCfg();
-                    if (!installPackages.contains(actionPackageName)) {
+                    if (!lttPopup.isEmpty() || !simplePopups.isEmpty()) {
+                        handlePopups(service.getRootInActiveWindow());
+                    }
+                    // 名单包含 或 名单为空(包可见性兜底) 都扫
+                    boolean inList2 = installPackages != null && installPackages.contains(actionPackageName);
+                    boolean emptyList2 = installPackages == null || installPackages.isEmpty();
+                    if (!(inList2 || emptyList2)) {
                         break;
                     }
-                    executeSkipTask(event.getSource());
+                    if (!skipProcessRunning) startSkipAdProcess(); // 内容变化也拉起扫描窗口
+                    AccessibilityNodeInfo src = event.getSource();
+                    if (src != null) executeSkipTask(src);
+                    else executeSkipTask(service.getRootInActiveWindow());
                     break;
             }
         } catch (Throwable e) {
