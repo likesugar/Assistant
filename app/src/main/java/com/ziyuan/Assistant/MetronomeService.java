@@ -70,17 +70,27 @@ public class MetronomeService extends Service {
 
     private android.media.MediaPlayer fkVoice;
 
-    /** 阶段语音播报: 资产 tianyi/xxx.wav (与洛天依语音同机制) */
+    /** 阶段语音播报: 资产 tianyi/xxx.wav; 播报期间节拍暂停, 播完自动恢复(避免与节拍重叠) */
     private void fkVoicePlay(String id) {
         try {
             if (fkVoice != null) { try { fkVoice.stop(); fkVoice.release(); } catch (Throwable ignored) {} fkVoice = null; }
+            if (engine != null) engine.pause(); // 播报期间节拍静默
             android.content.res.AssetFileDescriptor fd = getAssets().openFd("tianyi/" + id + ".wav");
             fkVoice = new android.media.MediaPlayer();
             fkVoice.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
             fd.close();
             fkVoice.prepare();
+            final long durMs = fkVoice.getDuration() + 300;
             fkVoice.start();
-        } catch (Throwable t) { }
+            // 播完(或兜底超时)后恢复节拍
+            Runnable resume = () -> {
+                if (fkOn && fkVoice != null && "run".equals(fkPhase)) { if (engine != null) engine.play(); }
+            };
+            fkVoice.setOnCompletionListener(mp -> { if (fkOn) resume.run(); });
+            fkHandler.postDelayed(resume, Math.max(1200, durMs));
+        } catch (Throwable t) {
+            if (engine != null && fkOn) engine.play(); // 语音失败也要恢复节拍
+        }
     }
 
     private static final String[][] FK_CHEERS = {
@@ -131,9 +141,8 @@ public class MetronomeService extends Service {
         fkCycles = Math.max(1, p.getInt("fartlekCycles", 5));
         fkOn = true; fkPhase = "run"; fkCycle = 1; fkElapsed = 0;
         fkTotal = (fkRun + fkWalk) * fkCycles; fkRemain = fkRun;
-        if (engine != null) engine.play();
         fkCue(true);
-        fkVoicePlay("paobu"); // 跑步开始
+        fkVoicePlay("paobu"); // 跑步开始(播完自动起节拍)
         fkBroadcast("run");
         fkHandler.removeCallbacks(fkTick);
         fkHandler.postDelayed(fkTick, 1000);
@@ -167,9 +176,8 @@ public class MetronomeService extends Service {
                         return;
                     }
                     fkPhase = "run"; fkRemain = fkRun;
-                    if (engine != null) engine.play();
                     fkCue(true);
-                    fkVoicePlay("paobu"); // 跑步开始
+                    fkVoicePlay("paobu"); // 跑步开始(播完自动起节拍)
                     fkHandler.removeCallbacks(fkCheer);
                 }
             }
