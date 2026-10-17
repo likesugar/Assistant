@@ -827,7 +827,6 @@ public class HomeActivity extends Activity {
 
     }
 
-    @Override
     private void refreshSkipAdSwitch(android.widget.Switch sw) {
         try {
             String enabled = android.provider.Settings.Secure.getString(
