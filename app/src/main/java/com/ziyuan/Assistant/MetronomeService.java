@@ -155,6 +155,8 @@ public class MetronomeService extends Service {
         fkOn = false;
         fkHandler.removeCallbacks(fkTick);
         fkHandler.removeCallbacks(fkCheer);
+        // 正在播的语音(含随机鼓励)立即掐掉, 防止停止后还在播
+        if (fkVoice != null) { try { fkVoice.stop(); fkVoice.release(); } catch (Throwable ignored) {} fkVoice = null; }
         fkBroadcast("done");
     }
 
