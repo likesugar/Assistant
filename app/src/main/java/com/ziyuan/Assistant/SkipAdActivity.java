@@ -15,6 +15,7 @@ import android.widget.TextView;
 /** 跳过广告管理页 (1:1 移植 Giftedcat/AdSkipHelper MainActivity 交互) */
 public class SkipAdActivity extends Activity {
     private TextView tvState;
+    private LinearLayout rulesBoxP;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,105 +62,105 @@ public class SkipAdActivity extends Activity {
         stateRow.addView(btnOpen);
         root.addView(stateRow);
 
-        // ===== 应用名单大框 (多选, 勾选的才自动跳过; 不选=全部) =====
+        // ===== 应用名单 (手动添加包名, 添加了的才自动跳过; 不添加=全部) =====
         TextView pickLab = new TextView(this);
-        pickLab.setText("☐ 请勾选跳过广告的应用 (多选)");
+        pickLab.setText("☐ 跳过广告的应用名单 (自行添加)");
         pickLab.setTextSize(14); pickLab.setTextColor(fg); pickLab.setTypeface(null, android.graphics.Typeface.BOLD);
         pickLab.setPadding(0, (int) (20 * getResources().getDisplayMetrics().density), 0, (int) (8 * getResources().getDisplayMetrics().density));
         root.addView(pickLab);
 
-        java.util.Set<String> sel = new java.util.HashSet<>();
-        try {
-            org.json.JSONArray a = new org.json.JSONArray(
-                    getSharedPreferences("settings", MODE_PRIVATE).getString("skipAdPkgs", "[]"));
-            for (int i = 0; i < a.length(); i++) sel.add(a.getString(i));
-        } catch (Throwable ignored) { }
-
-        LinearLayout grid = new LinearLayout(this);
-        grid.setOrientation(LinearLayout.VERTICAL);
-        java.util.List<android.content.pm.ResolveInfo> apps = new java.util.ArrayList<>();
-        try {
-            android.content.pm.PackageManager pm = getPackageManager();
-            Intent qi = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER);
-            apps = pm.queryIntentActivities(qi, android.content.pm.PackageManager.MATCH_ALL);
-            java.util.Set<String> seen = new java.util.HashSet<>();
-            java.util.Iterator<android.content.pm.ResolveInfo> it = apps.iterator();
-            while (it.hasNext()) {
-                android.content.pm.ResolveInfo r = it.next();
-                if (r.activityInfo.packageName.equals(getPackageName()) || !seen.add(r.activityInfo.packageName)) it.remove();
-            }
-        } catch (Throwable ignored) { }
-
-        LinearLayout rowG = null;
-        int col = 0;
-        int gp = (int) (8 * getResources().getDisplayMetrics().density);
-        for (final android.content.pm.ResolveInfo r : apps) {
-            if (col % 2 == 0) {
-                rowG = new LinearLayout(this);
-                rowG.setOrientation(LinearLayout.HORIZONTAL);
-                LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(-1, -2);
-                rlp.bottomMargin = gp;
-                grid.addView(rowG, rlp);
-            }
-            final String pkg = r.activityInfo.packageName;
-            final boolean checked = sel.contains(pkg);
-            LinearLayout cell = new LinearLayout(this);
-            cell.setOrientation(LinearLayout.HORIZONTAL);
-            cell.setGravity(Gravity.CENTER_VERTICAL);
-            cell.setBackgroundResource(dark ? R.drawable.bg_card_md3_dark : R.drawable.bg_card_md3);
-            cell.setPadding(gp, gp, gp, gp);
-            android.widget.ImageView ic = new android.widget.ImageView(this);
-            try { ic.setImageDrawable(r.loadIcon(getPackageManager())); } catch (Throwable ignored) { }
-            ic.setLayoutParams(new LinearLayout.LayoutParams((int) (30 * getResources().getDisplayMetrics().density),
-                    (int) (30 * getResources().getDisplayMetrics().density)));
-            cell.addView(ic);
-            TextView name = new TextView(this);
-            name.setText(String.valueOf(r.loadLabel(getPackageManager())));
-            name.setTextSize(12); name.setTextColor(fg);
-            name.setSingleLine(true);
-            name.setPadding(gp, 0, 0, 0);
-            cell.addView(name, new LinearLayout.LayoutParams(0, -2, 1f));
-            android.widget.CheckBox cb = new android.widget.CheckBox(this);
-            cb.setChecked(checked);
-            cb.setOnCheckedChangeListener((b, v) -> {
-                java.util.Set<String> cur = new java.util.HashSet<>();
-                try {
-                    org.json.JSONArray a = new org.json.JSONArray(
-                            getSharedPreferences("settings", MODE_PRIVATE).getString("skipAdPkgs", "[]"));
-                    for (int i = 0; i < a.length(); i++) cur.add(a.getString(i));
-                } catch (Throwable ignored) { }
-                if (v) cur.add(pkg); else cur.remove(pkg);
-                getSharedPreferences("settings", MODE_PRIVATE).edit()
-                        .putString("skipAdPkgs", new org.json.JSONArray(new java.util.ArrayList<>(cur)).toString()).apply();
-            });
-            cell.addView(cb);
-            cell.setOnClickListener(v -> cb.toggle());
-            LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(0, -2, 1f);
-            clp.rightMargin = col % 2 == 0 ? gp : 0;
-            cell.setLayoutParams(clp);
-            rowG.addView(cell);
-            col++;
-        }
-        if (apps.isEmpty()) {
-            TextView e = new TextView(this);
-            e.setText("未读取到应用列表");
-            e.setTextSize(12); e.setTextColor(sub);
-            grid.addView(e);
-        }
-        root.addView(grid);
-
-        TextView tip = new TextView(this);
-        tip.setText("开启后，打开含开屏广告的应用时会自动点击「跳过」按钮。");
-        tip.setTextSize(12); tip.setTextColor(sub);
-        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(-1, -2);
-        tlp.topMargin = (int) (16 * getResources().getDisplayMetrics().density);
-        tip.setLayoutParams(tlp);
-        root.addView(tip);
+        LinearLayout cardP = new LinearLayout(this);
+        cardP.setOrientation(LinearLayout.VERTICAL);
+        cardP.setBackgroundResource(dark ? R.drawable.bg_card_md3_dark : R.drawable.bg_card_md3);
+        int cp = (int) (14 * getResources().getDisplayMetrics().density);
+        cardP.setPadding(cp, cp, cp, cp);
+        rulesBoxP = new LinearLayout(this);
+        rulesBoxP.setOrientation(LinearLayout.VERTICAL);
+        cardP.addView(rulesBoxP);
+        TextView btnAddPkg = new TextView(this);
+        btnAddPkg.setText("＋ 添加应用 (输入包名)");
+        btnAddPkg.setTextSize(14); btnAddPkg.setTextColor(0xFF2F7CF6); btnAddPkg.setTypeface(null, android.graphics.Typeface.BOLD);
+        btnAddPkg.setPadding(0, (int) (10 * getResources().getDisplayMetrics().density), 0, 0);
+        btnAddPkg.setOnClickListener(v -> showAddPkgDialog());
+        cardP.addView(btnAddPkg);
+        root.addView(cardP);
 
         android.widget.ScrollView sc = new android.widget.ScrollView(this);
         sc.setFillViewport(true);
         sc.addView(root);
+        refreshPkgList();
         setContentView(sc);
+    }
+
+    private void showAddPkgDialog() {
+        boolean dark = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", false);
+        final EditText et = new EditText(this);
+        et.setHint("应用包名 (如 com.mfcloudcalculate.networkdisk)");
+        if (dark) { et.setTextColor(0xFFF2F2F2); et.setHintTextColor(0xFF777777); et.setBackgroundResource(R.drawable.bg_input_dark); }
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        int p = (int) (20 * getResources().getDisplayMetrics().density);
+        box.setPadding(p, p, p, 0);
+        box.addView(et);
+        new AlertDialog.Builder(this)
+                .setTitle("添加应用")
+                .setView(box)
+                .setPositiveButton("保存", (d, w) -> {
+                    String pkg = et.getText().toString().trim();
+                    if (pkg.isEmpty()) return;
+                    try {
+                        org.json.JSONArray a = new org.json.JSONArray(
+                                getSharedPreferences("settings", MODE_PRIVATE).getString("skipAdPkgs", "[]"));
+                        for (int i = 0; i < a.length(); i++) if (pkg.equals(a.getString(i))) return;
+                        a.put(pkg);
+                        getSharedPreferences("settings", MODE_PRIVATE)
+                                .edit().putString("skipAdPkgs", a.toString()).apply();
+                        refreshPkgList();
+                    } catch (Throwable ignored) { }
+                })
+                .setNegativeButton("取消", null).show();
+    }
+
+    private void refreshPkgList() {
+        rulesBoxP.removeAllViews();
+        boolean dark = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", false);
+        try {
+            org.json.JSONArray a = new org.json.JSONArray(
+                    getSharedPreferences("settings", MODE_PRIVATE).getString("skipAdPkgs", "[]"));
+            for (int i = 0; i < a.length(); i++) {
+                final int idx = i;
+                final String pkg = a.getString(i);
+                LinearLayout row = new LinearLayout(this);
+                row.setOrientation(LinearLayout.HORIZONTAL);
+                row.setGravity(Gravity.CENTER_VERTICAL);
+                row.setPadding(0, (int) (8 * getResources().getDisplayMetrics().density), 0, 0);
+                TextView t = new TextView(this);
+                t.setText(pkg); t.setTextSize(13); t.setTextColor(dark ? 0xFFE8ECF4 : 0xFF1F2329);
+                t.setSingleLine(true);
+                row.addView(t, new LinearLayout.LayoutParams(0, -2, 1f));
+                TextView del = new TextView(this);
+                del.setText("删除"); del.setTextSize(13); del.setTextColor(0xFFFF3B30); del.setTypeface(null, android.graphics.Typeface.BOLD);
+                del.setPadding((int) (12 * getResources().getDisplayMetrics().density), 0, 0, 0);
+                del.setOnClickListener(v -> {
+                    try {
+                        org.json.JSONArray na = new org.json.JSONArray();
+                        for (int j = 0; j < a.length(); j++) if (j != idx) na.put(a.getString(j));
+                        getSharedPreferences("settings", MODE_PRIVATE)
+                                .edit().putString("skipAdPkgs", na.toString()).apply();
+                        refreshPkgList();
+                    } catch (Throwable ignored) { }
+                });
+                row.addView(del);
+                rulesBoxP.addView(row);
+            }
+            if (a.length() == 0) {
+                TextView e = new TextView(this);
+                e.setText("未添加。不添加 = 所有应用都自动跳过");
+                e.setTextSize(12); e.setTextColor(0xFF8A94A6);
+                e.setPadding(0, (int) (8 * getResources().getDisplayMetrics().density), 0, 0);
+                rulesBoxP.addView(e);
+            }
+        } catch (Throwable ignored) { }
     }
 
     /** 打开无障碍权限提示 (AdSkipHelper 同款) */
