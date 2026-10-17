@@ -104,13 +104,14 @@ public class MetroSettingsActivity extends Activity {
 
         root.addView(card1);
 
-        // ===== 法特莱克 =====
-        root.addView(sectionTitle("法特莱克"));
+        // ===== 训练法 =====
+        root.addView(sectionTitle("训练法"));
         LinearLayout cardF = card();
         cardF.addView(switchRow("法特莱克跑训练器", "打拍页顶部显示训练横幅, 跑步打拍/步行静音, 阶段切换邦戈鼓提示", prefs.getBoolean("fartlekOn", false), (on) -> {
             prefs.edit().putBoolean("fartlekOn", on).apply();
             MetronomeActivity.notifySettingChanged(this);
         }));
+        cardF.addView(choiceRow("走路 (FITT 原则)", "按表格两档: 普通 / 进阶", v -> showFittDialog()));
         cardF.addView(choiceRow("训练参数",
                 "跑步 " + prefs.getInt("fartlekRun", 60) + "s · 步行 " + prefs.getInt("fartlekWalk", 30)
                         + "s · " + prefs.getInt("fartlekCycles", 5) + " 轮", v -> showFartlekDialog()));
@@ -203,6 +204,61 @@ public class MetroSettingsActivity extends Activity {
         tv.setTag("sub");
         tv.setPadding(dp(4), dp(18), dp(4), dp(8));
         return tv;
+    }
+
+    /** 走路 FITT 原则预设 (普通/进阶, 按表格) */
+    private void showFittDialog() {
+        boolean dark = prefs.getBoolean("dark", false);
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        int p = (int) (16 * getResources().getDisplayMetrics().density);
+        box.setPadding(p, (int) (8 * getResources().getDisplayMetrics().density), p, 0);
+
+        String[][] rows = {
+            {"基础", "一周5~7次 · 轻松微微出汗 (3-5公里/小时)\n快走 · 每次20~30分钟 · 总计150-200分钟", "115", "25"},
+            {"进阶", "一周5~7次 · 中等~高强度 (5-7公里/小时)\n快走/负重走/上坡走 · 每次20~30分钟", "140", "25"},
+        };
+        int[][] colors = { {0xFF1F8838, dark ? 0xFF1F2B22 : 0xFFEAF6EE}, {0xFFB3382C, dark ? 0xFF2B1F1F : 0xFFFBECEA} };
+        for (int i = 0; i < 2; i++) {
+            final String[] r = rows[i];
+            LinearLayout card = new LinearLayout(this);
+            card.setOrientation(LinearLayout.VERTICAL);
+            android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+            bg.setColor(colors[i][1]);
+            bg.setCornerRadius((int) (12 * getResources().getDisplayMetrics().density));
+            bg.setStroke(2, colors[i][0]);
+            card.setBackground(bg);
+            card.setPadding(p, p, p, p);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+            lp.topMargin = (int) (10 * getResources().getDisplayMetrics().density);
+            card.setLayoutParams(lp);
+            TextView t = new TextView(this);
+            t.setText(r[0] + "档 · 方式：" + (i == 0 ? "快走" : "快走/负重走/上坡走"));
+            t.setTextSize(15); t.setTypeface(null, android.graphics.Typeface.BOLD); t.setTextColor(colors[i][0]);
+            card.addView(t);
+            TextView d = new TextView(this);
+            d.setText(r[1]);
+            d.setTextSize(13); d.setTextColor(dark ? 0xFFC8CDD4 : 0xFF444B55);
+            d.setPadding(0, (int) (6 * getResources().getDisplayMetrics().density), 0, (int) (10 * getResources().getDisplayMetrics().density));
+            card.addView(d);
+            TextView go = new TextView(this);
+            go.setText("✓ 应用这一档 (步频节拍 " + r[2] + " BPM · " + r[3] + " 分钟自动停止)");
+            go.setTextSize(13); go.setTypeface(null, android.graphics.Typeface.BOLD); go.setTextColor(0xFF2F7CF6);
+            go.setOnClickListener(v -> {
+                prefs.edit()
+                        .putInt("metroBpm", Integer.parseInt(r[2]))
+                        .putInt("metroTimer", Integer.parseInt(r[3]))
+                        .apply();
+                MetronomeActivity.notifySettingChanged(this);
+                recreate();
+            });
+            card.addView(go);
+            box.addView(card);
+        }
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("走路 · FITT 原则 (频率/强度/方式/时间)")
+                .setView(box)
+                .setNegativeButton("关闭", null).show();
     }
 
     private void showFartlekDialog() {
