@@ -19,14 +19,7 @@ public class SkipAdActivity extends Activity {
     private Switch sw;
     private TextView status, tvOn;
 
-    private boolean enabled() {
-        try {
-            String e = Settings.Secure.getString(getContentResolver(),
-                    Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
-            return e != null && (e.contains(getPackageName() + "/.SkipAdService")
-                    || e.contains("com.ziyuan.Assistant.SkipAdService"));
-        } catch (Throwable t) { return false; }
-    }
+    private boolean enabled() { return HomeActivity.skipAdEnabled(this); }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,6 +114,12 @@ public class SkipAdActivity extends Activity {
 
     @Override
     protected void onResume() { super.onResume(); refresh(); }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) refresh();
+    }
 
     private static class BuildCheck { static boolean is29() { return android.os.Build.VERSION.SDK_INT >= 29; } }
 }

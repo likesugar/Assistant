@@ -784,7 +784,7 @@ public class HomeActivity extends Activity {
                 startActivity(lv);
             }
         });
-        // ===== 跳过广告: 卡片/开关点击 → 系统无障碍设置(开关状态由 onResume 刷新) =====
+        // ===== 跳过广告: 卡片/开关 → 进入跳过广告管理页(页内确认开启) =====
         View skipCard = findViewById(R.id.cardSkipAd);
         final android.widget.Switch swSkip = (android.widget.Switch) findViewById(R.id.swSkipAd);
         View.OnClickListener openPage = new View.OnClickListener() {
@@ -824,21 +824,40 @@ public class HomeActivity extends Activity {
 
     }
 
-    private void refreshSkipAdSwitch(android.widget.Switch sw) {
+    /** 跳过广告服务是否已启用: AccessibilityManager 权威接口 + Settings 字符串双通道 */
+    static boolean skipAdEnabled(android.content.Context c) {
         try {
-            String enabled = android.provider.Settings.Secure.getString(
-                    getContentResolver(), android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
-            boolean on = enabled != null && (enabled.contains(getPackageName() + "/.SkipAdService")
-                    || enabled.contains("com.ziyuan.Assistant.SkipAdService"));
-            sw.setOnCheckedChangeListener(null);
-            sw.setChecked(on);
-            sw.setOnCheckedChangeListener((b, v) -> {
-                try { startActivity(new android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)); }
-                catch (Throwable ignored) { }
-            });
+            android.view.accessibility.AccessibilityManager am = (android.view.accessibility.AccessibilityManager)
+                    c.getSystemService(ACCESSIBILITY_SERVICE);
+            if (am != null) {
+                for (android.accessibilityservice.AccessibilityServiceInfo i
+                        : am.getEnabledAccessibilityServiceList(android.accessibilityservice.AccessibilityServiceInfo.FEEDBACK_GENERIC)) {
+                    String id = i.getId();
+                    if (id != null && id.endsWith(".SkipAdService") && id.contains(c.getPackageName())) return true;
+                }
+            }
         } catch (Throwable ignored) { }
+        try {
+            String e = android.provider.Settings.Secure.getString(
+                    c.getContentResolver(), android.provider.Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+            if (e != null && e.contains(".SkipAdService")) return true;
+        } catch (Throwable ignored) { }
+        return false;
     }
 
+    private void refreshSkipAdSwitch(android.widget.Switch sw) {
+        boolean on = skipAdEnabled(this);
+        sw.setOnCheckedChangeListener(null);
+        sw.setChecked(on);
+        sw.setOnCheckedChangeListener((b, v) -> {
+            // 开关状态只能系统设置改, 这里只做入口
+            try { startActivity(new android.content.Intent(this, SkipAdActivity.class)); }
+            catch (Throwable ignored) { }
+        });
+        sw.invalidate();
+    }
+
+    @Override
     protected void onResume() {
         try { refreshSkipAdSwitch((android.widget.Switch) findViewById(R.id.swSkipAd)); } catch (Throwable ignored) {}
         super.onResume();
