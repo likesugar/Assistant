@@ -27,6 +27,7 @@ public class MetroAudioManager {
         putAudio(MetroConstant.AudioRisset, "audios/Risset1.wav", "audios/Risset2.wav");
         putAudio(MetroConstant.AudioSine, "audios/Sine1.wav", "audios/Sine2.wav");
         putAudio(MetroConstant.AudioSquare, "audios/Square1.wav", "audios/Square2.wav");
+        putAudio(MetroConstant.AudioBongo, "audios/Bongo1.wav", "audios/Bongo2.wav");
     }
 
     private byte[] loadData(String path) throws IOException {

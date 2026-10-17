@@ -1,6 +1,7 @@
 package com.ziyuan.Assistant;
 
 import android.app.Activity;
+import android.content.Intent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -30,6 +31,7 @@ public class MetroSettingsActivity extends Activity {
         if (MetroConstant.AudioRisset.equals(k)) return "鼓点";
         if (MetroConstant.AudioSine.equals(k)) return "正弦";
         if (MetroConstant.AudioSquare.equals(k)) return "方波";
+        if (MetroConstant.AudioBongo.equals(k)) return "邦戈鼓(强/弱)";
         return k;
     }
 
@@ -93,8 +95,25 @@ public class MetroSettingsActivity extends Activity {
         audioKey = prefs.getString("metroAudio", MetroConstant.AudioDefault);
         mgr = new MetroAudioManager(this);
         card1.addView(choiceRow("音色", displayName(audioKey), v -> showAudioDialog()));
+        card1.addView(switchRow("音量增强", "所有拍子加大音量", prefs.getBoolean("metroBooster", false), (on) -> {
+            prefs.edit().putBoolean("metroBooster", on).apply();
+            MetronomeActivity.notifySettingChanged(this);
+        }));
+        card1.addView(choiceRow("定时器", timerMin > 0 ? timerMin + " 分钟后自动停止" : "不限制", v -> showTimerDialog()));
 
         root.addView(card1);
+
+        // ===== 法特莱克 =====
+        root.addView(sectionTitle("法特莱克"));
+        LinearLayout cardF = card();
+        android.widget.Switch[] fkSw = new android.widget.Switch[1];
+        View fkRow = switchRow("法特莱克跑训练器", "跑步/步行循环训练 + 实时倒计时", false, (on) -> {
+            if (on) startActivity(new Intent(this, FartlekActivity.class));
+            if (fkSw[0] != null) fkSw[0].setChecked(false);
+        });
+        fkSw[0] = findSwitchInRow(fkRow);
+        cardF.addView(fkRow);
+        root.addView(cardF);
 
         // ===== 我的 =====
         root.addView(sectionTitle("我的"));
@@ -107,11 +126,6 @@ public class MetroSettingsActivity extends Activity {
         card2.addView(switchRow("天气", "打拍页显示百度天气生活指数 (开启才联网)", prefs.getBoolean("metroLifeService", false), (on) -> {
             prefs.edit().putBoolean("metroLifeService", on).apply();
         }));
-        card2.addView(switchRow("音量增强", "所有拍子加大音量", prefs.getBoolean("metroBooster", false), (on) -> {
-            prefs.edit().putBoolean("metroBooster", on).apply();
-            MetronomeActivity.notifySettingChanged(this);
-        }));
-        card2.addView(choiceRow("定时器", timerMin > 0 ? timerMin + " 分钟后自动停止" : "不限制", v -> showTimerDialog()));
         root.addView(card2);
 
         // ===== 洛天依 =====
@@ -188,6 +202,21 @@ public class MetroSettingsActivity extends Activity {
         tv.setTag("sub");
         tv.setPadding(dp(4), dp(18), dp(4), dp(8));
         return tv;
+    }
+
+    private android.widget.Switch findSwitchInRow(View row) {
+        if (row instanceof android.view.ViewGroup) {
+            android.view.ViewGroup g = (android.view.ViewGroup) row;
+            for (int i = 0; i < g.getChildCount(); i++) {
+                View c = g.getChildAt(i);
+                if (c instanceof android.widget.Switch) return (android.widget.Switch) c;
+                if (c instanceof android.view.ViewGroup) {
+                    android.widget.Switch r = findSwitchInRow(c);
+                    if (r != null) return r;
+                }
+            }
+        }
+        return null;
     }
 
     private LinearLayout card() {

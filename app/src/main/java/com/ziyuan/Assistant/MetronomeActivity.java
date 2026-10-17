@@ -255,6 +255,7 @@ public class MetronomeActivity extends Activity {
         if (MetroConstant.AudioRisset.equals(k)) return "鼓点";
         if (MetroConstant.AudioSine.equals(k)) return "正弦";
         if (MetroConstant.AudioSquare.equals(k)) return "方波";
+        if (MetroConstant.AudioBongo.equals(k)) return "邦戈鼓(强/弱)";
         return k;
     }
 

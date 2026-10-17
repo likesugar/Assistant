@@ -11,4 +11,5 @@ public class MetroConstant {
     public final static String AudioRisset = "Risset";
     public final static String AudioSine = "Sine";
     public final static String AudioSquare = "Square";
+    public final static String AudioBongo = "Bongo";
 }
