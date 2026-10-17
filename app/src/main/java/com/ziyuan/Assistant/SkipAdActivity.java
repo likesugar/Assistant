@@ -262,7 +262,22 @@ public class SkipAdActivity extends Activity {
         }
         try {
             String raw = Settings.Secure.getString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
-            tvSvc.setText("检测到无障碍服务: " + (raw == null || raw.isEmpty() ? "无" : raw));
+            String base = "检测到无障碍服务: " + (raw == null || raw.isEmpty() ? "无" : raw);
+            byte[] crash = new byte[0];
+            try {
+                java.io.File f = new java.io.File(getFilesDir(), "skipad_crash.txt");
+                if (f.exists()) { java.io.FileInputStream in = new java.io.FileInputStream(f); crash = new byte[(int) f.length()]; in.read(crash); in.close(); }
+            } catch (Throwable ignored) { }
+            if (crash.length > 0) {
+                String cs = new String(crash, "UTF-8");
+                int nl = cs.indexOf('\n');
+                String head = nl > 0 ? cs.substring(0, nl) : "";
+                String body = nl > 0 ? cs.substring(nl + 1) : cs;
+                if (body.length() > 500) body = body.substring(0, 500);
+                tvSvc.setText(base + "\n\n⚠ 服务崩溃记录 " + head + ":\n" + body);
+            } else {
+                tvSvc.setText(base + "\n无崩溃记录");
+            }
         } catch (Throwable t) { }
         rulesBox.removeAllViews();
         try {

@@ -88,7 +88,23 @@ public class SkipAdService extends AccessibilityService {
     }
 
     @Override
-    protected void onServiceConnected() { super.onServiceConnected(); inst = this; wm = (WindowManager) getSystemService(WINDOW_SERVICE); }
+    protected void onServiceConnected() {
+        super.onServiceConnected();
+        inst = this;
+        wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+        // 崩溃捕获: 服务崩了写日志(系统会弹"要停用吗"), 管理页可见
+        final Thread.UncaughtExceptionHandler def = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+            try {
+                java.io.StringWriter sw = new java.io.StringWriter();
+                e.printStackTrace(new java.io.PrintWriter(sw));
+                android.util.Log.e("SkipAd", "crash", e);
+                openFileOutput("skipad_crash.txt", MODE_PRIVATE)
+                        .write((System.currentTimeMillis() + "\n" + sw).getBytes("UTF-8"));
+            } catch (Throwable ignored) { }
+            if (def != null) def.uncaughtException(t, e);
+        });
+    }
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
@@ -196,7 +212,8 @@ public class SkipAdService extends AccessibilityService {
         try {
             Rect r = new Rect();
             n.getBoundsInScreen(r);
-            if (r.isEmpty()) return;
+            if (r.isEmpty() || r.width() < 10 || r.height() < 10) return;
+            if (r.width() > 3000 || r.height() > 3000) return;
             FrameLayout v = new FrameLayout(this);
             GradientDrawable bg = new GradientDrawable();
             bg.setColor(Color.argb(28, 255, 59, 48));
@@ -204,11 +221,10 @@ public class SkipAdService extends AccessibilityService {
             v.setBackground(bg);
             v.setClickable(true);
             v.setOnTouchListener((v1, ev) -> false);
-            v.setOnClickListener(vv -> { gestureTap(n); Toast.makeText(this, "已点击", Toast.LENGTH_SHORT).show(); });
+            v.setOnClickListener(vv -> { gestureTap(n);  });
             v.setOnLongClickListener(vv -> {
                 CharSequence t = n.getText() != null ? n.getText() : n.getContentDescription();
                 addRule(lastPkg, t != null ? t.toString() : "");
-                Toast.makeText(this, "已存为自定义规则", Toast.LENGTH_SHORT).show();
                 return true;
             });
             WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
