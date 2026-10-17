@@ -206,7 +206,8 @@ public class MetroSettingsActivity extends Activity {
         return tv;
     }
 
-    /** 走路 FITT 原则预设 (普通/进阶, 按表格) */
+    /** 走路 FITT 原则预设 (普通/进阶, 按表格): 点卡片选中 → 底部确认按钮应用并跳打拍页 */
+    private int fittSel = -1; // -1未选 0基础 1进阶
     private void showFittDialog() {
         boolean dark = prefs.getBoolean("dark", false);
         LinearLayout box = new LinearLayout(this);
@@ -219,15 +220,14 @@ public class MetroSettingsActivity extends Activity {
             {"进阶", "一周5~7次 · 中等~高强度 (5-7公里/小时)\n快走/负重走/上坡走 · 每次20~30分钟", "140", "25"},
         };
         int[][] colors = { {0xFF1F8838, dark ? 0xFF1F2B22 : 0xFFEAF6EE}, {0xFFB3382C, dark ? 0xFF2B1F1F : 0xFFFBECEA} };
+        final android.app.AlertDialog[] dlgHolder = new android.app.AlertDialog[1];
+        final LinearLayout[] cardHolders = new LinearLayout[2];
+        final TextView[] selMark = new TextView[2];
         for (int i = 0; i < 2; i++) {
             final String[] r = rows[i];
+            final int idx = i;
             LinearLayout card = new LinearLayout(this);
             card.setOrientation(LinearLayout.VERTICAL);
-            android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
-            bg.setColor(colors[i][1]);
-            bg.setCornerRadius((int) (12 * getResources().getDisplayMetrics().density));
-            bg.setStroke(2, colors[i][0]);
-            card.setBackground(bg);
             card.setPadding(p, p, p, p);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
             lp.topMargin = (int) (10 * getResources().getDisplayMetrics().density);
@@ -239,26 +239,65 @@ public class MetroSettingsActivity extends Activity {
             TextView d = new TextView(this);
             d.setText(r[1]);
             d.setTextSize(13); d.setTextColor(dark ? 0xFFC8CDD4 : 0xFF444B55);
-            d.setPadding(0, (int) (6 * getResources().getDisplayMetrics().density), 0, (int) (10 * getResources().getDisplayMetrics().density));
+            d.setPadding(0, (int) (6 * getResources().getDisplayMetrics().density), 0, 0);
             card.addView(d);
-            TextView go = new TextView(this);
-            go.setText("✓ 应用这一档 (步频节拍 " + r[2] + " BPM · " + r[3] + " 分钟自动停止)");
-            go.setTextSize(13); go.setTypeface(null, android.graphics.Typeface.BOLD); go.setTextColor(0xFF2F7CF6);
-            go.setOnClickListener(v -> {
-                prefs.edit()
-                        .putInt("metroBpm", Integer.parseInt(r[2]))
-                        .putInt("metroTimer", Integer.parseInt(r[3]))
-                        .apply();
-                MetronomeActivity.notifySettingChanged(this);
-                recreate();
+            selMark[i] = new TextView(this);
+            selMark[i].setTextSize(13); selMark[i].setTypeface(null, android.graphics.Typeface.BOLD);
+            selMark[i].setPadding(0, (int) (8 * getResources().getDisplayMetrics().density), 0, 0);
+            card.addView(selMark[i]);
+            card.setOnClickListener(v -> {
+                fittSel = idx;
+                for (int k = 0; k < 2; k++) {
+                    boolean on = k == fittSel;
+                    android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+                    bg.setColor(on ? colors[k][1] : (dark ? 0xFF22262C : 0xFFF2F4F8));
+                    bg.setCornerRadius((int) (12 * getResources().getDisplayMetrics().density));
+                    bg.setStroke(on ? 5 : 2, on ? colors[k][0] : (dark ? 0xFF3A404A : 0xFFD7DEE8));
+                    cardHolders[k].setBackground(bg);
+                    selMark[k].setText(on ? "✓ 已选中 · 点下方确认应用" : "");
+                    selMark[k].setTextColor(colors[k][0]);
+                }
             });
-            card.addView(go);
+            cardHolders[i] = card;
             box.addView(card);
         }
-        new android.app.AlertDialog.Builder(this)
-                .setTitle("走路 · FITT 原则 (频率/强度/方式/时间)")
+        // 底部确认大按钮
+        TextView confirm = new TextView(this);
+        confirm.setText("确认应用");
+        confirm.setTextSize(17); confirm.setTypeface(null, android.graphics.Typeface.BOLD);
+        confirm.setTextColor(0xFFFFFFFF);
+        confirm.setGravity(android.view.Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable cbg = new android.graphics.drawable.GradientDrawable();
+        cbg.setColor(0xFF2F7CF6);
+        cbg.setCornerRadius((int) (14 * getResources().getDisplayMetrics().density));
+        confirm.setBackground(cbg);
+        confirm.setPadding(0, (int) (14 * getResources().getDisplayMetrics().density), 0, (int) (14 * getResources().getDisplayMetrics().density));
+        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(-1, -2);
+        clp.topMargin = (int) (16 * getResources().getDisplayMetrics().density);
+        confirm.setLayoutParams(clp);
+        confirm.setOnClickListener(v -> {
+            if (fittSel < 0) {
+                android.widget.Toast.makeText(this, "先点卡片选中一档", android.widget.Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String[] r = rows[fittSel];
+            prefs.edit()
+                    .putInt("metroBpm", Integer.parseInt(r[2]))
+                    .putInt("metroTimer", Integer.parseInt(r[3]))
+                    .apply();
+            MetronomeActivity.notifySettingChanged(this);
+            android.widget.Toast.makeText(this, "已应用 " + r[0] + "档：" + r[2] + " BPM · " + r[3] + " 分钟自动停", android.widget.Toast.LENGTH_LONG).show();
+            if (dlgHolder[0] != null) dlgHolder[0].dismiss();
+            // 立刻跳转打拍页
+            startActivity(new android.content.Intent(this, MetronomeActivity.class));
+        });
+        box.addView(confirm);
+
+        android.app.AlertDialog dlg = new android.app.AlertDialog.Builder(this)
+                .setTitle("走路 · FITT 原则 (点卡片选中 → 确认应用)")
                 .setView(box)
                 .setNegativeButton("关闭", null).show();
+        dlgHolder[0] = dlg;
     }
 
     private void showFartlekDialog() {
