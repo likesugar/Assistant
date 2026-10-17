@@ -151,12 +151,20 @@ public class AdSkipServiceImpl {
         if (!SkipUtil.isKeywords(node, Constant.SCAN_KEYWORD)) {
             return false;
         }
+        // 按钮形状过滤: 跳过按钮一定是小控件且在屏幕上半区, 防止命中横跨全屏的大容器(点错拽下通知栏)
+        android.graphics.Rect br = new android.graphics.Rect();
+        node.getBoundsInScreen(br);
+        int sw = service.getResources().getDisplayMetrics().widthPixels;
+        int sh = service.getResources().getDisplayMetrics().heightPixels;
+        if (br.isEmpty()) return false;
+        if (br.width() > sw * 0.5f || br.height() > sh * 0.2f) return false;
+        if (br.top > sh * 0.5f) return false;
         String nodeDesc = SkipUtil.generateNodeDescribe(node);
         if (!nodeDescribes.contains(nodeDesc)) {
             // 先 performAction; 失败(123网盘等不可点击节点)改用坐标手势点击, 失败不记账可重试
             boolean clicked = node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
             if (!clicked) clicked = gestureTap(node);
-            Log.d("AdSkip", "try to click " + nodeDesc + " act=" + clicked);
+            logClick(nodeDesc + " act=" + clicked + " rect=" + br);
             if (clicked) {
                 nodeDescribes.add(nodeDesc);
                 return true;
@@ -187,6 +195,15 @@ public class AdSkipServiceImpl {
             }
             return ok[0];
         } catch (Throwable t) { return false; }
+    }
+
+    private void logClick(String msg) {
+        try {
+            java.io.FileOutputStream out = service.openFileOutput("skipad_log.txt",
+                    android.content.Context.MODE_APPEND);
+            out.write((System.currentTimeMillis() + " " + msg + "\n").getBytes("UTF-8"));
+            out.close();
+        } catch (Throwable ignored) { }
     }
 
     public void startSkipAdProcess() {

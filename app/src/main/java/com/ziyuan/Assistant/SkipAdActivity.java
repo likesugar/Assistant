@@ -93,4 +93,10 @@ public class SkipAdActivity extends Activity {
         super.onResume();
         tvState.setText(AdSkipService.isServiceRunning() ? "on" : "off");
     }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) tvState.setText(AdSkipService.isServiceRunning() ? "on" : "off");
+    }
 }
