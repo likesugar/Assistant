@@ -720,7 +720,12 @@ public class MetronomeActivity extends Activity {
         it.putExtra(MetronomeService.EXTRA_TIMER, timerMin);
         it.putExtra(MetronomeService.EXTRA_FARTLEK,
                 getSharedPreferences("settings", MODE_PRIVATE).getBoolean("fartlekOn", false));
-        if (start) startForegroundService(it); else startService(it);
+        try {
+            if (start) startForegroundService(it); else startService(it);
+        } catch (Throwable e) {
+            // 后台限制等偶发异常: 退化为直接 startService, 不闪退
+            try { startService(it); } catch (Throwable ignored) { }
+        }
         btnPlay.setText(playing ? "■ 停止" : "▶ 开始打拍");
     }
 

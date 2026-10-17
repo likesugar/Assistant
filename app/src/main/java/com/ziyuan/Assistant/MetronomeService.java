@@ -174,8 +174,20 @@ public class MetronomeService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent == null) { stopSelf(); return START_NOT_STICKY; }
+        // startForegroundService 后必须尽快 startForeground, 否则 5 秒超时系统杀进程闪退
+        if (intent == null) {
+            try { startForeground(0x1, buildNote("节拍器")); stopSelf(); } catch (Throwable ignored) {}
+            return START_NOT_STICKY;
+        }
         String action = intent.getAction();
+        if (ACTION_START.equals(action) || ACTION_UPDATE.equals(action)) {
+            try {
+                String t0 = intent.getIntExtra(EXTRA_BPM, 120) + " BPM · " + intent.getIntExtra(EXTRA_NOTES, 4) + "拍";
+                if (Build.VERSION.SDK_INT >= 29)
+                    startForeground(0x1, buildNote(t0), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
+                else startForeground(0x1, buildNote(t0));
+            } catch (Throwable ignored) { }
+        }
         int bpm = intent.getIntExtra(EXTRA_BPM, 120);
         int notes = intent.getIntExtra(EXTRA_NOTES, 4);
         String audioKey = intent.getStringExtra(EXTRA_AUDIO);
@@ -233,11 +245,13 @@ tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyi
                 try { engine.setAudioData(audioManager.getAudio(audioKey)); } catch (Throwable ignored) {}
             }
         } catch (Throwable ignored) {}
-        if (Build.VERSION.SDK_INT >= 29) {
-            startForeground(0x1, buildNote(text), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
-        } else {
-            startForeground(0x1, buildNote(text));
-        }
+        try {
+            if (Build.VERSION.SDK_INT >= 29) {
+                startForeground(0x1, buildNote(text), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK);
+            } else {
+                startForeground(0x1, buildNote(text));
+            }
+        } catch (Throwable ignored) { }
         boolean fk = intent.getBooleanExtra(EXTRA_FARTLEK, false);
         if (fk && !fkOn) startFartlek();
         else if (fk && fkOn) {
