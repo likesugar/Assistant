@@ -49,26 +49,23 @@ public class MetronomeService extends Service {
     private boolean fkOn = false;
     private String fkPhase = "run";
     private int fkRun = 60, fkWalk = 30, fkCycles = 5, fkRemain = 0, fkCycle = 1, fkElapsed = 0, fkTotal = 0;
-    private android.media.SoundPool fkSp;
-    private int fkSidHard, fkSidSoft;
+    private android.media.AudioTrack fkCueTrack;
 
-    private void fkInitSound() {
-        if (fkSp != null) return;
-        try {
-            fkSp = new android.media.SoundPool.Builder()
-                    .setMaxStreams(2)
-                    .setAudioAttributes(new android.media.AudioAttributes.Builder()
-                            .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
-                            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
-                    .build();
-            fkSidHard = fkSp.load(getAssets().openFd("audios/bongo_drum_hard.mp3"), 1);
-            fkSidSoft = fkSp.load(getAssets().openFd("audios/bongo_drum_soft.mp3"), 1);
-        } catch (Throwable t) { fkSp = null; }
-    }
-
+    /** 播放切换提示音: 直接复用邦戈鼓 wav 的 PCM(强/弱), 与节拍引擎同路线 */
     private void fkCue(boolean hard) {
-        fkInitSound();
-        if (fkSp != null) { try { fkSp.play(hard ? fkSidHard : fkSidSoft, 1f, 1f, 1, 0, 1f); } catch (Throwable ignored) {} }
+        try {
+            byte[] beat = hard ? audioManager.getAudio(MetroConstant.AudioBongo).getDownbeat()
+                               : audioManager.getAudio(MetroConstant.AudioBongo).getUpbeat();
+            if (fkCueTrack != null) { try { fkCueTrack.stop(); fkCueTrack.release(); } catch (Throwable ignored) {} }
+            int min = android.media.AudioTrack.getMinBufferSize(MetroConstant.SampleRate,
+                    android.media.AudioFormat.CHANNEL_OUT_MONO, android.media.AudioFormat.ENCODING_PCM_16BIT);
+            fkCueTrack = new android.media.AudioTrack(android.media.AudioManager.STREAM_MUSIC,
+                    MetroConstant.SampleRate, android.media.AudioFormat.CHANNEL_OUT_MONO,
+                    android.media.AudioFormat.ENCODING_PCM_16BIT,
+                    Math.max(min, beat.length), android.media.AudioTrack.MODE_STATIC);
+            fkCueTrack.write(beat, 0, beat.length);
+            fkCueTrack.play();
+        } catch (Throwable t) { }
     }
 
     private void fkBroadcast(String phase) {
@@ -273,7 +270,7 @@ tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyi
     @Override
     public void onDestroy() {
         stopFartlek();
-        if (fkSp != null) { fkSp.release(); fkSp = null; }
+        if (fkCueTrack != null) { try { fkCueTrack.stop(); fkCueTrack.release(); } catch (Throwable ignored) {} fkCueTrack = null; }
         if (tianyi != null) { tianyi.stop(); tianyi = null; }
         if (gpsMgr != null) { gpsMgr.stop(); gpsMgr = null; }
         if (stepMgr != null) { stepMgr.stop(); stepMgr = null; }
