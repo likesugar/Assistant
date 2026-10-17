@@ -42,7 +42,7 @@ public class AdSkipServiceImpl {
 
     private void ensureCfg() {
         try {
-            String raw = getSharedPreferences("settings", MODE_PRIVATE)
+            String raw = service.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE)
                     .getString("skipAdCfg", "");
             if (raw != null && raw.equals(cfgRaw)) return;
             cfgRaw = raw;
@@ -381,7 +381,7 @@ public class AdSkipServiceImpl {
     private void doLttAction(AccessibilityNodeInfo root, String act) {
         try {
             if (act.equals("GLOBAL_ACTION_BACK")) {
-                service.performGlobalAction(GLOBAL_ACTION_BACK);
+                service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK);
                 return;
             }
             if (act.matches("\\d+,\\d+,\\d+,\\d+")) {
