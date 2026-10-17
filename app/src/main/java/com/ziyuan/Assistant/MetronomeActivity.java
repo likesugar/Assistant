@@ -657,8 +657,9 @@ public class MetronomeActivity extends Activity {
 
         fkProg = new android.widget.ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         fkProg.setMax(100); fkProg.setProgress(0);
+        android.graphics.PorterDuffColorFilter pf = new android.graphics.PorterDuffColorFilter(0xFFF5A623, android.graphics.PorterDuff.Mode.SRC_IN);
         android.graphics.drawable.Drawable d = fkProg.getProgressDrawable();
-        if (d != null) android.graphics.drawable.DrawableCompat.setTint(d, 0xFFF5A623);
+        if (d != null) { d.setColorFilter(pf); fkProg.setProgressDrawable(d); d.invalidateSelf(); }
         LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, (int) (8 * getResources().getDisplayMetrics().density));
         plp.topMargin = (int) (8 * getResources().getDisplayMetrics().density);
