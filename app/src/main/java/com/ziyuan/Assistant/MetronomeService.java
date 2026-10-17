@@ -85,10 +85,10 @@ public class MetronomeService extends Service {
             // 播完(或兜底超时): 先阶段鼓点, 鼓点落定后节拍进场(两阶段都恢复, 修快走无拍)
             Runnable resume = () -> {
                 if (!fkOn) return;
-                fkCue("run".equals(fkPhase));
+                // 语音已报阶段, 不再叠加鼓点(否则和节拍器强首拍重复响两次), 直接进节拍
                 fkHandler.postDelayed(() -> {
                     if (fkOn && engine != null && !engine.isPlaying()) engine.play();
-                }, 400);
+                }, 150);
             };
             fkVoice.setOnCompletionListener(mp -> { if (fkOn) resume.run(); });
             fkHandler.postDelayed(resume, Math.max(1200, durMs));
