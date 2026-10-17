@@ -785,9 +785,6 @@ public class HomeActivity extends Activity {
             }
         });
         // ===== 跳过广告: 点卡片进入管理页(页内确认开启) =====
-        findViewById(R.id.cardSkipAd).setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) { startActivity(new android.content.Intent(HomeActivity.this, SkipAdActivity.class)); }
-        });
 
         findViewById(R.id.cardTapper).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, TapperActivity.class)); }

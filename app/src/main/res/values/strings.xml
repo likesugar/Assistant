@@ -2,5 +2,4 @@
 <resources>
     <string name="app_name">资源助手</string>
     <string name="tapper_desc">自动点击器: 无障碍手势模拟点击, 无需 root</string>
-    <string name="skip_ad_desc">自动点击跳过广告按钮</string>
 </resources>
