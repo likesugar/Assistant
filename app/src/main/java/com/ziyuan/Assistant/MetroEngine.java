@@ -79,6 +79,12 @@ public class MetroEngine extends Thread {
             if (playing && audioTrack != null) {
                 if (changed) { loadSamples(); changed = false; }
                 if (beat1 == null) { try { sleep(50); } catch (InterruptedException ignored) {} continue; }
+                if (resync) { // 暂停恢复: 清掉半截残音, 对齐小节头干净起拍
+                    resync = false;
+                    try { audioTrack.pause(); audioTrack.flush(); } catch (Throwable ignored) {}
+                    try { audioTrack.play(); } catch (Throwable ignored) {}
+                    tickIndex = 0;
+                }
                 // 一个细分 tick 一个 period: 60s/bpm/sub, 换算成字节
                 int subN = Math.max(1, sub);
                 int periodFrames = MetroConstant.SampleRate * 60 / Math.max(1, bpm) / subN;
@@ -137,7 +143,8 @@ public class MetroEngine extends Thread {
         return (int) ((head / periodFrames) % ticks);
     }
 
-    public void play() { playing = true; if (audioTrack != null) audioTrack.play(); }
+    private boolean resync = false;
+    public void play() { resync = true; playing = true; if (audioTrack != null) { try { audioTrack.play(); } catch (Throwable ignored) {} } }
     public void pause() { playing = false; if (audioTrack != null) { audioTrack.pause(); audioTrack.flush(); } }
     public boolean isPlaying() { return playing; }
     public int currentBpm() { return bpm; }
