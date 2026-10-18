@@ -280,7 +280,6 @@ public class MetroSettingsActivity extends Activity {
             bg.setStroke(2, dark ? 0xFF77828F : 0xFF8A99AC);
             cardHolders[k].setBackground(bg);
         }
-        }
         // 底部确认大按钮
         TextView confirm = new TextView(this);
         confirm.setText("确认应用");
