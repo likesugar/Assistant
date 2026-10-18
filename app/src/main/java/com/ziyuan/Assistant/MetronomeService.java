@@ -22,6 +22,22 @@ public class MetronomeService extends Service {
     public final static String EXTRA_SUB = "sub";
     public final static String EXTRA_TIMER = "timerMin";
     private final static String CH_ID = "metro_channel";
+    private android.os.PowerManager.WakeLock wakeLock;
+
+    private void holdWake() {
+        try {
+            if (wakeLock == null) {
+                wakeLock = ((android.os.PowerManager) getSystemService(POWER_SERVICE))
+                        .newWakeLock(android.os.PowerManager.PARTIAL_WAKE_LOCK, "Assistant:metro");
+                wakeLock.setReferenceCounted(false);
+            }
+            wakeLock.acquire();
+        } catch (Throwable ignored) {}
+    }
+
+    private void dropWake() {
+        try { if (wakeLock != null && wakeLock.isHeld()) wakeLock.release(); } catch (Throwable ignored) {}
+    }
 
     private static MetroEngine engine;
 
@@ -269,6 +285,7 @@ tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyi
             if (gpsMgr != null) { gpsMgr.stop(); gpsMgr = null; }
         if (stepMgr != null) { stepMgr.stop(); stepMgr = null; }
             if (engine != null) engine.close();
+            dropWake();
             engine = null;
             stopForeground(STOP_FOREGROUND_REMOVE);
             stopSelf();
@@ -278,6 +295,7 @@ tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyi
             if (!ACTION_START.equals(action)) { stopSelf(); return START_NOT_STICKY; } // 停止后不因改参数复活
             engine = new MetroEngine();
             engine.start();
+            holdWake();
         }
         try {
             if (ACTION_START.equals(action) || engine.isPlaying() == false) {
@@ -336,6 +354,7 @@ tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyi
         if (timerMin > 0) {
             stopHandler.postDelayed(() -> {
                 if (engine != null) { engine.close(); engine = null; }
+                dropWake();
                 stopForeground(STOP_FOREGROUND_REMOVE);
                 stopSelf();
             }, timerMin * 60_000L);
@@ -352,7 +371,7 @@ tianyiOn = tp.getBoolean("metroTianyiCheer", true) || tp.getBoolean("metroTianyi
         if (gpsMgr != null) { gpsMgr.stop(); gpsMgr = null; }
         if (stepMgr != null) { stepMgr.stop(); stepMgr = null; }
         inst = null;
-        if (engine != null) { engine.close(); engine = null; } super.onDestroy();
+        if (engine != null) { engine.close(); engine = null; } dropWake(); super.onDestroy();
     }
     @Override
     public IBinder onBind(Intent intent) { return null; }
