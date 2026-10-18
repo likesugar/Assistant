@@ -213,7 +213,18 @@ public class MetroSettingsActivity extends Activity {
         LinearLayout box = new LinearLayout(this);
         box.setOrientation(LinearLayout.VERTICAL);
         int p = (int) (16 * getResources().getDisplayMetrics().density);
-        box.setPadding(p, (int) (8 * getResources().getDisplayMetrics().density), p, 0);
+        box.setPadding(p, (int) (20 * getResources().getDisplayMetrics().density), p, (int) (8 * getResources().getDisplayMetrics().density));
+        // 自绘大标题(两行, 图2式)
+        TextView dtitle = new TextView(this);
+        dtitle.setText("走路 · FITT 原则 (点卡片选中 → 确认应用)");
+        dtitle.setTextSize(21);
+        dtitle.setTypeface(null, android.graphics.Typeface.BOLD);
+        dtitle.setTextColor(prefs.getBoolean("dark", false) ? 0xFFF2F4F8 : 0xFF1F2329);
+        dtitle.setLineSpacing((int) (4 * getResources().getDisplayMetrics().density), 1f);
+        box.addView(dtitle);
+        View tgap = new View(this);
+        tgap.setLayoutParams(new LinearLayout.LayoutParams(-1, (int) (26 * getResources().getDisplayMetrics().density)));
+        box.addView(tgap);
 
         String[][] rows = {
             {"基础", "一周5~7次 · 轻松微微出汗 (3-5公里/小时)\n快走 · 每次20~30分钟 · 总计150-200分钟", "115", "25"},
@@ -230,7 +241,7 @@ public class MetroSettingsActivity extends Activity {
             card.setOrientation(LinearLayout.VERTICAL);
             card.setPadding(p, p, p, p);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
-            lp.topMargin = (int) (10 * getResources().getDisplayMetrics().density);
+            lp.topMargin = (int) (26 * getResources().getDisplayMetrics().density);
             card.setLayoutParams(lp);
             TextView t = new TextView(this);
             t.setText(r[0] + "档 · 方式：" + (i == 0 ? "快走" : "快走/负重走/上坡走"));
@@ -293,10 +304,20 @@ public class MetroSettingsActivity extends Activity {
         });
         box.addView(confirm);
 
+        // 右下"关闭"蓝字链接
+        TextView closeLk = new TextView(this);
+        closeLk.setText("关闭");
+        closeLk.setTextSize(17);
+        closeLk.setTypeface(null, android.graphics.Typeface.BOLD);
+        closeLk.setTextColor(0xFF2F7CF6);
+        closeLk.setPadding(0, (int) (14 * getResources().getDisplayMetrics().density), (int) (6 * getResources().getDisplayMetrics().density), 0);
+        closeLk.setGravity(android.view.Gravity.END);
+        closeLk.setOnClickListener(v -> { if (dlgHolder[0] != null) dlgHolder[0].dismiss(); });
+        box.addView(closeLk);
+
         android.app.AlertDialog dlg = new android.app.AlertDialog.Builder(this)
-                .setTitle("走路 · FITT 原则 (点卡片选中 → 确认应用)")
                 .setView(box)
-                .setNegativeButton("关闭", null).show();
+                .show();
         dlgHolder[0] = dlg;
     }
 

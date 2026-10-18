@@ -177,7 +177,21 @@ public class ShortcutEditActivity extends Activity {
             if (z(it, 10).length() > 0) {
                 iconPath = z(it, 10);
             } else {
-                iconPath = newestIconFile();
+                iconPath = "";
+                // 新建/选择而来: 用目标应用真实图标, 不再沿用上一个快捷方式的图标
+                if (curIcon == null && z(it, 1).length() > 0) {
+                    try {
+                        android.graphics.drawable.Drawable di = getPackageManager().getApplicationIcon(z(it, 1));
+                        int w = di.getIntrinsicWidth() > 0 ? di.getIntrinsicWidth() : 96;
+                        int h = di.getIntrinsicHeight() > 0 ? di.getIntrinsicHeight() : 96;
+                        android.graphics.Bitmap bm3 = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888);
+                        android.graphics.Canvas cv = new android.graphics.Canvas(bm3);
+                        di.setBounds(0, 0, w, h);
+                        di.draw(cv);
+                        curIcon = bm3;
+                        iconView.setImageBitmap(bm3);
+                    } catch (Throwable ignored) {}
+                }
             }
             if (iconPath.length() == 0 && curIcon == null) {
                 // 再兜底一次：编辑回填的 curIcon 可能来自包名
