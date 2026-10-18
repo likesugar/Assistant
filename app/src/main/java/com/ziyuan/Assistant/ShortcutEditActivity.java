@@ -34,24 +34,25 @@ public class ShortcutEditActivity extends Activity {
         Immersive.hide(this);
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Theme.c(ShortcutEditActivity.this, 0xFF000000, 0xFFEEF4FF));
+        root.setBackgroundColor(Theme.c(ShortcutEditActivity.this, 0xFF000000, 0xFFDDE8F2));
 
         // 顶栏
         LinearLayout top = new LinearLayout(this);
         top.setOrientation(LinearLayout.HORIZONTAL);
         top.setGravity(Gravity.CENTER_VERTICAL);
-        top.setPadding(dp(12), dp(12), dp(12), dp(12));
+        top.setPadding(dp(12), dp(14), dp(12), dp(14));
+        top.setBackgroundColor(0xFF215870);
         TextView back = new TextView(this);
         back.setText("←");
-        back.setTextColor(Theme.c(ShortcutEditActivity.this, 0xFFF2F4F8, 0xFF1F2329));
+        back.setTextColor(0xFFFFFFFF);
         back.setTextSize(20);
         back.setPadding(dp(8), 0, dp(16), 0);
         back.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { finish(); } });
         top.addView(back);
         TextView title = new TextView(this);
         title.setText("创建快捷方式");
-        title.setTextColor(Theme.c(ShortcutEditActivity.this, 0xFFF2F4F8, 0xFF1F2329));
-        title.setTextSize(18);
+        title.setTextColor(0xFFFFFFFF);
+        title.setTextSize(20);
         title.getPaint().setFakeBoldText(true);
         top.addView(title);
         root.addView(top);
@@ -70,10 +71,10 @@ public class ShortcutEditActivity extends Activity {
         for (int i = 0; i < labels.length; i++) {
             TextView bt = new TextView(this);
             bt.setText(labels[i]);
-            bt.setTextColor(Theme.c(ShortcutEditActivity.this, 0xFFF2F4F8, 0xFF1F2329));
-            bt.setTextSize(14);
+            bt.setTextColor(0xFFCFE3F5);
+            bt.setTextSize(15);
             bt.setGravity(Gravity.CENTER);
-            bt.setBackgroundColor(i == 3 ? 0xFF245C8D : Theme.c(ShortcutEditActivity.this, 0xFF242B34, 0xFFE3E9F5));
+            bt.setBackgroundColor(0xFF4E86A8);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(38), 1f);
             lp.rightMargin = dp(8);
             bt.setLayoutParams(lp);
@@ -90,8 +91,8 @@ public class ShortcutEditActivity extends Activity {
 
         // 图标区：提示 + 预览 + 两个按钮
         iconHint = new TextView(this);
-        iconHint.setText("快捷方式的图标(点击从系统选择)");
-        iconHint.setTextColor(Theme.c(ShortcutEditActivity.this, 0xFF8A919E, 0xFF6B7280));
+        iconHint.setText("快捷方式的图标(点击更换)");
+        iconHint.setTextColor(0xFF16607A);
         iconHint.setTextSize(13);
         iconHint.setGravity(Gravity.CENTER);
         iconHint.setPadding(0, dp(4), 0, dp(4));
@@ -128,15 +129,15 @@ public class ShortcutEditActivity extends Activity {
 
         TextView at = new TextView(this);
         at.setText("附加Action");
-        at.setTextColor(Theme.c(ShortcutEditActivity.this, 0xFF8A919E, 0xFF6B7280));
+        at.setTextColor(Theme.c(ShortcutEditActivity.this, 0xFF8A919E, 0xFF16607A));
         at.setTextSize(13);
         at.setPadding(0, dp(8), 0, dp(2));
         body.addView(at);
         RadioGroup rg = new RadioGroup(this);
         rg.setOrientation(RadioGroup.HORIZONTAL);
-        rbView = radio(rg, "VIEW", true);
-        rbMain = radio(rg, "MAIN", false);
-        rbCustom = radio(rg, "自定义", false);
+        rbView = radio(rg, "android.intent.action.VIEW", true);
+        rbMain = radio(rg, "android.intent.action.MAIN", false);
+        rbCustom = radio(rg, "自定义: android.intent.action.VIEW", false);
         body.addView(rg);
         etCustom = field(body, "自定义Action");
         etCustom.setVisibility(View.GONE);
@@ -207,17 +208,25 @@ public class ShortcutEditActivity extends Activity {
     }
 
     private EditText field(LinearLayout parent, String hint) {
+        // 图2式：标签小字(青)在上, 值大字加粗, 下划线
+        TextView lb = new TextView(this);
+        lb.setText(hint);
+        lb.setTextColor(Theme.c(ShortcutEditActivity.this, 0xFF4A8AA5, 0xFF16607A));
+        lb.setTextSize(14);
+        lb.setPadding(0, dp(10), 0, 0);
+        parent.addView(lb);
         EditText et = new EditText(this);
         et.setHint(hint);
         et.setSingleLine(true);
-        et.setTextColor(Theme.c(ShortcutEditActivity.this, 0xFFF2F4F8, 0xFF1F2329));
+        et.setTextColor(Theme.c(ShortcutEditActivity.this, 0xFFF2F4F8, 0xFF1A1A1A));
         et.setHintTextColor(Theme.c(ShortcutEditActivity.this, 0xFF5C6470, 0xFF9AA5B4));
-        et.setTextSize(15);
+        et.setTextSize(19);
+        et.getPaint().setFakeBoldText(true);
         et.setBackground(null);
-        et.setPadding(0, dp(10), 0, dp(10));
+        et.setPadding(0, dp(2), 0, dp(8));
         parent.addView(et);
         View line = new View(this);
-        line.setBackgroundColor(Theme.c(ShortcutEditActivity.this, 0xFF242B34, 0xFFE3E9F5));
+        line.setBackgroundColor(Theme.c(ShortcutEditActivity.this, 0xFF3A4652, 0xFFB9C4CF));
         parent.addView(line, new LinearLayout.LayoutParams(-1, 1));
         return et;
     }
@@ -225,7 +234,7 @@ public class ShortcutEditActivity extends Activity {
     private RadioButton radio(RadioGroup rg, String text, boolean checked) {
         RadioButton rb = new RadioButton(this);
         rb.setText(text);
-        rb.setTextColor(Theme.c(ShortcutEditActivity.this, 0xFFF2F4F8, 0xFF1F2329));
+        rb.setTextColor(Theme.c(ShortcutEditActivity.this, 0xFFC8CDD4, 0xFF1A1A1A));
         rb.setPadding(dp(6), dp(4), dp(12), dp(4));
         rb.setChecked(checked);
         rg.addView(rb);
@@ -235,8 +244,9 @@ public class ShortcutEditActivity extends Activity {
     private android.widget.CheckBox check(LinearLayout parent, String text, boolean checked) {
         android.widget.CheckBox cb = new android.widget.CheckBox(this);
         cb.setText(text);
-        cb.setTextColor(Theme.c(ShortcutEditActivity.this, 0xFFB9C0CA, 0xFF6B7280));
-        cb.setTextSize(13);
+        cb.setTextColor(Theme.c(ShortcutEditActivity.this, 0xFFB9C0CA, 0xFF1A1A1A));
+        cb.setTextSize(15);
+        cb.getPaint().setFakeBoldText(true);
         cb.setChecked(checked);
         parent.addView(cb);
         return cb;

@@ -156,13 +156,12 @@ public class AppPickerActivity extends Activity {
 
     private void loadApps() {
         try { all = pm.getInstalledPackages(android.content.pm.PackageManager.GET_ACTIVITIES); } catch (Throwable e) { all = new java.util.ArrayList<android.content.pm.PackageInfo>(); }
-        // 一次性批量拿到活动数（单次系统调用,列表秒出且"无活动:隐"首次就生效）
+        // 一次性批量拿到活动数（单次系统调用）; 图标不预载, 照参照物逐行异步加载
         for (android.content.pm.PackageInfo pi : all) {
             try {
                 android.content.pm.ActivityInfo[] acts = pi.activities;
                 actCount.put(pi.packageName, acts == null ? 0 : acts.length);
             } catch (Throwable t) { actCount.put(pi.packageName, 0); }
-            try { iconCache.put(pi.packageName, iconToBmp(pi)); } catch (Throwable t) { }
         }
         actsScanned = true;
         java.util.Collections.sort(all, new java.util.Comparator<android.content.pm.PackageInfo>() {
@@ -241,11 +240,29 @@ public class AppPickerActivity extends Activity {
             rlp.topMargin = dp(8);
             row.setLayoutParams(rlp);
 
-            ImageView ic = new ImageView(this);
+            final ImageView ic = new ImageView(this);
             ic.setScaleType(ImageView.ScaleType.FIT_CENTER);
             Bitmap icb = iconCache.get(pi.packageName);
-            if (icb == null) icb = iconToBmp(pi);
-            ic.setImageBitmap(icb);
+            if (icb != null) {
+                ic.setImageBitmap(icb);
+            } else {
+                ic.setBackgroundColor(Theme.c(AppPickerActivity.this, 0xFF242B34, 0xFFE3E9F5));
+                final String fp = pi.packageName, fg = pi.packageName + "@" + renderGen;
+                ic.setTag(fg);
+                new Thread(new Runnable() { public void run() {
+                    Bitmap bm = iconCache.get(fp);
+                    if (bm == null) {
+                        android.content.pm.PackageInfo px = pkgInfoByPkg(fp);
+                        if (px == null) return;
+                        bm = iconToBmp(px);
+                        iconCache.put(fp, bm);
+                    }
+                    Bitmap fb = bm;
+                    runOnUiThread(new Runnable() { public void run() {
+                        if (fg.equals(ic.getTag())) ic.setImageBitmap(iconCache.get(fp));
+                    }});
+                } }).start();
+            }
             row.addView(ic, new LinearLayout.LayoutParams(dp(46), dp(46)));
 
             LinearLayout mid = new LinearLayout(this);
@@ -290,30 +307,19 @@ public class AppPickerActivity extends Activity {
     }
 
     private void showActivities(final android.content.pm.PackageInfo pi) {
-        try {
-            android.content.pm.ActivityInfo[] acts0 = pm.getPackageInfo(pi.packageName, android.content.pm.PackageManager.GET_ACTIVITIES).activities;
-            if (acts0 == null || acts0.length == 0) { toast("该包没有可列出的活动"); return; }
-            java.util.ArrayList<android.content.pm.ActivityInfo> filtered = new java.util.ArrayList<android.content.pm.ActivityInfo>();
-            for (android.content.pm.ActivityInfo a2 : acts0) {
-                if (!onlyExported || a2.exported) filtered.add(a2);
-            }
-            if (filtered.isEmpty()) { toast("没有可直启的活动（可关掉'仅可直启'或用Root）"); return; }
-            final android.content.pm.ActivityInfo[] arr = filtered.toArray(new android.content.pm.ActivityInfo[0]);
-            String[] names = new String[arr.length];
-            for (int i = 0; i < arr.length; i++) {
-                String nm = arr[i].name;
-                int dot = nm.lastIndexOf('.');
-                String short2 = dot >= 0 && dot < nm.length() - 1 ? nm.substring(dot + 1) : nm;
-                names[i] = short2 + (arr[i].exported ? "  [可直启]" : "  [需Root]");
-            }
-            new android.app.AlertDialog.Builder(this)
-                .setTitle(pi.packageName + " 的 " + arr.length + " 个活动")
-                .setItems(names, new android.content.DialogInterface.OnClickListener() {
-                    public void onClick(android.content.DialogInterface d, int w) {
-                        finishWith(pi.packageName, arr[w].name);
-                    }
-                }).show();
-        } catch (Throwable e) { toast("读取活动失败"); }
+        // 图1式：独立活动选择列表页（每个活动一张卡, 点"详情"回传）
+        try { startActivityForResult(new Intent(this, ActivityListActivity.class)
+                .putExtra("pkg", pi.packageName).putExtra("name", labelOf(pi)), 7003); }
+        catch (Throwable e) { toast("无法打开活动列表"); }
+    }
+
+    @Override
+    protected void onActivityResult(int req, int res, Intent data) {
+        super.onActivityResult(req, res, data);
+        if (req == 7003 && res == RESULT_OK && data != null) {
+            setResult(RESULT_OK, data);   // 转发给 ShortcutEditActivity
+            finish();
+        }
     }
 
     private void finishWith(String pkg, String cls) {
