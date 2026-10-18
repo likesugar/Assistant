@@ -258,17 +258,8 @@ public class MetroSettingsActivity extends Activity {
             card.addView(selMark[i]);
             card.setOnClickListener(v -> {
                 fittSel = idx;
-                for (int k = 0; k < 2; k++) styleFittCard(k, k == fittSel, colors, cardHolders, selMark, dark);
-            });
-            cardHolders[i] = card;
-            box.addView(card);
-        }
-        // 初始就上未选中样式(否则进弹窗卡片是隐形的)
-        for (int k = 0; k < 2; k++) styleFittCard(k, false, colors, cardHolders, selMark, dark);
-    }
-
-    private void styleFittCard(int k, boolean on, int[][] colors, LinearLayout[] cardHolders, TextView[] selMark, boolean dark) {
-        {
+                for (int k = 0; k < 2; k++) {
+                    boolean on = k == fittSel;
                     android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
                     bg.setColor(on ? colors[k][1] : (dark ? 0xFF2E3540 : 0xFFE3E9F5));
                     bg.setCornerRadius((int) (12 * getResources().getDisplayMetrics().density));
@@ -276,6 +267,18 @@ public class MetroSettingsActivity extends Activity {
                     cardHolders[k].setBackground(bg);
                     selMark[k].setText(on ? "✓ 已选中 · 点下方确认应用" : "");
                     selMark[k].setTextColor(colors[k][0]);
+                }
+            });
+            cardHolders[i] = card;
+            box.addView(card);
+        }
+        // 初始就上未选中样式(否则进弹窗卡片是隐形的)
+        for (int k = 0; k < 2; k++) {
+            android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+            bg.setColor(dark ? 0xFF2E3540 : 0xFFE3E9F5);
+            bg.setCornerRadius((int) (12 * getResources().getDisplayMetrics().density));
+            bg.setStroke(2, dark ? 0xFF77828F : 0xFF8A99AC);
+            cardHolders[k].setBackground(bg);
         }
         }
         // 底部确认大按钮
