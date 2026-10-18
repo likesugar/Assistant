@@ -801,6 +801,13 @@ public class HomeActivity extends Activity {
         findViewById(R.id.cardWeb2Apk).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, Web2ApkActivity.class)); }
         });
+        findViewById(R.id.cardGkd).setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Intent gi = getPackageManager().getLaunchIntentForPackage("li.songe.gkd");
+                if (gi != null) startActivity(gi);
+                else android.widget.Toast.makeText(HomeActivity.this, "GKD 应用未安装", android.widget.Toast.LENGTH_LONG).show();
+            }
+        });
         findViewById(R.id.cardEnt).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, EntertainmentActivity.class)); }
         });
