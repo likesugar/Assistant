@@ -28,6 +28,16 @@ public class AppPickerActivity extends Activity {
     private boolean hideNoActs = true;    // 隐藏无可列出活动的包
     private boolean actsScanned = false;  // 活动数是否已扫描（点开"无活动:显"才扫）
     private boolean onlyExported = false; // 仅可直启(exported)活动
+    private boolean hasRoot = detectRoot();
+
+    private static boolean detectRoot() {
+        try {
+            for (String p : new String[]{"/system/bin/su", "/system/xbin/su", "/sbin/su", "/vendor/bin/su", "/su/bin/su"}) {
+                if (new java.io.File(p).exists()) return true;
+            }
+        } catch (Throwable ignored) {}
+        return false;
+    }
     private String searchText = "";
     private android.content.pm.PackageManager pm;
 
@@ -113,7 +123,8 @@ public class AppPickerActivity extends Activity {
         }});
         row2.addView(tg2);
         final TextView tg3 = new TextView(this);
-        tg3.setText("仅可直启:关");
+        // 有Root: 默认仅可直启:关(全部活动都可用); 无Root: 默认开
+        onlyExported = !hasRoot;
         tg3.setTextSize(12);
         tg3.setTextColor(Theme.c(AppPickerActivity.this, 0xFF8A919E, 0xFF6B7280));
         tg3.setPadding(dp(10), dp(6), dp(10), dp(6));
@@ -121,6 +132,8 @@ public class AppPickerActivity extends Activity {
         LinearLayout.LayoutParams t3p = new LinearLayout.LayoutParams(-2, -2);
         t3p.leftMargin = dp(8);
         tg3.setLayoutParams(t3p);
+        tg3.setText(onlyExported ? "仅可直启:开" : "仅可直启:关");
+        tg3.setTextColor(onlyExported ? 0xFF3D7BFF : Theme.c(AppPickerActivity.this, 0xFF8A919E, 0xFF6B7280));
         tg3.setOnClickListener(new View.OnClickListener() { public void onClick(View v) {
             onlyExported = !onlyExported;
             tg3.setText(onlyExported ? "仅可直启:开" : "仅可直启:关");

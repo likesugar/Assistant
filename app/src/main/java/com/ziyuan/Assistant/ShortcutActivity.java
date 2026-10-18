@@ -119,12 +119,28 @@ public class ShortcutActivity extends Activity {
         }
     }
 
+    @Override
+    protected void onActivityResult(int req, int res, Intent data) {
+        super.onActivityResult(req, res, data);
+        if (req == 8001 && res == RESULT_OK && data != null && data.getStringExtra("pkg") != null) {
+            Intent i = new Intent(this, ShortcutEditActivity.class);
+            i.putExtra("e0", data.getStringExtra("name") == null ? "" : data.getStringExtra("name"));
+            i.putExtra("e1", data.getStringExtra("pkg"));
+            i.putExtra("e2", data.getStringExtra("cls") == null ? "" : data.getStringExtra("cls"));
+            startActivity(i);
+        }
+    }
+
     // ---------- 网格渲染 ----------
     private void renderGrid() {
         grid.removeAllViews();
         java.util.ArrayList<View> cells = new java.util.ArrayList<View>();
         cells.add(smallCard("⚡", "新建快捷键", new View.OnClickListener() {
-            public void onClick(View v) { startActivity(new Intent(ShortcutActivity.this, ShortcutEditActivity.class)); }
+            public void onClick(View v) {
+                // 照 ShortcutCreator 流程: 新建 → 图1应用选择 → (活动列表) → 详情 → 编辑页
+                try { startActivityForResult(new Intent(ShortcutActivity.this, AppPickerActivity.class), 8001); }
+                catch (Throwable t) { startActivity(new Intent(ShortcutActivity.this, ShortcutEditActivity.class)); }
+            }
         }, null));
         android.content.pm.PackageManager pm0 = getPackageManager();
         for (final String[] us : userShortcuts()) {
