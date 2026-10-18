@@ -47,20 +47,7 @@ public class ShortcutEditActivity extends Activity {
         back.setTextColor(0xFFFFFFFF);
         back.setTextSize(20);
         back.setPadding(dp(8), 0, dp(16), 0);
-        back.setOnClickListener(new View.OnClickListener() { public void onClick(View v) {
-            // 图2返回 → 图3活动选择(重选活动); 无包名时直接退出
-            String p2 = etPkg.getText().toString().trim();
-            if (p2.length() > 0) {
-                String n2 = etName.getText().toString().trim();
-                if (n2.length() == 0) n2 = p2;
-                try {
-                    startActivity(new Intent(ShortcutEditActivity.this, ActivityListActivity.class)
-                        .putExtra("pkg", p2).putExtra("name", n2).putExtra("fromEdit", true));
-                    return;
-                } catch (Throwable ignored) {}
-            }
-            finish();
-        } });
+        back.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { goBackToList(); } });
         top.addView(back);
         TextView title = new TextView(this);
         title.setText("创建快捷方式");
@@ -437,6 +424,24 @@ public class ShortcutEditActivity extends Activity {
             + (cbRoot.isChecked() ? "1" : "0") + SEP
             + iconPath;
     }
+
+    private void goBackToList() {
+        // 图2返回 → 图3活动选择(重选活动); 无包名时直接退出
+        String p2 = etPkg.getText().toString().trim();
+        if (p2.length() > 0) {
+            String n2 = etName.getText().toString().trim();
+            if (n2.length() == 0) n2 = p2;
+            try {
+                startActivity(new Intent(ShortcutEditActivity.this, ActivityListActivity.class)
+                    .putExtra("pkg", p2).putExtra("name", n2).putExtra("fromEdit", true));
+                return;
+            } catch (Throwable ignored) {}
+        }
+        finish();
+    }
+
+    @Override
+    public void onBackPressed() { goBackToList(); }
 
     private String newestIconFile() {
         try {

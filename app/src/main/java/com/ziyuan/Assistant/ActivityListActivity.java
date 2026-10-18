@@ -64,6 +64,14 @@ public class ActivityListActivity extends Activity {
         bar.addView(back);
         LinearLayout tcol = new LinearLayout(this);
         tcol.setOrientation(LinearLayout.VERTICAL);
+        TextView back = new TextView(this);
+        back.setText("←");
+        back.setTextColor(0xFFFFFFFF);
+        back.setTextSize(22);
+        back.setPadding(dp(6), 0, dp(14), 0);
+        back.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { finish(); } });
+        top.addView(back, new LinearLayout.LayoutParams(-2, -2, 0));
+
         TextView title = new TextView(this);
         title.setText("活动选择");
         title.setTextColor(0xFFFFFFFF);
@@ -239,6 +247,9 @@ public class ActivityListActivity extends Activity {
 
         list.addView(card);
     }
+
+    @Override
+    public void onBackPressed() { finish(); }
 
     private void finishWith(String cls) {
         if (getIntent().getBooleanExtra("fromEdit", false)) {
