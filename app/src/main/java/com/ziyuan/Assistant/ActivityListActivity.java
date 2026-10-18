@@ -241,6 +241,17 @@ public class ActivityListActivity extends Activity {
     }
 
     private void finishWith(String cls) {
+        if (getIntent().getBooleanExtra("fromEdit", false)) {
+            // 图2返回到图3后, 详情 → 重新进入编辑页(带所选活动)
+            Intent i = new Intent(this, ShortcutEditActivity.class);
+            i.putExtra("e0", appLabel);
+            i.putExtra("e1", pkg);
+            i.putExtra("e2", cls);
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(i);
+            finish();
+            return;
+        }
         Intent out = new Intent();
         out.putExtra("pkg", pkg);
         out.putExtra("cls", cls);

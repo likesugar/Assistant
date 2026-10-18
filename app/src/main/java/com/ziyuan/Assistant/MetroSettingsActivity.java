@@ -250,9 +250,9 @@ public class MetroSettingsActivity extends Activity {
                 for (int k = 0; k < 2; k++) {
                     boolean on = k == fittSel;
                     android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
-                    bg.setColor(on ? colors[k][1] : (dark ? 0xFF22262C : 0xFFF2F4F8));
+                    bg.setColor(on ? colors[k][1] : (dark ? 0xFF14181D : 0xFFDDE4EE));
                     bg.setCornerRadius((int) (12 * getResources().getDisplayMetrics().density));
-                    bg.setStroke(on ? 5 : 2, on ? colors[k][0] : (dark ? 0xFF3A404A : 0xFFD7DEE8));
+                    bg.setStroke(on ? 5 : 2, on ? colors[k][0] : (dark ? 0xFF5A6472 : 0xFF8A99AC));
                     cardHolders[k].setBackground(bg);
                     selMark[k].setText(on ? "✓ 已选中 · 点下方确认应用" : "");
                     selMark[k].setTextColor(colors[k][0]);
