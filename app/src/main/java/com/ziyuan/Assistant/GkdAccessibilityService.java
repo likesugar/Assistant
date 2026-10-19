@@ -87,11 +87,21 @@ public class GkdAccessibilityService extends AccessibilityService {
             if (root == null) return;
             boolean hit = false; String lastGroup = null;
             for (int g = 0; g < groups.length() && !hit; g++) {
-                JSONObject grp = groups.optJSONObject(g); if (grp == null) continue;
+                Object gobj = groups.opt(g);
+                JSONObject grp = gobj instanceof JSONObject ? (JSONObject) gobj : null;
+                if (grp == null) continue;
                 if (!grp.optBoolean("enable", true)) continue;
                 JSONArray rules = asArray(grp, "rules"); if (rules == null) continue;
                 for (int r = 0; r < rules.length() && !hit; r++) {
-                    JSONObject rule = rules.optJSONObject(r); if (rule == null) continue;
+                    Object rv = rules.opt(r);
+                    JSONObject rule = rv instanceof JSONObject ? (JSONObject) rv : null;
+                    if (rule == null) {
+                        // 规则项本身是选择器字符串 (AIsouler 格式)
+                        if (rv instanceof String && ((String) rv).length() > 0) {
+                            rule = new JSONObject();
+                            try { rule.put("matches", rv); } catch (Throwable ignored) {}
+                        } else continue;
+                    }
                     if (!rule.optBoolean("enable", true)) continue;
                     JSONArray src = asArray(rule, "matches");
                     if (src == null) src = asArray(rule, "anyMatches");
