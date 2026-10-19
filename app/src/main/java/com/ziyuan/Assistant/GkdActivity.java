@@ -183,27 +183,6 @@ public class GkdActivity extends Activity {
         pn.addView(hp);
         p.addView(pn, new LinearLayout.LayoutParams(-1, -2));
 
-        // 悬浮快照球卡 (官方快照同款 overlay)
-        LinearLayout fb = card();
-        LinearLayout hf = new LinearLayout(this);
-        hf.setOrientation(LinearLayout.HORIZONTAL); hf.setGravity(Gravity.CENTER_VERTICAL);
-        LinearLayout lf = new LinearLayout(this); lf.setOrientation(LinearLayout.VERTICAL);
-        lf.addView(txt("悬浮快照球", 16, txtMain, true));
-        TextView fs = txt("弹窗界面点悬浮球抓取界面快照", 13, txtSub, false); fs.setPadding(0, dp(2), 0, 0);
-        lf.addView(fs);
-        hf.addView(lf, new LinearLayout.LayoutParams(0, -2, 1f));
-        android.widget.Switch swf = new android.widget.Switch(this);
-        swf.setChecked(GkdStore.sp(this).getBoolean("gkd_float_snap", false));
-        swf.setOnClickListener(v -> {
-            boolean on = swf.isChecked();
-            GkdStore.sp(this).edit().putBoolean("gkd_float_snap", on).apply();
-            if (GkdAccessibilityService.running) GkdAccessibilityService.instance.toggleSnapBall(on);
-            else Toast.makeText(this, "先开启无障碍", Toast.LENGTH_SHORT).show();
-        });
-        hf.addView(swf);
-        fb.addView(hf);
-        p.addView(fb, new LinearLayout.LayoutParams(-1, -2));
-
         // 了解 GKD 卡 (官方 PageItemCard)
         LinearLayout lm = card();
         LinearLayout hl2 = new LinearLayout(this);

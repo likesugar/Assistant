@@ -45,6 +45,13 @@ public final class GkdSelector {
     }
 
     // ===== 选择器表达式 =====
+
+    /** 官方 GKD 默认语义: 不可见节点(含子树)不参与匹配 */
+    static boolean visOk(Object n, NodeAdapter a) {
+        Object v = a.getAttr(n, "visibleToUser");
+        return !(v instanceof Boolean) || (Boolean) v;
+    }
+    public static boolean VISIBLE_ONLY = true;
     static abstract class Expr { abstract Object eval(Ctx ctx, NodeAdapter a); }
     static final class UnitExpr extends Expr {
         final PropertySelector[] ps; final RelationSelector[] rs; final int targetIdx;
@@ -60,7 +67,9 @@ public final class GkdSelector {
             ArrayDeque<Object> dq = new ArrayDeque<>();
             dq.push(node);
             while (!dq.isEmpty()) {
-                Object x = dq.pop(); out.add(x);
+                Object x = dq.pop();
+                if (VISIBLE_ONLY && !visOk(x, a)) continue;
+                out.add(x);
                 int cn = a.getChildCount(x);
                 for (int i = cn - 1; i >= 0; i--) { Object ch = a.getChild(x, i); if (ch != null) dq.push(ch); }
                 if (out.size() > 8000) break;
@@ -159,7 +168,7 @@ public final class GkdSelector {
                         if (candIdx < 0) { st = -1; return null; }
                         Object n = a.getChild(walker, candIdx);
                         offset++;
-                        if (rel.checkOffset(offset - 1)) { if (n != null) return new Candidate(n, offset - 1); }
+                        if (rel.checkOffset(offset - 1)) { if (n != null) if (n != null && visOk(n, a)) return new Candidate(n, offset - 1); }
                         continue;
                     }
                     case 1: { // - 后面兄弟
@@ -168,7 +177,7 @@ public final class GkdSelector {
                         if (rel.maxOffset != null && offset > rel.maxOffset || candIdx >= cnt) { st = -1; return null; }
                         Object n = a.getChild(walker, candIdx);
                         offset++;
-                        if (rel.checkOffset(offset - 1)) { if (n != null) return new Candidate(n, offset - 1); }
+                        if (rel.checkOffset(offset - 1)) { if (n != null) if (n != null && visOk(n, a)) return new Candidate(n, offset - 1); }
                         continue;
                     }
                     case 2: { // > 祖先
@@ -176,7 +185,7 @@ public final class GkdSelector {
                         Object n = walker;
                         walker = a.getParent(n);
                         offset++;
-                        if (rel.checkOffset(offset - 1)) { if (n != null) return new Candidate(n, offset - 1); }
+                        if (rel.checkOffset(offset - 1)) { if (n != null) if (n != null && visOk(n, a)) return new Candidate(n, offset - 1); }
                         continue;
                     }
                     case 3: { // < 子
@@ -184,20 +193,20 @@ public final class GkdSelector {
                         if (childIdx >= cnt || rel.maxOffset != null && offset > rel.maxOffset) { st = -1; return null; }
                         Object n = a.getChild(walker, childIdx);
                         childIdx++; offset++;
-                        if (rel.checkOffset(offset - 1)) { if (n != null) return new Candidate(n, offset - 1); }
+                        if (rel.checkOffset(offset - 1)) { if (n != null) if (n != null && visOk(n, a)) return new Candidate(n, offset - 1); }
                         continue;
                     }
                     case 4: { // << 后代 前序
                         Object n = nextDesc();
                         if (n == null || rel.maxOffset != null && offset > rel.maxOffset) { st = -1; return null; }
                         offset++;
-                        if (rel.checkOffset(offset - 1)) return new Candidate(n, offset - 1);
+                        if (rel.checkOffset(offset - 1)) return visOk(n, a) ? new Candidate(n, offset - 1) : null;
                         continue;
                     }
                     case 5: { // -> 上文
                         if (prevWalk == null) { st = -1; return null; }
                         Ctx c = prevWalk;
-                        if (rel.checkOffset(offset)) return new Candidate(c.node, offset);
+                        if (rel.checkOffset(offset)) if (visOk(c.node, a)) return new Candidate(c.node, offset);
                         prevWalk = c.prev; offset++;
                         if (rel.maxOffset != null && offset > rel.maxOffset) { st = -1; return null; }
                         continue;

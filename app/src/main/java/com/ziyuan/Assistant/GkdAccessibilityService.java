@@ -77,10 +77,7 @@ public class GkdAccessibilityService extends AccessibilityService {
                 | AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
         i.notificationTimeout = 100;
         setServiceInfo(i);
-        // 悬浮快照球随偏好自动挂载
-        if (getSharedPreferences("gkd", MODE_PRIVATE).getBoolean("gkd_float_snap", false)) toggleSnapBall(true);
     }
-    private int dp(int v) { return (int) (v * getResources().getDisplayMetrics().density); }
 
     @Override
     public boolean onUnbind(android.content.Intent intent) { running = false; return super.onUnbind(intent); }
@@ -198,68 +195,6 @@ public class GkdAccessibilityService extends AccessibilityService {
             }
             return t.performAction(AccessibilityNodeInfo.ACTION_SELECT);
         } catch (Throwable t) { return false; }
-    }
-
-    // ===== 悬浮快照球 (TYPE_ACCESSIBILITY_OVERLAY, 官方GKD同款, 不抢焦点) =====
-    private android.view.View snapBall;
-    private android.view.WindowManager wm;
-    public void toggleSnapBall(boolean on) {
-        try {
-            if (wm == null) wm = (android.view.WindowManager) getSystemService(WINDOW_SERVICE);
-            if (snapBall != null) { try { wm.removeView(snapBall); } catch (Throwable ignored) {} snapBall = null; }
-            if (!on) return;
-            TextView v = new TextView(this);
-            v.setText("📷");
-            v.setTextSize(16);
-            v.setGravity(Gravity.CENTER);
-            v.setTextColor(0xFFFFFFFF);
-            GradientDrawable gd = new GradientDrawable();
-            gd.setColor(0xAA1E6FA8); gd.setShape(GradientDrawable.OVAL);
-            v.setBackground(gd);
-            v.setAlpha(0.75f);
-            android.view.WindowManager.LayoutParams lp = new android.view.WindowManager.LayoutParams(
-                    dp(44), dp(44),
-                    android.view.WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-                    android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                    android.graphics.PixelFormat.TRANSLUCENT);
-            lp.gravity = Gravity.TOP | Gravity.START;
-            lp.x = dp(12); lp.y = dp(160);
-            // 可拖动
-            final android.view.WindowManager.LayoutParams flp = lp;
-            v.setOnTouchListener(new View.OnTouchListener() {
-                int downX, downY; boolean moved;
-                @Override public boolean onTouch(View vv, android.view.MotionEvent ev) {
-                    switch (ev.getAction()) {
-                        case android.view.MotionEvent.ACTION_DOWN:
-                            downX = (int) ev.getRawX(); downY = (int) ev.getRawY(); moved = false; return true;
-                        case android.view.MotionEvent.ACTION_MOVE:
-                            if (Math.abs(ev.getRawX() - downX) > 8 || Math.abs(ev.getRawY() - downY) > 8) {
-                                moved = true;
-                                flp.x = (int) (flp.x - (ev.getRawX() - downX));
-                                flp.y = (int) (flp.y - (ev.getRawY() - downY));
-                                downX = (int) ev.getRawX(); downY = (int) ev.getRawY();
-                                try { wm.updateViewLayout(v, flp); } catch (Throwable ignored) {}
-                            }
-                            return true;
-                        case android.view.MotionEvent.ACTION_UP:
-                            if (!moved) {
-                                new Thread(() -> {
-                                    String tree = dumpTree();
-                                    GkdStore.sp(GkdAccessibilityService.this).edit()
-                                            .putString("last_snap", tree)
-                                            .putLong("last_snap_t", System.currentTimeMillis()).apply();
-                                    android.os.Handler h = new android.os.Handler(android.os.Looper.getMainLooper());
-                                    h.post(() -> Toast.makeText(GkdAccessibilityService.this, "快照已抓取 ✓", Toast.LENGTH_SHORT).show());
-                                }).start();
-                            }
-                            return true;
-                    }
-                    return false;
-                }
-            });
-            wm.addView(v, lp);
-            snapBall = v;
-        } catch (Throwable t) { Toast.makeText(this, "悬浮球失败: " + t, Toast.LENGTH_SHORT).show(); }
     }
 
     /** 界面快照: dump 所有非本应用窗口 (通知栏触发, 弹窗界面时按下拉通知) */
