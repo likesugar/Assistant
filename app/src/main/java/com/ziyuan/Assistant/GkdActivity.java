@@ -385,10 +385,8 @@ public class GkdActivity extends Activity {
                     left.setId(102);
                     left.setOrientation(LinearLayout.VERTICAL);
                     row.addView(left, new LinearLayout.LayoutParams(0, -2, 1f));
-                    TextView st = new TextView(GkdActivity.this);
+                    android.widget.Switch st = new android.widget.Switch(GkdActivity.this);
                     st.setId(103);
-                    st.setTextSize(16);
-                    st.setPadding(dp(8), 0, dp(8), 0);
                     row.addView(st);
                 }
                 android.widget.ImageView ic = row.findViewById(101);
@@ -418,13 +416,16 @@ public class GkdActivity extends Activity {
                 if (on) sub += " · 已启用";
                 pk.setText(sub);
                 pk.setTextColor(editMode ? (GkdStore.isBlocked(GkdActivity.this, ai.packageName) ? blue : txtSub) : txtSub);
-                TextView st = row.findViewById(103);
+                android.widget.Switch st = row.findViewById(103);
                 Integer tc = trigCount != null ? trigCount.get(ai.packageName) : null;
-                if (!editMode && tc != null && tc > 0) {
-                    st.setTextColor(blue); st.setText(String.valueOf(tc));
+                if (editMode) {
+                    st.setOnCheckedChangeListener(null);
+                    st.setChecked(GkdStore.isBlocked(GkdActivity.this, ai.packageName));
+                    st.setOnCheckedChangeListener((b, on2) -> GkdStore.toggleBlocked(GkdActivity.this, ai.packageName));
                 } else {
-                    st.setTextColor(on ? green : txtSub);
-                    st.setText(editMode ? (GkdStore.isBlocked(GkdActivity.this, ai.packageName) ? "⊘" : "□") : (on ? "✓" : "⃠"));
+                    st.setOnCheckedChangeListener(null);
+                    st.setChecked(GkdStore.isAppEnabled(GkdActivity.this, ai.packageName));
+                    st.setOnCheckedChangeListener((b, on2) -> GkdStore.setAppEnabled(GkdActivity.this, ai.packageName, on2));
                 }
                 row.setOnClickListener(vv -> {
                     if (editMode) {
