@@ -124,8 +124,7 @@ public class GkdAccessibilityService extends AccessibilityService {
                     }
                     if (!rule.optBoolean("enable", true)) continue;
                     String action = rule.optString("action", "click");
-                    // back 动作暂禁用: 隐藏锚点节点导致首页持续误触发返回键, 抢占手势导航 (待加 visibleToUser 校验后再启用)
-                    if (action.equals("back")) continue;
+                    // back 动作: 引擎已启用仅可见节点匹配, 隐藏锚点不再误触发, 恢复官方行为
                     JSONArray src = asArray(rule, "matches");
                     if (src == null) src = asArray(rule, "anyMatches");
                     if (src == null) continue;
