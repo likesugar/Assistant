@@ -40,6 +40,16 @@ public class GkdAccessibilityService extends AccessibilityService {
             if (k.equals("password")) return x.isPassword();
             if (k.equals("visibleToUser")) return x.isVisibleToUser();
             if (k.equals("childCount")) return x.getChildCount();
+            if (k.equals("parent")) return x.getParent();
+            if (k.equals("width") || k.equals("height") || k.equals("centerX") || k.equals("centerY")) {
+                android.graphics.Rect r = new android.graphics.Rect();
+                x.getBoundsInScreen(r);
+                if (k.equals("width")) return r.width();
+                if (k.equals("height")) return r.height();
+                if (k.equals("centerX")) return r.centerX();
+                return r.centerY();
+            }
+            if (k.equals("index") || k.equals("depth")) return null;
             return null;
         }
         public int getChildCount(Object n) { return ((AccessibilityNodeInfo) n).getChildCount(); }

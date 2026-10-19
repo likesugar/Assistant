@@ -369,7 +369,8 @@ public final class GkdSelector {
                 return a.getAttr(c.node, prop);
             }
             if (recv instanceof CharSequence && prop.equals("length")) return ((CharSequence) recv).length();
-            return null;
+            // 节点对象成员: 走 adapter 属性 (parent.childCount 等)
+            return a.getAttr(recv, prop);
         }
     }
     static final class CallV extends Value { final Value callee; final List<Value> args; CallV(Value c, List<Value> x) { callee = c; args = x; }
@@ -567,9 +568,27 @@ public final class GkdSelector {
     private static RelExpr parsePolyOrTuple(Cur c) {
         if (c.cur() != null && c.s.charAt(c.i) == '(') {
             c.i++; c.ws();
-            List<Integer> nums = new ArrayList<>();
+            // 先探测: 含逗号=元组(纯数字), 否则=多项式
+            int probe = c.i, depth = 0; boolean comma = false;
+            while (probe < c.s.length()) {
+                char ch = c.s.charAt(probe);
+                if (ch == '(') depth++;
+                else if (ch == ')') { if (depth == 0) break; depth--; }
+                else if (ch == ',' && depth == 0) { comma = true; break; }
+                probe++;
+            }
+            if (comma) {
+                List<Integer> nums = new ArrayList<>();
+                while (true) {
+                    nums.add(c.readUnsignedInt()); c.ws();
+                    if (c.cur() != null && c.s.charAt(c.i) == ',') { c.i++; c.ws(); continue; }
+                    if (c.cur() != null && c.s.charAt(c.i) == ')') { c.i++; break; }
+                    throw new IllegalArgumentException("',' 或 ')' @" + c.i);
+                }
+                return new TupleExpr(nums);
+            }
+            // 多项式 (an+b)
             int a2 = 0, b2 = 0;
-            int cnt = 0;
             while (true) {
                 int sg = 1;
                 if (c.cur() != null && (c.s.charAt(c.i) == '-' || c.s.charAt(c.i) == '+')) { if (c.s.charAt(c.i) == '-') sg = -1; c.i++; c.ws(); }
@@ -577,15 +596,12 @@ public final class GkdSelector {
                 if (c.isOneOf(DIGITS)) { co = c.readUnsignedInt(); }
                 if (c.cur() != null && c.s.charAt(c.i) == 'n') { c.i++; hasN = true; }
                 if (hasN) { a2 += sg * co; } else { b2 += sg * co; }
-                cnt++;
                 c.ws();
                 if (c.cur() != null && (c.s.charAt(c.i) == '+' || c.s.charAt(c.i) == '-')) continue;
-                if (c.cur() != null && c.s.charAt(c.i) == ',') { c.i++; c.ws(); nums.add(cnt > 0 && !hasN ? b2 : cnt); b2 = 0; cnt = 0; continue; }
                 break;
             }
             if (c.cur() != null && c.s.charAt(c.i) == ')') { c.i++; return new PolyExpr(a2, b2); }
-            // 元组 (4,5)
-            return new TupleExpr(nums);
+            throw new IllegalArgumentException("')' @" + c.i);
         }
         if (c.cur() != null && c.s.charAt(c.i) == 'n') { c.i++; return new PolyExpr(1, 0); }
         int n1 = c.readUnsignedInt();
