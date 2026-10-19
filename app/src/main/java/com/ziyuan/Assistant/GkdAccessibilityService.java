@@ -80,12 +80,13 @@ public class GkdAccessibilityService extends AccessibilityService {
             boolean hit = false;
             for (int g = 0; g < groups.length() && !hit; g++) {
                 JSONObject grp = groups.optJSONObject(g); if (grp == null) continue;
-                JSONArray rules = grp.optJSONArray("rules"); if (rules == null) continue;
+                if (!grp.optBoolean("enable", true)) continue;
+                JSONArray rules = asArray(grp, "rules"); if (rules == null) continue;
                 for (int r = 0; r < rules.length() && !hit; r++) {
                     JSONObject rule = rules.optJSONObject(r); if (rule == null) continue;
-                    JSONArray matches = rule.optJSONArray("matches");
-                    JSONArray anys = rule.optJSONArray("anyMatches");
-                    JSONArray src = matches != null ? matches : anys;
+                    if (!rule.optBoolean("enable", true)) continue;
+                    JSONArray src = asArray(rule, "matches");
+                    if (src == null) src = asArray(rule, "anyMatches");
                     if (src == null) continue;
                     for (int m = 0; m < src.length() && !hit; m++) {
                         String sel = src.optString(m, "");
@@ -128,6 +129,18 @@ public class GkdAccessibilityService extends AccessibilityService {
             }
             return t.performAction(AccessibilityNodeInfo.ACTION_SELECT);
         } catch (Throwable t) { return false; }
+    }
+
+    /** rules/matches/anyMatches 官方订阅里可能是字符串也可能是数组 */
+    private JSONArray asArray(JSONObject o, String k) {
+        Object v = o.opt(k);
+        if (v instanceof JSONArray) return (JSONArray) v;
+        if (v instanceof String) {
+            JSONArray out = new JSONArray();
+            out.put(v);
+            return out;
+        }
+        return null;
     }
 
     private String s(CharSequence c) { return c == null ? "" : c.toString(); }

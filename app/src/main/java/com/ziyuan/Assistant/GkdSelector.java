@@ -249,7 +249,7 @@ public final class GkdSelector {
         }
         boolean matchesAllOffsets() { return a == 1 && b == 0; }
         boolean checkOffset(int offset) {
-            if (minOffset == maxOffset && maxOffset != null) return offset == minOffset;
+            if (maxOffset != null && minOffset == maxOffset) return offset == minOffset;
             int y = offset + 1 - b;
             return y % a == 0 && y / a >= 1;
         }
