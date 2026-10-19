@@ -52,7 +52,14 @@ public class GkdStore {
                 if (o != null && o.optString("url", "").contains("aisouler")) { hasA = true; break; }
             }
             if (!hasA) {
-                s.put(new JSONObject().put("url", AISOULER_SUB).put("enabled", true).put("name", "AIsouler的GKD订阅"));
+                JSONObject o = new JSONObject().put("url", AISOULER_SUB).put("enabled", true).put("name", "AIsouler的GKD订阅");
+                // 内置离线数据直接填充 (装上即用, 无需联网)
+                String bi = builtinAisouler(c);
+                if (bi.length() > 0) {
+                    o.put("data", bi);
+                    try { JSONObject r = new JSONObject(bi); o.put("version", r.optInt("version")); o.put("author", r.optString("author")); } catch (Throwable ignored) {}
+                }
+                s.put(o);
                 sp(c).edit().putString("subs_json", s.toString()).apply();
             }
             return s;
@@ -68,7 +75,22 @@ public class GkdStore {
         java.util.List<Integer> todo = new ArrayList<>();
         for (int i = 0; i < s.length(); i++) {
             JSONObject o = s.optJSONObject(i);
-            if (o != null && o.optBoolean("enabled", true) && o.optString("data", "").length() == 0) todo.add(i);
+            if (o != null && o.optBoolean("enabled", true) && o.optString("data", "").length() == 0) {
+                // aisouler 优先用内置离线数据
+                if (o.optString("url", "").contains("aisouler")) {
+                    String bi = builtinAisouler(c);
+                    if (bi.length() > 0) {
+                        try {
+                            o.put("data", bi);
+                            JSONObject r = new JSONObject(bi);
+                            o.put("version", r.optInt("version")); o.put("author", r.optString("author"));
+                            saveSubs(c, s);
+                            continue;
+                        } catch (Throwable ignored) {}
+                    }
+                }
+                todo.add(i);
+            }
         }
         if (todo.isEmpty()) return false;
         autoFilling = true;
@@ -125,6 +147,21 @@ public class GkdStore {
         while ((n = in.read(buf)) > 0) bo.write(buf, 0, n);
         in.close();
         return bo.toString("UTF-8");
+    }
+
+    private static volatile String builtinCache;
+    /** 内置离线 AIsouler v406 (assets/gkd_aisouler.json) */
+    public static String builtinAisouler(Context c) {
+        if (builtinCache != null) return builtinCache;
+        try {
+            java.io.InputStream in = c.getAssets().open("gkd_aisouler.json");
+            ByteArrayOutputStream bo = new ByteArrayOutputStream();
+            byte[] buf = new byte[8192]; int n;
+            while ((n = in.read(buf)) > 0) bo.write(buf, 0, n);
+            in.close();
+            builtinCache = bo.toString("UTF-8");
+        } catch (Throwable t) { builtinCache = ""; }
+        return builtinCache;
     }
 
     private static volatile JSONObject cachedMerge;
