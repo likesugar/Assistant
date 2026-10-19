@@ -105,6 +105,12 @@ public class GkdAppRulesActivity extends Activity {
         TextView dbgV = txt(dbg, 11, 0xFFFF7043, false);
         dbgV.setPadding(dp(6), dp(2), 0, dp(2));
         list.addView(dbgV);
+        // 订阅数据缺失时自动补拉 (AIsouler 内置自动下载)
+        if (GkdStore.autoFillAsync(this, this::rebuild)) {
+            TextView filling = txt("⏳ 正在下载订阅规则…", 13, blue, true);
+            filling.setPadding(dp(6), dp(6), 0, 0);
+            list.addView(filling);
+        }
         JSONArray gl = GkdStore.globalGroups(this);
         if (gl != null && gl.length() > 0) {
             list.addView(section("全局规则"));

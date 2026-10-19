@@ -59,6 +59,26 @@ public class GkdStore {
         } catch (Throwable t) { return new JSONArray(); }
     }
     public static void saveSubs(Context c, JSONArray s) { sp(c).edit().putString("subs_json", s.toString()).apply(); cachedMerge = null; }
+    private static final android.os.Handler main = new android.os.Handler(android.os.Looper.getMainLooper());
+    private static volatile boolean autoFilling = false;
+    /** data 为空的启用订阅自动后台下载, 完成后主线程回调 (无订阅数据时自动补拉) */
+    public static boolean autoFillAsync(Context c, Runnable onDone) {
+        if (autoFilling) return false;
+        JSONArray s = subs(c);
+        java.util.List<Integer> todo = new ArrayList<>();
+        for (int i = 0; i < s.length(); i++) {
+            JSONObject o = s.optJSONObject(i);
+            if (o != null && o.optBoolean("enabled", true) && o.optString("data", "").length() == 0) todo.add(i);
+        }
+        if (todo.isEmpty()) return false;
+        autoFilling = true;
+        new Thread(() -> {
+            for (int idx : todo) { try { refreshSub(c, idx); } catch (Throwable ignored) {} }
+            autoFilling = false;
+            if (onDone != null) main.post(onDone);
+        }).start();
+        return true;
+    }
     public static void addSub(Context c, String url) {
         try {
             JSONArray s = subs(c);

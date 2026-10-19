@@ -211,6 +211,8 @@ public class GkdActivity extends Activity {
     private TextView triggerBody;
 
     private void refreshDashboard() {
+        // 订阅数据缺失时自动补拉 (AIsouler 内置自动下载)
+        GkdStore.autoFillAsync(this, () -> runOnUiThread(this::refreshDashboard));
         // 异步统计, 避免阻塞 UI
         final LinearLayout p = pages[0];
         new Thread(() -> {
