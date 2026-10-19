@@ -302,7 +302,7 @@ public class GkdAccessibilityService extends AccessibilityService {
         if (n.getText() != null && n.getText().length() > 0) sb.append(" text=\"").append(n.getText()).append('"');
         if (n.getContentDescription() != null && n.getContentDescription().length() > 0) sb.append(" desc=\"").append(n.getContentDescription()).append('"');
         if (n.isClickable()) sb.append(" clickable");
-        sb.append(" w=").append(r.width()).append(" h=").append(r.height());
+        sb.append(" x=").append(r.left).append(" y=").append(r.top).append(" w=").append(r.width()).append(" h=").append(r.height());
         sb.append(" ch=").append(n.getChildCount());
         sb.append('\n');
         for (int i = 0; i < n.getChildCount(); i++) dumpNode(n.getChild(i), depth + 1, sb);
