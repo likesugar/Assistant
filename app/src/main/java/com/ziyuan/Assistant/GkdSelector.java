@@ -51,7 +51,7 @@ public final class GkdSelector {
         Object v = a.getAttr(n, "visibleToUser");
         return !(v instanceof Boolean) || (Boolean) v;
     }
-    public static boolean VISIBLE_ONLY = true;
+    public static boolean VISIBLE_ONLY = false;
     static abstract class Expr { abstract Object eval(Ctx ctx, NodeAdapter a); }
     static final class UnitExpr extends Expr {
         final PropertySelector[] ps; final RelationSelector[] rs; final int targetIdx;
