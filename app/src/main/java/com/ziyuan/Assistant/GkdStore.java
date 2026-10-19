@@ -616,7 +616,7 @@ public class GkdStore {
             if (o != null && o.optBoolean("enabled", true) && o.optString("data", "").length() > 0)
                 return new String[]{o.optString("name", ""), String.valueOf(o.optInt("version", 0))};
         }
-        return new String[]{"", 0};
+        return new String[]{"", "0"};
     }
     public static int[] appGroupInfo(Context c, String pkg) {
         try {
