@@ -9,16 +9,44 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
-/** GKD 复刻: 无障碍执行引擎 — 订阅规则匹配 + 自动点击(跳过/关闭类节点) */
+/** GKD 复刻: 无障碍执行引擎 — @gkd-kit/selector 完整移植引擎 + 订阅规则自动点击 */
 public class GkdAccessibilityService extends AccessibilityService {
     public static volatile boolean running = false;
     public static int hitCount = 0;
-    private long lastRun = 0;
     private final Map<String, Long> pkgCooldown = new HashMap<>();
+    private final Map<String, GkdSelector.Selector> selCache = new ConcurrentHashMap<>();
+
+    /** AccessibilityNodeInfo 适配器: 属性名对齐 GKD 官方 A11yContext */
+    private final GkdSelector.NodeAdapter adapter = new GkdSelector.NodeAdapter() {
+        public String getName(Object n) { return s(((AccessibilityNodeInfo) n).getClassName()); }
+        public Object getAttr(Object n, String k) {
+            AccessibilityNodeInfo x = (AccessibilityNodeInfo) n;
+            if (k.equals("id")) return s(x.getViewIdResourceName());
+            if (k.equals("vid")) { String f = s(x.getViewIdResourceName()); int i = f.lastIndexOf('/'); return i >= 0 ? f.substring(i + 1) : f; }
+            if (k.equals("name")) return s(x.getClassName());
+            if (k.equals("text")) return x.getText();
+            if (k.equals("desc")) return x.getContentDescription();
+            if (k.equals("clickable")) return x.isClickable();
+            if (k.equals("longClickable")) return x.isLongClickable();
+            if (k.equals("checkable")) return x.isCheckable();
+            if (k.equals("checked")) return x.isChecked();
+            if (k.equals("selected")) return x.isSelected();
+            if (k.equals("focusable")) return x.isFocusable();
+            if (k.equals("enabled")) return x.isEnabled();
+            if (k.equals("scrollable")) return x.isScrollable();
+            if (k.equals("password")) return x.isPassword();
+            if (k.equals("visibleToUser")) return x.isVisibleToUser();
+            if (k.equals("childCount")) return x.getChildCount();
+            return null;
+        }
+        public int getChildCount(Object n) { return ((AccessibilityNodeInfo) n).getChildCount(); }
+        public Object getChild(Object n, int i) { return ((AccessibilityNodeInfo) n).getChild(i); }
+        public Object getParent(Object n) { return ((AccessibilityNodeInfo) n).getParent(); }
+        public Object getRoot(Object n) { return getRootInActiveWindow(); }
+    };
 
     @Override
     public void onServiceConnected() {
@@ -43,8 +71,7 @@ public class GkdAccessibilityService extends AccessibilityService {
         if (pkg.equals(getPackageName())) return;
         long now = System.currentTimeMillis();
         Long cd = pkgCooldown.get(pkg);
-        if (cd != null && now - cd < 1500) return; // 同包冷却防刷
-        lastRun = now;
+        if (cd != null && now - cd < 1500) return;
         try {
             JSONArray groups = GkdStore.enabledRules(this, pkg);
             if (groups == null || groups.length() == 0) return;
@@ -77,72 +104,30 @@ public class GkdAccessibilityService extends AccessibilityService {
         } catch (Throwable ignored) {}
     }
 
-    /** 简化选择器: [attr op value] 单段/多段 ' > ' 链, 支持 text/id/desc, = != *= ^=(含GKD vid*=写法) */
     private boolean tryMatchAndClick(AccessibilityNodeInfo root, String selector) {
         try {
-            selector = selector.replace("''", "\"");
-            // 拆段: GKD 选择器常带 [attr] 或 @ViewById + [attr], 这里只处理 [...] 链
-            java.util.List<String[]> parts = new java.util.ArrayList<>();
-            java.util.regex.Matcher mm = java.util.regex.Pattern.compile("\\[([^\\]]+)\\]").matcher(selector);
-            while (mm.find()) {
-                String seg = mm.group(1).trim();
-                String[] c = parseSeg(seg);
-                if (c != null) parts.add(c);
+            GkdSelector.Selector sel = selCache.get(selector);
+            if (sel == null) {
+                sel = GkdSelector.parse(selector);
+                if (selCache.size() > 500) selCache.clear();
+                selCache.put(selector, sel);
             }
-            if (parts.isEmpty()) return false;
-            java.util.List<AccessibilityNodeInfo> cur = new java.util.ArrayList<>();
-            cur.add(root);
-            for (String[] c : parts) {
-                java.util.List<AccessibilityNodeInfo> next = new java.util.ArrayList<>();
-                for (AccessibilityNodeInfo n : cur) {
-                    for (int i = 0; i < n.getChildCount(); i++) {
-                        AccessibilityNodeInfo ch = n.getChild(i);
-                        if (ch != null && segMatch(ch, c)) next.add(ch);
-                    }
-                }
-                cur = next;
-                if (cur.isEmpty()) return false;
+            Object target = sel.match(root, adapter);
+            if (!(target instanceof AccessibilityNodeInfo)) return false;
+            AccessibilityNodeInfo t = (AccessibilityNodeInfo) target;
+            // 目标不可点时向下/向上找可点节点
+            if (t.isClickable()) return t.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+            for (int i = 0; i < t.getChildCount(); i++) {
+                AccessibilityNodeInfo c = t.getChild(i);
+                if (c != null && c.isClickable()) return c.performAction(AccessibilityNodeInfo.ACTION_CLICK);
             }
-            // 倒数第一段命中即点; 若最后要求点击目标(text含跳过/关闭/取消/以后/知道) 优先
-            AccessibilityNodeInfo target = cur.get(cur.size() - 1);
-            return target.performAction(AccessibilityNodeInfo.ACTION_CLICK)
-                    || target.performAction(AccessibilityNodeInfo.ACTION_SELECT);
+            AccessibilityNodeInfo pp = t.getParent();
+            while (pp != null) {
+                if (pp.isClickable()) return pp.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                pp = pp.getParent();
+            }
+            return t.performAction(AccessibilityNodeInfo.ACTION_SELECT);
         } catch (Throwable t) { return false; }
-    }
-
-    private String[] parseSeg(String seg) {
-        // attr op value
-        String[] ops = {"*=", "^=", "$=", "!=", "="};
-        for (String op : ops) {
-            int ix = seg.indexOf(op);
-            if (ix > 0) {
-                String k = seg.substring(0, ix).trim().replace("\"", "");
-                String v = seg.substring(ix + op.length()).trim();
-                if (v.length() >= 2 && v.startsWith("'") && v.endsWith("'")) v = v.substring(1, v.length() - 1);
-                else if (v.length() >= 2 && v.startsWith("\"") && v.endsWith("\"")) v = v.substring(1, v.length() - 1);
-                return new String[]{k, op, v};
-            }
-        }
-        return new String[]{seg, "?", ""};
-    }
-
-    private boolean segMatch(AccessibilityNodeInfo n, String[] c) {
-        String k = c[0], op = c[1], v = c[2];
-        String val;
-        if (k.equals("text") || k.endsWith("text")) val = s(n.getText());
-        else if (k.equals("desc") || k.endsWith("description")) val = s(n.getContentDescription());
-        else if (k.equals("id") || k.equals("vid") || k.endsWith("id")) {
-            String full = s(n.getViewIdResourceName());
-            int ix = full.lastIndexOf('/');
-            val = ix >= 0 ? full.substring(ix + 1) : full;
-        } else if (k.equals("name")) val = s(n.getClassName());
-        else val = s(n.getText()) + s(n.getContentDescription());
-        if (op.equals("=")) return val.equals(v);
-        if (op.equals("!=")) return !val.equals(v);
-        if (op.equals("*=")) return val.contains(v);
-        if (op.equals("^=")) return val.startsWith(v);
-        if (op.equals("$=")) return val.endsWith(v);
-        return false;
     }
 
     private String s(CharSequence c) { return c == null ? "" : c.toString(); }
