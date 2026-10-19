@@ -303,16 +303,33 @@ public class GkdActivity extends Activity {
     private ListView lv;
     private String query = "";
     private boolean onlySub = false;
+    private int sortMode = 0;      // 0=应用名 1=最近触发 2=触发次数
+    private boolean sysGroup = false, userGroup = true;
+    private boolean editMode = false; // 白名单编辑模式
+    private TextView titleBar;
     private void buildAppList() {
         LinearLayout p = pages[2];
-        // 顶栏: 应用 + 筛选
+        android.content.SharedPreferences prefs = GkdStore.sp(this);
+        sortMode = prefs.getInt("gkd_sort", 0);
+        sysGroup = prefs.getBoolean("gkd_sysgroup", false);
+        userGroup = prefs.getBoolean("gkd_usergroup", true);
+        // 顶栏: 应用 + 白名单编辑 + 筛选 + 搜索 (官方三图标)
         LinearLayout top = new LinearLayout(this);
         top.setOrientation(LinearLayout.HORIZONTAL); top.setGravity(Gravity.CENTER_VERTICAL);
-        TextView title = txt("应用", 22, txtMain, true);
-        top.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
-        TextView fBtn = txt(onlySub ? "◧" : "▤", 18, onlySub ? blue : txtSub, false);
+        titleBar = txt("应用", 22, txtMain, true);
+        top.addView(titleBar, new LinearLayout.LayoutParams(0, -2, 1f));
+        TextView wBtn = txt("⊘", 17, txtSub, false);
+        wBtn.setPadding(dp(12), 0, dp(12), 0);
+        wBtn.setOnClickListener(v -> {
+            editMode = !editMode;
+            titleBar.setText(editMode ? "应用白名单" : "应用");
+            wBtn.setTextColor(editMode ? blue : txtSub);
+            ((BaseAdapter) lv.getAdapter()).notifyDataSetChanged();
+        });
+        top.addView(wBtn);
+        TextView fBtn = txt("▤", 18, txtSub, false);
         fBtn.setPadding(dp(12), 0, dp(12), 0);
-        fBtn.setOnClickListener(v -> { onlySub = !onlySub; applyFilter(); });
+        fBtn.setOnClickListener(v -> showFilterMenu(fBtn));
         top.addView(fBtn);
         TextView sBtn = txt("🔍", 16, txtSub, false);
         sBtn.setPadding(dp(12), 0, dp(4), 0);
@@ -388,27 +405,81 @@ public class GkdActivity extends Activity {
                 name.setText(getPackageManager().getApplicationLabel(ai).toString());
                 int[] info = infoMap != null ? infoMap.get(ai.packageName) : null;
                 String sub;
-                if (info == null) sub = "无订阅规则";
+                if (editMode) sub = GkdStore.isBlocked(this, ai.packageName) ? "已屏蔽匹配" : "参与匹配";
+                else if (info == null) sub = ai.packageName; // 官方: 无规则时显示 appId
                 else {
                     sub = info[0] + "全局/" + info[1] + "组规则";
                     if (info[1] > 0 && (info[2] != info[1])) sub += "/" + info[2] + "启用/" + info[3] + "关闭";
                 }
-                boolean on = GkdStore.isAppEnabled(GkdActivity.this, ai.packageName);
+                boolean on = !editMode && GkdStore.isAppEnabled(GkdActivity.this, ai.packageName);
                 if (on) sub += " · 已启用";
                 pk.setText(sub);
+                pk.setTextColor(editMode ? (GkdStore.isBlocked(this, ai.packageName) ? blue : txtSub) : txtSub);
                 TextView st = row.findViewById(103);
-                st.setTextColor(on ? green : txtSub);
-                st.setText(on ? "✓" : "⃠");
+                Integer tc = trigCount != null ? trigCount.get(ai.packageName) : null;
+                if (!editMode && tc != null && tc > 0) {
+                    st.setTextColor(blue); st.setText(String.valueOf(tc));
+                } else {
+                    st.setTextColor(on ? green : txtSub);
+                    st.setText(editMode ? (GkdStore.isBlocked(this, ai.packageName) ? "⊘" : "□") : (on ? "✓" : "⃠"));
+                }
                 row.setOnClickListener(vv -> {
+                    if (editMode) {
+                        GkdStore.toggleBlocked(GkdActivity.this, ai.packageName);
+                        ((BaseAdapter) lv.getAdapter()).notifyDataSetChanged();
+                        return;
+                    }
                     Intent ri = new Intent(GkdActivity.this, GkdAppRulesActivity.class);
                     ri.putExtra("pkg", ai.packageName);
                     ri.putExtra("name", getPackageManager().getApplicationLabel(ai).toString());
                     startActivity(ri);
                 });
+                row.setAlpha(editMode || !GkdStore.isBlocked(this, ai.packageName) ? 1f : 0.55f);
                 return row;
             }
         });
         p.addView(lv, new LinearLayout.LayoutParams(-1, 0, 1f));
+    }
+
+    /** 官方筛选菜单: 排序(单选) + 分组(系统/用户) + 仅订阅应用 */
+    private void showFilterMenu(View anchor) {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(dp(20), dp(10), dp(20), dp(4));
+        box.addView(txt("排序", 13, txtSub, true));
+        String[] sorts = {"应用名", "最近触发", "触发次数"};
+        int[] selSort = {sortMode};
+        android.widget.RadioGroup rg = new android.widget.RadioGroup(this);
+        for (int i = 0; i < sorts.length; i++) {
+            android.widget.RadioButton rb = new android.widget.RadioButton(this);
+            rb.setText(sorts[i]); rb.setChecked(i == sortMode); rb.setTextSize(14);
+            rb.setOnClickListener(v -> selSort[0] = i);
+            rg.addView(rb);
+        }
+        box.addView(rg);
+        box.addView(txt("分组", 13, txtSub, true));
+        android.content.SharedPreferences prefs = GkdStore.sp(this);
+        android.widget.CheckBox cbU = new android.widget.CheckBox(this);
+        cbU.setText("用户应用"); cbU.setChecked(userGroup); cbU.setTextSize(14);
+        android.widget.CheckBox cbS = new android.widget.CheckBox(this);
+        cbS.setText("系统应用"); cbS.setChecked(sysGroup); cbS.setTextSize(14);
+        box.addView(cbU); box.addView(cbS);
+        android.widget.CheckBox cbSub = new android.widget.CheckBox(this);
+        cbSub.setText("仅显示有订阅规则的应用"); cbSub.setChecked(onlySub); cbSub.setTextSize(14);
+        box.addView(cbSub);
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("排序与分组")
+                .setView(box)
+                .setPositiveButton("确定", (d, w) -> {
+                    sortMode = selSort[0];
+                    userGroup = cbU.isChecked(); sysGroup = cbS.isChecked();
+                    onlySub = cbSub.isChecked();
+                    prefs.edit().putInt("gkd_sort", sortMode)
+                            .putBoolean("gkd_sysgroup", sysGroup)
+                            .putBoolean("gkd_usergroup", userGroup).apply();
+                    applyFilter();
+                })
+                .setNegativeButton("取消", null).show();
     }
 
     private void applyFilter() {
@@ -417,10 +488,14 @@ public class GkdActivity extends Activity {
         final boolean os = onlySub;
         new Thread(() -> {
             Map<String, int[]> im = new HashMap<>();
+            Map<String, Integer> tm = GkdStore.triggerCounts(this);
+            Map<String, Long> lastT = GkdStore.lastTrigger(this);
             java.util.List<android.content.pm.ApplicationInfo> out = new ArrayList<>();
             for (android.content.pm.ApplicationInfo ai : appInfos) {
                 int[] info = GkdStore.appGroupInfo(this, ai.packageName);
                 if (info != null) im.put(ai.packageName, info);
+                boolean isUser = (ai.flags & android.content.pm.ApplicationInfo.FLAG_SYSTEM) == 0;
+                if (isUser ? !userGroup : !sysGroup) continue;
                 if (os && info == null) continue;
                 if (q.length() > 0) {
                     String n = getPackageManager().getApplicationLabel(ai).toString().toLowerCase();
@@ -428,9 +503,26 @@ public class GkdActivity extends Activity {
                 }
                 out.add(ai);
             }
+            // 排序
+            final Map<String, int[]> fim = im;
+            if (sortMode == 0) {
+                out.sort((a2, b2) -> getPackageManager().getApplicationLabel(a2).toString()
+                        .compareToIgnoreCase(getPackageManager().getApplicationLabel(b2).toString()));
+            } else if (sortMode == 1) {
+                out.sort((a2, b2) -> {
+                    long ta = lastT.containsKey(a2.packageName) ? lastT.get(a2.packageName) : 0;
+                    long tb = lastT.containsKey(b2.packageName) ? lastT.get(b2.packageName) : 0;
+                    return Long.compare(tb, ta);
+                });
+            } else if (sortMode == 2) {
+                out.sort((a2, b2) -> Integer.compare(
+                        tm.containsKey(b2.packageName) ? tm.get(b2.packageName) : 0,
+                        tm.containsKey(a2.packageName) ? tm.get(a2.packageName) : 0));
+            }
             final java.util.List<android.content.pm.ApplicationInfo> fout = out;
             runOnUiThread(() -> {
-                infoMap = im;
+                infoMap = fim;
+                trigCount = tm;
                 shown = fout;
                 if (lv != null) ((BaseAdapter) lv.getAdapter()).notifyDataSetChanged();
             });

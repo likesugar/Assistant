@@ -162,8 +162,46 @@ public class GkdStore {
         } catch (Throwable t) { return null; }
     }
 
+    // ===== 应用白名单(屏蔽匹配) + 触发计数 =====
+    public static java.util.Set<String> blockedApps(Context c) {
+        return sp(c).getStringSet("blocked_apps", new HashSet<>());
+    }
+    public static boolean isBlocked(Context c, String pkg) { return blockedApps(c).contains(pkg); }
+    public static void toggleBlocked(Context c, String pkg) {
+        Set<String> s = new HashSet<>(blockedApps(c));
+        if (!s.remove(pkg)) s.add(pkg);
+        sp(c).edit().putStringSet("blocked_apps", s).apply();
+    }
+    /** 每包触发次数 (从日志统计) */
+    public static Map<String, Integer> triggerCounts(Context c) {
+        Map<String, Integer> m = new HashMap<>();
+        try {
+            for (String line : logs(c).split("\n")) {
+                String[] parts = line.split(" · ");
+                if (parts.length >= 3) { String p = parts[2]; Integer v = m.get(p); m.put(p, v == null ? 1 : v + 1); }
+            }
+        } catch (Throwable ignored) {}
+        return m;
+    }
+    /** 每包最近触发时间戳(行序用) */
+    public static Map<String, Long> lastTrigger(Context c) {
+        Map<String, Long> m = new HashMap<>();
+        try {
+            java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("MM-dd HH:mm", java.util.Locale.CHINA);
+            String[] lines = logs(c).split("\n");
+            for (int i = lines.length - 1; i >= 0; i--) {
+                String[] parts = lines[i].split(" · ");
+                if (parts.length >= 3 && !m.containsKey(parts[2])) {
+                    try { m.put(parts[2], f.parse(parts[0]).getTime()); } catch (Throwable ignored) {}
+                }
+            }
+        } catch (Throwable ignored) {}
+        return m;
+    }
+
     /** 取某包启用的规则组(含 per-app 覆盖开关与自定义组) */
     public static JSONArray enabledRules(Context c, String pkg) {
+        if (isBlocked(c, pkg)) return null; // 白名单(屏蔽匹配)
         if (!isAppEnabled(c, pkg)) return null;
         try {
             JSONObject root = subRoot(c); if (root == null) return null;
