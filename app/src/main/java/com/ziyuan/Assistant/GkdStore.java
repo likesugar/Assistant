@@ -18,6 +18,19 @@ import java.util.Set;
 /** GKD 复刻: 订阅存储/下载 + 规则索引 + 日志 */
 public class GkdStore {
     private static final String PREF = "gkd";
+
+    private static volatile JSONObject cachedRoot; private static String cachedRawSig = "";
+    /** 订阅解析一次全局缓存 (卡顿根因: 每行重解析 545KB) */
+    public static JSONObject subRoot(Context c) {
+        String raw = subRaw(c);
+        if (raw.length() == 0) { cachedRoot = null; cachedRawSig = ""; return null; }
+        if (cachedRoot != null && raw.length() == cachedRawSig.length() && raw.equals(cachedRawSig)) return cachedRoot;
+        try {
+            cachedRoot = new JSONObject(stripJson5(raw));
+            cachedRawSig = raw;
+        } catch (Throwable t) { cachedRoot = null; }
+        return cachedRoot;
+    }
     public static final String DEFAULT_SUB = "https://registry.npmmirror.com/@gkd-kit/subscription/latest/files/dist/gkd.json5";
 
     public static SharedPreferences sp(Context c) { return c.getSharedPreferences(PREF, Context.MODE_PRIVATE); }

@@ -21,7 +21,11 @@ import android.widget.Toast;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import android.graphics.drawable.Drawable;
 
 /** GKD(去广告) 复刻页 — 四Tab: 仪表盘/应用列表/订阅/设置 (源: gkd-kit/gkd) */
 public class GkdActivity extends Activity {
@@ -146,10 +150,13 @@ public class GkdActivity extends Activity {
         c0.addView(btn);
         p.addView(c0);
 
-        // 触发记录卡 1:1
+        // 触发记录卡 1:1: 卡内列真实条目(最近3条), 点击弹全量
         LinearLayout pr = new LinearLayout(this); pr.setOrientation(LinearLayout.VERTICAL);
         TextView rs = buildDashCard(pr, "🕘", "触发记录", "规则误触可定位关闭");
         rs.setTextColor(blue);
+        triggerBody = txt("", 12, txtSub, false);
+        triggerBody.setPadding(dp(18), dp(8), dp(6), 0);
+        pr.addView(triggerBody);
         pr.setOnClickListener(v -> {
             String logs = GkdStore.logs(this);
             new android.app.AlertDialog.Builder(this)
@@ -161,6 +168,7 @@ public class GkdActivity extends Activity {
         p.addView(pr, new LinearLayout.LayoutParams(-1, -2));
         refreshDashboard();
     }
+    private TextView triggerBody;
 
     private void refreshDashboard() {
         // 异步统计, 避免阻塞 UI
@@ -171,6 +179,14 @@ public class GkdActivity extends Activity {
             final String logs = GkdStore.logs(this);
             final String recent = logs.isEmpty() ? "暂无触发" : logs.split("\n")[0];
             runOnUiThread(() -> {
+                // 触发记录卡内条目
+                if (triggerBody != null) {
+                    String[] ls = logs.isEmpty() ? new String[0] : logs.split("\n");
+                    StringBuilder tb = new StringBuilder();
+                    for (int i = 0; i < ls.length && i < 3; i++) tb.append("· ").append(ls[i]).append(i < 2 && i < ls.length - 1 ? "\n" : "");
+                    triggerBody.setText(tb.length() == 0 ? "· 暂无触发" : tb.toString());
+                    triggerBody.setTextColor(ls.length == 0 ? txtSub : txtMain);
+                }
                 // 移除旧概览卡重建
                 for (int i = p.getChildCount() - 1; i >= 0; i--) {
                     View ch = p.getChildAt(i);
@@ -197,6 +213,12 @@ public class GkdActivity extends Activity {
                 TextView line1 = txt("📊 " + st[0] + "全局/" + st[1] + "应用/" + st[2] + "规则/" + st[3] + "触发", 14, txtMain, true);
                 line1.setPadding(dp(4), dp(10), 0, 0);
                 c.addView(line1);
+                if (subName != null) {
+                    TextView line0 = txt("订阅: " + subName + " · " + (GkdStore.subUrl(this).contains("gkd-kit/subscription") ? "官方源" : "自定义源"), 12, txtSub, false);
+                    line0.setPadding(dp(4), dp(6), 0, 0);
+                    line0.setMaxLines(1); line0.setEllipsize(TextUtils.TruncateAt.END);
+                    c.addView(line0);
+                }
                 TextView line2 = txt("最近触发: " + recent, 13, blue, true);
                 line2.setPadding(dp(4), dp(4), 0, 0);
                 line2.setMaxLines(2); line2.setEllipsize(TextUtils.TruncateAt.END);
@@ -224,6 +246,7 @@ public class GkdActivity extends Activity {
     // ===== Tab 应用 1:1 图2 =====
     private java.util.List<android.content.pm.ApplicationInfo> appInfos;
     private java.util.List<android.content.pm.ApplicationInfo> shown;
+    private Map<String, int[]> infoMap;
     private ListView lv;
     private String query = "";
     private boolean onlySub = false;
@@ -264,54 +287,68 @@ public class GkdActivity extends Activity {
         shown = new ArrayList<>(appInfos);
         lv = new ListView(this);
         lv.setDivider(null);
+        final Map<String, android.graphics.drawable.Drawable> iconCache = new HashMap<>();
         lv.setAdapter(new BaseAdapter() {
             public int getCount() { return shown.size(); }
             public Object getItem(int i) { return shown.get(i); }
             public long getItemId(int i) { return i; }
-            public View getView(int i, View v, ViewGroup parent) {
+            public View getView(int i, View cv, ViewGroup parent) {
                 android.content.pm.ApplicationInfo ai = shown.get(i);
-                LinearLayout row = new LinearLayout(GkdActivity.this);
-                row.setOrientation(LinearLayout.HORIZONTAL);
-                row.setGravity(Gravity.CENTER_VERTICAL);
-                row.setPadding(dp(10), dp(8), dp(10), dp(8));
-                // 图标
-                android.widget.ImageView ic = new android.widget.ImageView(GkdActivity.this);
-                try {
-                    android.graphics.drawable.Drawable dw = getPackageManager().getApplicationIcon(ai.packageName);
-                    ic.setImageDrawable(dw);
-                } catch (Throwable t) { ic.setImageResource(android.R.drawable.sym_def_app_icon); }
-                GradientDrawable clip = new GradientDrawable();
-                clip.setCornerRadius(dp(12));
-                ic.setClipToOutline(true);
-                ic.setBackground(clip);
-                row.addView(ic, dp(46), dp(46));
-                // 名称+计数
-                LinearLayout left = new LinearLayout(GkdActivity.this);
-                left.setOrientation(LinearLayout.VERTICAL);
-                TextView name = txt(getPackageManager().getApplicationLabel(ai).toString(), 15, txtMain, true);
-                name.setPadding(dp(12), 0, 0, 0);
-                left.addView(name);
-                int[] info = GkdStore.appGroupInfo(GkdActivity.this, ai.packageName);
+                LinearLayout row;
+                if (cv instanceof LinearLayout) { row = (LinearLayout) cv; }
+                else {
+                    row = new LinearLayout(GkdActivity.this);
+                    row.setOrientation(LinearLayout.HORIZONTAL);
+                    row.setGravity(Gravity.CENTER_VERTICAL);
+                    row.setPadding(dp(10), dp(8), dp(10), dp(8));
+                    android.widget.ImageView ic = new android.widget.ImageView(GkdActivity.this);
+                    ic.setId(101);
+                    GradientDrawable clip = new GradientDrawable();
+                    clip.setCornerRadius(dp(12));
+                    ic.setClipToOutline(true);
+                    ic.setBackground(clip);
+                    row.addView(ic, dp(46), dp(46));
+                    LinearLayout left = new LinearLayout(GkdActivity.this);
+                    left.setId(102);
+                    left.setOrientation(LinearLayout.VERTICAL);
+                    row.addView(left, new LinearLayout.LayoutParams(0, -2, 1f));
+                    TextView st = new TextView(GkdActivity.this);
+                    st.setId(103);
+                    st.setTextSize(16);
+                    st.setPadding(dp(8), 0, dp(8), 0);
+                    row.addView(st);
+                }
+                android.widget.ImageView ic = row.findViewById(101);
+                Drawable dw = iconCache.get(ai.packageName);
+                if (dw == null) {
+                    try { dw = getPackageManager().getApplicationIcon(ai.packageName); } catch (Throwable t) { dw = getResources().getDrawable(android.R.drawable.sym_def_app_icon); }
+                    iconCache.put(ai.packageName, dw);
+                }
+                ic.setImageDrawable(dw);
+                LinearLayout left = row.findViewById(102);
+                TextView name = (TextView) left.getChildAt(0);
+                TextView pk = (TextView) left.getChildAt(1);
+                if (name == null) {
+                    name = txt("", 15, txtMain, true); name.setPadding(dp(12), 0, 0, 0); left.addView(name);
+                    pk = txt("", 12, txtSub, false); pk.setPadding(dp(12), dp(1), 0, 0); left.addView(pk);
+                }
+                name.setText(getPackageManager().getApplicationLabel(ai).toString());
+                int[] info = infoMap != null ? infoMap.get(ai.packageName) : null;
                 String sub;
                 if (info == null) sub = "无订阅规则";
                 else {
                     sub = info[0] + "全局/" + info[1] + "组规则";
                     if (info[1] > 0 && (info[2] != info[1])) sub += "/" + info[2] + "启用/" + info[3] + "关闭";
                 }
-                if (GkdStore.isAppEnabled(GkdActivity.this, ai.packageName)) sub += " · 已启用";
-                TextView pk = txt(sub, 12, txtSub, false);
-                pk.setPadding(dp(12), dp(1), 0, 0);
-                left.addView(pk);
-                left.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1f));
-                row.addView(left);
-                // 右侧开关状态
                 boolean on = GkdStore.isAppEnabled(GkdActivity.this, ai.packageName);
-                TextView st = txt(on ? "✓" : "⃠", 16, on ? green : txtSub, false);
-                st.setPadding(dp(8), 0, dp(8), 0);
-                row.addView(st);
+                if (on) sub += " · 已启用";
+                pk.setText(sub);
+                TextView st = row.findViewById(103);
+                st.setTextColor(on ? green : txtSub);
+                st.setText(on ? "✓" : "⃠");
                 row.setOnClickListener(vv -> {
-                    GkdStore.setAppEnabled(GkdActivity.this, ai.packageName, !on);
-                    applyFilter();
+                    GkdStore.setAppEnabled(GkdActivity.this, ai.packageName, !GkdStore.isAppEnabled(GkdActivity.this, ai.packageName));
+                    ((BaseAdapter) lv.getAdapter()).notifyDataSetChanged();
                 });
                 return row;
             }
@@ -321,15 +358,28 @@ public class GkdActivity extends Activity {
 
     private void applyFilter() {
         shown = new ArrayList<>();
-        for (android.content.pm.ApplicationInfo ai : appInfos) {
-            if (onlySub && GkdStore.appGroupInfo(this, ai.packageName) == null) continue;
-            if (query.length() > 0) {
-                String n = getPackageManager().getApplicationLabel(ai).toString();
-                if (!n.toLowerCase().contains(query.toLowerCase()) && !ai.packageName.toLowerCase().contains(query.toLowerCase())) continue;
+        final String q = query.toLowerCase();
+        final boolean os = onlySub;
+        new Thread(() -> {
+            Map<String, int[]> im = new HashMap<>();
+            java.util.List<android.content.pm.ApplicationInfo> out = new ArrayList<>();
+            for (android.content.pm.ApplicationInfo ai : appInfos) {
+                int[] info = GkdStore.appGroupInfo(this, ai.packageName);
+                if (info != null) im.put(ai.packageName, info);
+                if (os && info == null) continue;
+                if (q.length() > 0) {
+                    String n = getPackageManager().getApplicationLabel(ai).toString().toLowerCase();
+                    if (!n.contains(q) && !ai.packageName.toLowerCase().contains(q)) continue;
+                }
+                out.add(ai);
             }
-            shown.add(ai);
-        }
-        ((BaseAdapter) lv.getAdapter()).notifyDataSetChanged();
+            final java.util.List<android.content.pm.ApplicationInfo> fout = out;
+            runOnUiThread(() -> {
+                infoMap = im;
+                shown = fout;
+                if (lv != null) ((BaseAdapter) lv.getAdapter()).notifyDataSetChanged();
+            });
+        }).start();
     }
 
     // ===== Tab3 订阅 =====

@@ -62,6 +62,8 @@ public class GkdAccessibilityService extends AccessibilityService {
     @Override
     public boolean onUnbind(android.content.Intent intent) { running = false; return super.onUnbind(intent); }
 
+    private final java.util.concurrent.ExecutorService exec = java.util.concurrent.Executors.newSingleThreadExecutor();
+
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         if (event == null) return;
@@ -72,7 +74,13 @@ public class GkdAccessibilityService extends AccessibilityService {
         long now = System.currentTimeMillis();
         Long cd = pkgCooldown.get(pkg);
         if (cd != null && now - cd < 1500) return;
+        // 匹配全程后台单线程, 不占主线程 (防卡顿/ANR)
+        exec.execute(() -> doMatch(pkg));
+    }
+
+    private void doMatch(String pkg) {
         try {
+            long now = System.currentTimeMillis();
             JSONArray groups = GkdStore.enabledRules(this, pkg);
             if (groups == null || groups.length() == 0) return;
             AccessibilityNodeInfo root = getRootInActiveWindow();
