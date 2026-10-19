@@ -638,6 +638,21 @@ public final class GkdSelector {
     }
     private static PropExpr parsePropExpr(Cur c) {
         c.ws();
+        if (c.cur() != null && c.s.charAt(c.i) == '!') {
+            // !xxx 但不能是 !*= 等比较算子前缀: 比较算子只在二元表达式内出现
+            if (!c.s.startsWith("!*=", c.i) && !c.s.startsWith("!^=", c.i) && !c.s.startsWith("!$=", c.i) && !c.s.startsWith("!~=", c.i)) {
+                c.i++;
+                return new NotP(parsePropExpr(c));
+            }
+        }
+        if (c.cur() != null && c.s.charAt(c.i) == '(') {
+            c.i++;
+            PropExpr e = parsePropOr(c);
+            c.ws();
+            if (c.cur() == null || c.s.charAt(c.i) != ')') throw new IllegalArgumentException("')' @" + c.i);
+            c.i++;
+            return e;
+        }
         boolean neg = false;
         while (c.cur() != null && c.s.charAt(c.i) == '!') { neg = !neg; c.i++; c.ws(); }
         PropExpr base;
