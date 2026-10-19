@@ -110,11 +110,11 @@ public class GkdAppRulesActivity extends Activity {
                 String name = g.optString("name", "全局" + i);
                 boolean def = g.optBoolean("enable", true);
                 boolean on = GkdStore.effGlobalOn(this, pkg, name, def);
-                list.addView(groupRow("⊕ " + name, g.optString("desc", ""), on, v -> {
+                list.addView(groupRow(name + " - 全局", g.optString("desc", ""), on, v -> {
                     boolean nv = !GkdStore.effGlobalOn(this, pkg, name, def);
                     GkdStore.setGlobalOv(this, pkg, name, nv);
                     rebuild();
-                }));
+                }, true));
             }
         }
         JSONArray ag = GkdStore.appGroupsRaw(this, pkg);
@@ -131,7 +131,7 @@ public class GkdAppRulesActivity extends Activity {
                     boolean nv = !GkdStore.effGroupOn(this, pkg, key, def);
                     GkdStore.setGroupOv(this, pkg, key, nv);
                     rebuild();
-                }));
+                }, false));
             }
         }
         JSONArray cs = GkdStore.customGroups(this, pkg);
@@ -140,7 +140,7 @@ public class GkdAppRulesActivity extends Activity {
             for (int i = 0; i < cs.length(); i++) {
                 JSONObject cu = cs.optJSONObject(i);
                 if (cu == null) continue;
-                list.addView(groupRow("✎ " + cu.optString("name", "自定义"), cu.optString("matches", ""), true, null));
+                list.addView(groupRow("✎ " + cu.optString("name", "自定义"), cu.optString("matches", ""), true, null, false));
             }
         }
         if (list.getChildCount() <= 1) {
@@ -182,17 +182,22 @@ public class GkdAppRulesActivity extends Activity {
         return t;
     }
 
-    private View groupRow(String title, String desc, boolean on, View.OnClickListener toggle) {
+    private View groupRow(String title, String desc, boolean on, View.OnClickListener toggle, boolean isGlobal) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.VERTICAL);
-        row.setPadding(dp(14), dp(12), dp(14), dp(12));
+        row.setPadding(dp(16), dp(14), dp(16), dp(14));
         GradientDrawable g = new GradientDrawable();
         g.setColor(cardBg); g.setCornerRadius(dp(12));
         row.setBackground(g);
         LinearLayout head = new LinearLayout(this);
         head.setOrientation(LinearLayout.HORIZONTAL);
         head.setGravity(Gravity.CENTER_VERTICAL);
-        TextView tv = txt(title, 15, txtMain, true);
+        if (isGlobal) {
+            TextView ic = txt("⊘", 15, txtSub, false);
+            ic.setPadding(dp(2), 0, dp(10), 0);
+            head.addView(ic);
+        }
+        TextView tv = txt(title, 16, txtMain, false);
         head.addView(tv, new LinearLayout.LayoutParams(0, -2, 1f));
         android.widget.Switch sw = new android.widget.Switch(this);
         sw.setChecked(on);
@@ -201,7 +206,7 @@ public class GkdAppRulesActivity extends Activity {
         head.addView(sw);
         row.addView(head);
         if (desc.length() > 0) {
-            TextView dv = txt(desc, 12, txtSub, false);
+            TextView dv = txt(desc, 13, txtSub, false);
             dv.setPadding(0, dp(4), 0, 0);
             dv.setMaxLines(2);
             dv.setEllipsize(TextUtils.TruncateAt.END);
