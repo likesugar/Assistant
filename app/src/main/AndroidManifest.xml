@@ -55,6 +55,7 @@
         <activity android:name=".GkdActivity" android:exported="false"/>
         <activity android:name=".GkdAppRulesActivity" android:exported="false"/>
         <activity android:name=".GkdLogActivity" android:exported="false"/>
+        <receiver android:name=".GkdSnapReceiver" android:exported="false"/>
         <service android:name=".GkdStatusService" android:exported="false" android:foregroundServiceType="dataSync"/>
         <service android:name=".GkdAccessibilityService"
             android:exported="false"

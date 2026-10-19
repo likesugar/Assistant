@@ -178,18 +178,29 @@ public class GkdAccessibilityService extends AccessibilityService {
         } catch (Throwable t) { return false; }
     }
 
-    /** 界面快照: 递归 dump 当前窗口树 (调规则用) */
+    /** 界面快照: dump 所有非本应用窗口 (通知栏触发, 弹窗界面时按下拉通知) */
     public static String dumpTree() {
         GkdAccessibilityService s = instance;
         if (s == null) return "无障碍服务未运行";
-        AccessibilityNodeInfo root = s.getRootInActiveWindow();
-        if (root == null) return "当前无可访问窗口";
         StringBuilder sb = new StringBuilder();
-        String pkg = root.getPackageName() == null ? "" : root.getPackageName().toString();
-        sb.append("pkg=").append(pkg).append(" act=").append(
-                s.getWindows() != null && !s.getWindows().isEmpty() && s.getWindows().get(0).getRoot() != null
-                        && s.getWindows().get(0).getRoot().getPackageName() != null ? "" : "").append("\n");
-        dumpNode(root, 0, sb);
+        try {
+            boolean any = false;
+            for (android.view.accessibility.AccessibilityWindowInfo w : s.getWindows()) {
+                AccessibilityNodeInfo r = w.getRoot();
+                if (r == null) continue;
+                String pk = r.getPackageName() == null ? "" : r.getPackageName().toString();
+                if (pk.equals("com.ziyuan.Assistant")) continue;
+                any = true;
+                sb.append("== pkg=").append(pk).append(" ==\n");
+                dumpNode(r, 0, sb);
+            }
+            if (!any) {
+                AccessibilityNodeInfo root = s.getRootInActiveWindow();
+                if (root == null) return "当前无可访问窗口";
+                sb.append("== pkg=").append(root.getPackageName()).append(" ==\n");
+                dumpNode(root, 0, sb);
+            }
+        } catch (Throwable t) { sb.append("dump err: ").append(t); }
         return sb.toString();
     }
     private static void dumpNode(AccessibilityNodeInfo n, int depth, StringBuilder sb) {

@@ -29,6 +29,11 @@ public class GkdStatusService extends Service {
                 .setContentText(st[0] + "全局/" + st[1] + "应用/" + st[2] + "规则/" + st[3] + "触发")
                 .setOngoing(true)
                 .setOnlyAlertOnce(true);
+        // 抓取快照 action: 弹窗界面时下拉通知点它, 不切界面
+        android.app.PendingIntent pi = android.app.PendingIntent.getBroadcast(this, 1,
+                new Intent(this, GkdSnapReceiver.class),
+                android.app.PendingIntent.FLAG_UPDATE_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE);
+        b.addAction(new Notification.Action.Builder(null, "📷 抓取界面快照", pi).build());
         return b.build();
     }
 

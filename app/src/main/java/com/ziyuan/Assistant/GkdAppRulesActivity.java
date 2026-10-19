@@ -232,10 +232,13 @@ public class GkdAppRulesActivity extends Activity {
                 })
                 .setNegativeButton("取消", null).show();
                 // 抓取当前界面树: 切到目标弹窗界面后点此按钮, 把文本截图发开发者即可写精准规则
-                TextView snap = txt("📷 抓取当前界面快照 (切到弹窗界面后点我)", 13, blue, true);
+                TextView snap = txt("📷 查看已抓快照 (弹窗界面时下拉通知点「抓取界面快照」)", 13, blue, true);
                 snap.setPadding(dp(4), dp(12), 0, 0);
                 snap.setOnClickListener(v2 -> {
-                    String tree = GkdAccessibilityService.dumpTree();
+                    String tree = GkdStore.sp(this).getString("last_snap", "");
+                    long t = GkdStore.sp(this).getLong("last_snap_t", 0);
+                    if (tree.length() == 0) { tree = "还没有快照\n开启常驻通知后, 在弹窗界面下拉通知点「📷 抓取界面快照」"; }
+                    else tree = new java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.CHINA).format(new java.util.Date(t)) + "\n" + tree;
                     android.widget.ScrollView sv2 = new android.widget.ScrollView(this);
                     TextView tv2 = txt(tree, 11, txtMain, false);
                     sv2.addView(tv2);
