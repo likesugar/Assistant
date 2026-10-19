@@ -146,7 +146,7 @@ public class GkdAccessibilityService extends AccessibilityService {
                         if (sel.length() == 0) continue;
                         if (action.equals("back")) {
                             // 动作=按返回键 (关闭弹窗类规则)
-                            if (sel.match(root, adapter) != null) {
+                            if (GkdSelector.parse(sel).match(root, adapter) != null) {
                                 hit = true;
                                 performGlobalAction(GLOBAL_ACTION_BACK);
                             }
