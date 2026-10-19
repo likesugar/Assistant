@@ -97,9 +97,7 @@ public class GkdStore {
     public static JSONArray enabledRules(Context c, String pkg) {
         if (!isAppEnabled(c, pkg)) return null;
         try {
-            String raw = subRaw(c); if (raw.length() == 0) return null;
-            raw = stripJson5(raw);
-            JSONObject root = new JSONObject(raw);
+            JSONObject root = subRoot(c); if (root == null) return null;
             JSONArray global = root.optJSONArray("globalGroups");
             JSONArray groups = root.optJSONArray("groups");
             JSONArray out = new JSONArray();
@@ -183,9 +181,8 @@ public class GkdStore {
     public static int[] stats(Context c) {
         int[] out = new int[4];
         try {
-            String raw = subRaw(c);
-            if (raw.length() == 0) return out;
-            JSONObject root = new JSONObject(stripJson5(raw));
+            JSONObject root = subRoot(c);
+            if (root == null) return out;
             JSONArray gl = root.optJSONArray("globalGroups");
             if (gl != null) for (int i = 0; i < gl.length(); i++) {
                 JSONObject g = gl.optJSONObject(i);
@@ -214,19 +211,15 @@ public class GkdStore {
     }
 
     public static String subName(Context c) {
-        try {
-            String raw = subRaw(c);
-            if (raw.length() == 0) return null;
-            return new JSONObject(stripJson5(raw)).optString("name", null);
-        } catch (Throwable t) { return null; }
+        try { JSONObject r = subRoot(c); return r == null ? null : r.optString("name", null); }
+        catch (Throwable t) { return null; }
     }
 
     /** 应用列表副标题: {全局数, 组数, 启用组, 关闭组} 未覆盖返回 null */
     public static int[] appGroupInfo(Context c, String pkg) {
         try {
-            String raw = subRaw(c);
-            if (raw.length() == 0) return null;
-            JSONObject root = new JSONObject(stripJson5(raw));
+            JSONObject root = subRoot(c);
+            if (root == null) return null;
             int global = 0;
             JSONArray gl = root.optJSONArray("globalGroups");
             if (gl != null) for (int i = 0; i < gl.length(); i++) {
