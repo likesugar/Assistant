@@ -91,6 +91,12 @@ public class GkdAppRulesActivity extends Activity {
 
     private void rebuild() {
         list.removeAllViews();
+        // 诊断行: 解析状态直接可见
+        String dbg = "诊断: subRaw=" + GkdStore.subRaw(this).length() + "B root=" + (GkdStore.subRoot(this) != null ? "OK" : "FAIL")
+                + (GkdStore.lastParseError != null ? " err=" + GkdStore.lastParseError : "");
+        TextView dbgV = txt(dbg, 11, 0xFFFF7043, false);
+        dbgV.setPadding(dp(6), dp(2), 0, dp(2));
+        list.addView(dbgV);
         JSONArray gl = GkdStore.globalGroups(this);
         if (gl != null && gl.length() > 0) {
             list.addView(section("全局规则"));
@@ -133,8 +139,8 @@ public class GkdAppRulesActivity extends Activity {
                 list.addView(groupRow("✎ " + cu.optString("name", "自定义"), cu.optString("matches", ""), true, null));
             }
         }
-        if (list.getChildCount() == 0) {
-            TextView empty = txt("该应用无订阅规则\n点右下角 + 添加自定义规则", 14, txtSub, false);
+        if (list.getChildCount() <= 1) {
+            TextView empty = txt("该应用无订阅规则\n点右下角 + 添加自定义规则", 14, txtMain, false);
             empty.setGravity(Gravity.CENTER);
             empty.setPadding(0, dp(60), 0, 0);
             list.addView(empty);

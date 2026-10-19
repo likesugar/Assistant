@@ -22,15 +22,21 @@ public class GkdStore {
     private static final String PREF = "gkd";
 
     private static volatile JSONObject cachedRoot; private static String cachedRawSig = "";
+    public static volatile String lastParseError = null;
     /** 订阅解析一次全局缓存 (卡顿根因: 每行重解析 545KB) */
     public static JSONObject subRoot(Context c) {
         String raw = subRaw(c);
-        if (raw.length() == 0) { cachedRoot = null; cachedRawSig = ""; return null; }
+        if (raw.length() == 0) { cachedRoot = null; cachedRawSig = ""; lastParseError = "订阅为空"; return null; }
         if (cachedRoot != null && raw.length() == cachedRawSig.length() && raw.equals(cachedRawSig)) return cachedRoot;
         try {
-            cachedRoot = new JSONObject(stripJson5(raw));
+            String j = stripJson5(raw);
+            cachedRoot = new JSONObject(j);
             cachedRawSig = raw;
-        } catch (Throwable t) { cachedRoot = null; }
+            lastParseError = null;
+        } catch (Throwable t) {
+            cachedRoot = null;
+            lastParseError = t.getClass().getSimpleName() + ": " + t.getMessage();
+        }
         return cachedRoot;
     }
     public static final String DEFAULT_SUB = "https://registry.npmmirror.com/@gkd-kit/subscription/latest/files/dist/gkd.json5";
