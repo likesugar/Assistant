@@ -16,6 +16,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /** GKD 官方触发记录页 1:1: 应用分组 + 蓝竖线 + 毫秒时间 + Activity + 订阅名/版本徽标 + 规则名 key/index */

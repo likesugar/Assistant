@@ -614,7 +614,7 @@ public class GkdStore {
         for (int i = 0; i < s.length(); i++) {
             JSONObject o = s.optJSONObject(i);
             if (o != null && o.optBoolean("enabled", true) && o.optString("data", "").length() > 0)
-                return new String[]{o.optString("name", ""), o.optInt("version", 0)};
+                return new String[]{o.optString("name", ""), String.valueOf(o.optInt("version", 0))};
         }
         return new String[]{"", 0};
     }
