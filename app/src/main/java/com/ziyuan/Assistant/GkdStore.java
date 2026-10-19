@@ -45,6 +45,16 @@ public class GkdStore {
                 }
                 sp(c).edit().putString("subs_json", s.toString()).apply();
             }
+            // 补种 AIsouler (官方同款订阅源), 已存在则跳过
+            boolean hasA = false;
+            for (int i = 0; i < s.length(); i++) {
+                JSONObject o = s.optJSONObject(i);
+                if (o != null && o.optString("url", "").contains("aisouler")) { hasA = true; break; }
+            }
+            if (!hasA) {
+                s.put(new JSONObject().put("url", AISOULER_SUB).put("enabled", true).put("name", "AIsouler的GKD订阅"));
+                sp(c).edit().putString("subs_json", s.toString()).apply();
+            }
             return s;
         } catch (Throwable t) { return new JSONArray(); }
     }
