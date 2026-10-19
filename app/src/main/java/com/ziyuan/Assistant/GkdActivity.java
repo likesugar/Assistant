@@ -166,6 +166,46 @@ public class GkdActivity extends Activity {
                     .setNegativeButton("关闭", null).show();
         });
         p.addView(pr, new LinearLayout.LayoutParams(-1, -2));
+
+        // 常驻通知卡 (官方 PageSwitchItemCard)
+        LinearLayout pn = card();
+        LinearLayout hp = new LinearLayout(this);
+        hp.setOrientation(LinearLayout.HORIZONTAL); hp.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout lpn = new LinearLayout(this); lpn.setOrientation(LinearLayout.VERTICAL);
+        lpn.addView(txt("常驻通知", 16, txtMain, true));
+        TextView pns = txt("显示运行状态及统计数据", 13, txtSub, false); pns.setPadding(0, dp(2), 0, 0);
+        lpn.addView(pns);
+        hp.addView(lpn, new LinearLayout.LayoutParams(0, -2, 1f));
+        android.widget.Switch swp = new android.widget.Switch(this);
+        swp.setChecked(GkdStore.sp(this).getBoolean("gkd_status_notify", false));
+        swp.setOnClickListener(v -> {
+            boolean on = swp.isChecked();
+            GkdStore.sp(this).edit().putBoolean("gkd_status_notify", on).apply();
+            try {
+                if (on) startForegroundService(new Intent(this, GkdStatusService.class));
+                else stopService(new Intent(this, GkdStatusService.class));
+            } catch (Throwable t) { Toast.makeText(this, "启动失败: " + t, Toast.LENGTH_SHORT).show(); }
+        });
+        hp.addView(swp);
+        pn.addView(hp);
+        p.addView(pn, new LinearLayout.LayoutParams(-1, -2));
+
+        // 了解 GKD 卡 (官方 PageItemCard)
+        LinearLayout lm = card();
+        LinearLayout hl2 = new LinearLayout(this);
+        hl2.setOrientation(LinearLayout.HORIZONTAL); hl2.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout ll2 = new LinearLayout(this); ll2.setOrientation(LinearLayout.VERTICAL);
+        ll2.addView(txt("了解 GKD", 16, txtMain, true));
+        TextView lms = txt("查阅规则文档和常见问题", 13, txtSub, false); lms.setPadding(0, dp(2), 0, 0);
+        ll2.addView(lms);
+        hl2.addView(ll2, new LinearLayout.LayoutParams(0, -2, 1f));
+        hl2.addView(txt("›", 20, txtSub, false));
+        lm.addView(hl2);
+        lm.setOnClickListener(v -> {
+            try { startActivity(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://github.com/gkd-kit/gkd"))); }
+            catch (Throwable t) { Toast.makeText(this, "打不开", Toast.LENGTH_SHORT).show(); }
+        });
+        p.addView(lm, new LinearLayout.LayoutParams(-1, -2));
         refreshDashboard();
     }
     private TextView triggerBody;
@@ -177,7 +217,21 @@ public class GkdActivity extends Activity {
             final int[] st = GkdStore.stats(this);
             final String subName = GkdStore.subName(this);
             final String logs = GkdStore.logs(this);
-            final String recent = logs.isEmpty() ? "暂无触发" : logs.split("\n")[0];
+            // 官方格式: 最近触发: 组名/应用名
+            String rec = null;
+            if (!logs.isEmpty()) {
+                try {
+                    String[] parts = logs.split("\n")[0].split(" · ");
+                    if (parts.length >= 3) {
+                        String grp = parts[1].contains("#") ? parts[1].split("#")[0] : parts[1];
+                        String pkgId = parts[2];
+                        String appN = pkgId;
+                        try { appN = getPackageManager().getApplicationLabel(getPackageManager().getApplicationInfo(pkgId, 0)).toString(); } catch (Throwable ignored) {}
+                        rec = grp + "/" + appN;
+                    }
+                } catch (Throwable ignored) {}
+            }
+            final String recent = rec == null ? "暂无触发" : rec;
             runOnUiThread(() -> {
                 // 触发记录卡内条目
                 if (triggerBody != null) {
@@ -220,7 +274,6 @@ public class GkdActivity extends Activity {
                     c.addView(line0);
                 }
                 TextView line2 = txt("最近触发: " + recent, 13, blue, true);
-                line2.setPadding(dp(4), dp(4), 0, 0);
                 line2.setMaxLines(2); line2.setEllipsize(TextUtils.TruncateAt.END);
                 c.addView(line2);
                 ov.addView(c);

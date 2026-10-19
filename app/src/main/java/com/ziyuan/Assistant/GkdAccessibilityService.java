@@ -108,6 +108,7 @@ public class GkdAccessibilityService extends AccessibilityService {
                 hitCount++;
                 pkgCooldown.put(pkg, now);
                 GkdStore.log(this, pkg, lastGroup);
+                GkdStatusService.refresh(this);
             } else {
                 pkgCooldown.put(pkg, now - 1200);
             }
