@@ -231,8 +231,8 @@ public class GkdAccessibilityService extends AccessibilityService {
                     android.view.WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
                     android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                     android.graphics.PixelFormat.TRANSLUCENT);
-            lp.gravity = Gravity.TOP | Gravity.END;
-            lp.x = dp(12); lp.y = dp(180);
+            lp.gravity = Gravity.TOP | Gravity.START;
+            lp.x = dp(12); lp.y = dp(160);
             // 可拖动
             final android.view.WindowManager.LayoutParams flp = lp;
             v.setOnTouchListener(new View.OnTouchListener() {
