@@ -175,12 +175,7 @@ public class GkdAccessibilityService extends AccessibilityService {
             android.graphics.Rect rr = new android.graphics.Rect();
             t.getBoundsInScreen(rr);
             if (rr.isEmpty()) return false;
-            android.graphics.Path path = new android.graphics.Path();
-            path.moveTo(rr.centerX(), rr.centerY());
-            android.accessibilityservice.GestureDescription.Builder gb =
-                    new android.accessibilityservice.GestureDescription.Builder();
-            gb.addStroke(new android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 40));
-            if (dispatchGesture(gb.build(), null, null)) return true;
+            if (gestureTap(rr.centerX(), rr.centerY())) return true;
             // 手势失败回退 performAction: 目标不可点时向下/向上找可点节点
             if (t.isClickable()) return t.performAction(AccessibilityNodeInfo.ACTION_CLICK);
             for (int i = 0; i < t.getChildCount(); i++) {
@@ -194,6 +189,28 @@ public class GkdAccessibilityService extends AccessibilityService {
             }
             return t.performAction(AccessibilityNodeInfo.ACTION_SELECT);
         } catch (Throwable t) { return false; }
+    }
+
+    /** 手势点击必须主线程派发 (后台线程调用会静默失败 → "有时跳不过") */
+    private boolean gestureTap(int x, int y) {
+        final java.util.concurrent.atomic.AtomicBoolean done = new java.util.concurrent.atomic.AtomicBoolean(false);
+        final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+            try {
+                android.graphics.Path path = new android.graphics.Path();
+                path.moveTo(x, y);
+                android.accessibilityservice.GestureDescription.Builder gb =
+                        new android.accessibilityservice.GestureDescription.Builder();
+                gb.addStroke(new android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 60));
+                boolean r = dispatchGesture(gb.build(), new android.accessibilityservice.AccessibilityService.GestureResultCallback() {
+                    @Override public void onCompleted(android.accessibilityservice.GestureDescription gestureDescription) { done.set(true); latch.countDown(); }
+                    @Override public void onCancelled(android.accessibilityservice.GestureDescription gestureDescription) { latch.countDown(); }
+                }, null);
+                if (!r) latch.countDown();
+            } catch (Throwable t2) { latch.countDown(); }
+        });
+        try { latch.await(900, java.util.concurrent.TimeUnit.MILLISECONDS); } catch (InterruptedException ignored) {}
+        return done.get();
     }
 
     /** 界面快照: dump 所有非本应用窗口 (通知栏触发, 弹窗界面时按下拉通知) */
