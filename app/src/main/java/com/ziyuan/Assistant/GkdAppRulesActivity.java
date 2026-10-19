@@ -37,6 +37,9 @@ public class GkdAppRulesActivity extends Activity {
         txtMain = dark ? 0xFFE8EAED : 0xFF1A1C1E;
         txtSub = dark ? 0xFF9AA0A6 : 0xFF5F6368;
 
+        // 最外层 FrameLayout: 内容列 + FAB 悬浮层 (垂直 LinearLayout 里 match_parent 悬浮层会挤掉 ScrollView)
+        android.widget.FrameLayout rootF = new android.widget.FrameLayout(this);
+        rootF.setBackgroundColor(bg);
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(bg);
@@ -84,8 +87,9 @@ public class GkdAppRulesActivity extends Activity {
                 Gravity.BOTTOM | Gravity.END));
         ((android.widget.FrameLayout.LayoutParams) fab.getLayoutParams()).setMargins(0, 0, dp(20), dp(24));
         fab.setOnClickListener(v -> addCustomDialog());
-        root.addView(fl, new android.widget.FrameLayout.LayoutParams(-1, -1));
-        setContentView(root);
+        rootF.addView(root, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        rootF.addView(fl, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        setContentView(rootF);
         rebuild();
     }
 
