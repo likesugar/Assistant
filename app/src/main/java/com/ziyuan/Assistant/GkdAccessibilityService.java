@@ -83,6 +83,7 @@ public class GkdAccessibilityService extends AccessibilityService {
     public boolean onUnbind(android.content.Intent intent) { running = false; return super.onUnbind(intent); }
 
     private final java.util.concurrent.ExecutorService exec = java.util.concurrent.Executors.newSingleThreadExecutor();
+    private final android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
@@ -132,10 +133,12 @@ public class GkdAccessibilityService extends AccessibilityService {
                         String sel = src.optString(m, "");
                         if (sel.length() == 0) continue;
                         if (action.equals("back")) {
-                            // 动作=按返回键 (关闭弹窗类规则)
+                            // 动作=按返回键 (关闭弹窗类规则) — 必须主线程执行
                             if (GkdSelector.parse(sel).match(root, adapter) != null) {
                                 hit = true;
-                                performGlobalAction(GLOBAL_ACTION_BACK);
+                                mainHandler.post(() -> {
+                                    try { performGlobalAction(GLOBAL_ACTION_BACK); } catch (Throwable ignored) {}
+                                });
                             }
                         } else {
                             hit = tryMatchAndClick(root, sel);
