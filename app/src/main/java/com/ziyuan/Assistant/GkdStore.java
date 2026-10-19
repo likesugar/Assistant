@@ -50,10 +50,12 @@ public class GkdStore {
     }
     public static void saveSubs(Context c, JSONArray s) { sp(c).edit().putString("subs_json", s.toString()).apply(); cachedMerge = null; }
     public static void addSub(Context c, String url) {
-        JSONArray s = subs(c);
-        s.put(new JSONObject().put("url", url).put("enabled", true).put("name", url));
-        saveSubs(c, s);
-        try { refreshSub(c, s.length() - 1); } catch (Throwable ignored) {}
+        try {
+            JSONArray s = subs(c);
+            s.put(new JSONObject().put("url", url).put("enabled", true).put("name", url));
+            saveSubs(c, s);
+            refreshSub(c, s.length() - 1);
+        } catch (Throwable ignored) {}
     }
     public static void removeSub(Context c, int idx) {
         JSONArray out = new JSONArray();
