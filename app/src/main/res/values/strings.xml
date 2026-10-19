@@ -2,4 +2,5 @@
 <resources>
     <string name="app_name">资源助手</string>
     <string name="tapper_desc">自动点击器: 无障碍手势模拟点击, 无需 root</string>
+    <string name="gkd_a11y_desc">GKD 去广告: 根据订阅规则在启用应用内自动点击跳过/关闭按钮</string>
 </resources>
