@@ -165,6 +165,7 @@ public class GkdActivity extends Activity {
     // ===== Tab3 订阅 =====
     private EditText subInput;
     private TextView subStatus;
+    private String raw = "";
     private void buildSubs() {
         LinearLayout p = pages[2];
         LinearLayout c = card();
@@ -230,7 +231,15 @@ public class GkdActivity extends Activity {
     }
 
     private void refreshSubStatus() {
-        String raw = GkdStore.subRaw(this);
+        // 清理 vc351 误存的旧错误地址订阅
+        String saved = GkdStore.subUrl(this);
+        if (saved.contains("@gkd-kit/subscribe/")) {
+            GkdStore.sp(this).edit().putString("sub_url", GkdStore.DEFAULT_SUB).remove("sub_raw").remove("sub_time").apply();
+            subInput.setText(GkdStore.DEFAULT_SUB);
+            raw = "";
+        } else {
+            raw = GkdStore.subRaw(this);
+        }
         if (raw.isEmpty()) { subStatus.setText("未添加订阅\n官方订阅地址默认已填好，点【下载/更新订阅】即可拉取 GKD 官方规则库"); return; }
         String info = "已加载 · " + new java.text.SimpleDateFormat("MM-dd HH:mm", java.util.Locale.CHINA)
                 .format(new java.util.Date(GkdStore.sp(this).getLong("sub_time", 0)));
