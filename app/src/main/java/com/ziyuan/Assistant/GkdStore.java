@@ -154,14 +154,84 @@ public class GkdStore {
         return b.toString().replaceAll("(\\{|,)(\\s*)([A-Za-z_$][A-Za-z0-9_$]*)\\s*:", "$1$2\"$3\":");
     }
 
-    public static void log(Context c, String pkg) {
+    public static void log(Context c, String pkg, String groupName) {
         try {
             SharedPreferences p = sp(c);
             String old = p.getString("logs", "");
             String line = new java.text.SimpleDateFormat("MM-dd HH:mm", java.util.Locale.CHINA)
-                    .format(new java.util.Date()) + " 命中 " + pkg;
+                    .format(new java.util.Date()) + " " + (groupName == null ? "规则" : groupName) + " · " + pkg;
             p.edit().putString("logs", line + "\n" + old).apply();
         } catch (Throwable ignored) {}
+    }
+
+    /** 仪表盘统计: [全局组, 本机启用应用数, 订阅覆盖的启用应用规则组总数, 触发次数] */
+    public static int[] stats(Context c) {
+        int[] out = new int[4];
+        try {
+            String raw = subRaw(c);
+            if (raw.length() == 0) return out;
+            JSONObject root = new JSONObject(stripJson5(raw));
+            JSONArray gl = root.optJSONArray("globalGroups");
+            if (gl != null) for (int i = 0; i < gl.length(); i++) {
+                JSONObject g = gl.optJSONObject(i);
+                if (g != null && g.optBoolean("enable", true)) out[0]++;
+            }
+            JSONArray apps = root.optJSONArray("apps");
+            Set<String> enabled = new HashSet<>();
+            JSONArray eas = new JSONArray(sp(c).getString("apps", "[]"));
+            for (int i = 0; i < eas.length(); i++) {
+                JSONObject o = eas.optJSONObject(i);
+                if (o != null && o.optBoolean("enable", false)) enabled.add(o.optString("id"));
+            }
+            if (apps != null) for (int i = 0; i < apps.length(); i++) {
+                JSONObject a = apps.optJSONObject(i);
+                if (a == null || !enabled.contains(a.optString("id"))) continue;
+                out[1]++;
+                JSONArray gs = a.optJSONArray("groups");
+                if (gs != null) for (int j = 0; j < gs.length(); j++) {
+                    JSONObject g = gs.optJSONObject(j);
+                    if (g != null && g.optBoolean("enable", true)) out[2]++;
+                }
+            }
+            out[3] = logs(c).isEmpty() ? 0 : logs(c).split("\n").length;
+        } catch (Throwable ignored) {}
+        return out;
+    }
+
+    public static String subName(Context c) {
+        try {
+            String raw = subRaw(c);
+            if (raw.length() == 0) return null;
+            return new JSONObject(stripJson5(raw)).optString("name", null);
+        } catch (Throwable t) { return null; }
+    }
+
+    /** 应用列表副标题: {全局数, 组数, 启用组, 关闭组} 未覆盖返回 null */
+    public static int[] appGroupInfo(Context c, String pkg) {
+        try {
+            String raw = subRaw(c);
+            if (raw.length() == 0) return null;
+            JSONObject root = new JSONObject(stripJson5(raw));
+            int global = 0;
+            JSONArray gl = root.optJSONArray("globalGroups");
+            if (gl != null) for (int i = 0; i < gl.length(); i++) {
+                JSONObject g = gl.optJSONObject(i);
+                if (g != null && g.optBoolean("enable", true)) global++;
+            }
+            JSONArray apps = root.optJSONArray("apps");
+            if (apps != null) for (int i = 0; i < apps.length(); i++) {
+                JSONObject a = apps.optJSONObject(i);
+                if (a == null || !pkg.equals(a.optString("id"))) continue;
+                JSONArray gs = a.optJSONArray("groups");
+                int n = gs == null ? 0 : gs.length(), on = 0;
+                if (gs != null) for (int j = 0; j < gs.length(); j++) {
+                    JSONObject g = gs.optJSONObject(j);
+                    if (g != null && g.optBoolean("enable", true)) on++;
+                }
+                return new int[]{global, n, on, n - on};
+            }
+            return null;
+        } catch (Throwable t) { return null; }
     }
 
     public static String logs(Context c) { return sp(c).getString("logs", ""); }

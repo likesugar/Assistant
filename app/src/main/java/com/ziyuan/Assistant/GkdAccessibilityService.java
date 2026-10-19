@@ -77,7 +77,7 @@ public class GkdAccessibilityService extends AccessibilityService {
             if (groups == null || groups.length() == 0) return;
             AccessibilityNodeInfo root = getRootInActiveWindow();
             if (root == null) return;
-            boolean hit = false;
+            boolean hit = false; String lastGroup = null;
             for (int g = 0; g < groups.length() && !hit; g++) {
                 JSONObject grp = groups.optJSONObject(g); if (grp == null) continue;
                 if (!grp.optBoolean("enable", true)) continue;
@@ -92,13 +92,14 @@ public class GkdAccessibilityService extends AccessibilityService {
                         String sel = src.optString(m, "");
                         if (sel.length() == 0) continue;
                         hit = tryMatchAndClick(root, sel);
+                        if (hit) lastGroup = grp.optString("name", "") + (rule.has("key") ? "#" + rule.optInt("key") : "");
                     }
                 }
             }
             if (hit) {
                 hitCount++;
                 pkgCooldown.put(pkg, now);
-                GkdStore.log(this, pkg);
+                GkdStore.log(this, pkg, lastGroup);
             } else {
                 pkgCooldown.put(pkg, now - 1200);
             }

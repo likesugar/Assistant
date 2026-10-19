@@ -26,9 +26,10 @@ import java.util.List;
 /** GKD(去广告) 复刻页 — 四Tab: 仪表盘/应用列表/订阅/设置 (源: gkd-kit/gkd) */
 public class GkdActivity extends Activity {
     private static final int[] TABS = {0, 1, 2, 3};
-    private static final String[] TAB_NAMES = {"仪表盘", "应用列表", "订阅", "设置"};
+    private static final String[] TAB_NAMES = {"首页", "订阅", "应用", "设置"};
+    private static final String[] TAB_ICONS = {"🏠", "☰", "▦", "⚙"};
     private LinearLayout[] pages = new LinearLayout[4];
-    private TextView[] tabViews = new TextView[4];
+    private LinearLayout[] tabItems = new LinearLayout[4];
     private LinearLayout body;
     private boolean dark;
     private int bg, cardBg, txtMain, txtSub, blue = 0xFF3B82F6, green = 0xFF22C55E;
@@ -63,21 +64,27 @@ public class GkdActivity extends Activity {
         body.setPadding(dp(14), dp(10), dp(14), dp(10));
         root.addView(body, new LinearLayout.LayoutParams(-1, 0, 1f));
 
-        // 底部Tab栏
+        // 底部Tab栏 1:1: 图标+文字+选中胶囊
         LinearLayout tabs = new LinearLayout(this);
         tabs.setOrientation(LinearLayout.HORIZONTAL);
         tabs.setBackgroundColor(cardBg);
-        tabs.setPadding(0, dp(8), 0, dp(8));
+        tabs.setPadding(0, dp(6), 0, dp(6));
         for (int i = 0; i < 4; i++) {
             final int idx = i;
-            TextView t = txt(TAB_NAMES[i], 13, txtSub, false);
-            t.setGravity(Gravity.CENTER);
-            t.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1f));
-            t.setOnClickListener(v -> switchTab(idx));
-            tabs.addView(t);
-            tabViews[i] = t;
+            LinearLayout item = new LinearLayout(this);
+            item.setOrientation(LinearLayout.VERTICAL);
+            item.setGravity(Gravity.CENTER);
+            TextView ic = txt(TAB_ICONS[i], 17, txtSub, false);
+            ic.setGravity(Gravity.CENTER);
+            TextView lb = txt(TAB_NAMES[i], 11, txtSub, false);
+            item.addView(ic); item.addView(lb);
+            item.setPadding(dp(20), dp(4), dp(20), dp(4));
+            item.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1f));
+            item.setOnClickListener(v -> switchTab(idx));
+            tabs.addView(item);
+            tabItems[i] = item;
         }
-        root.addView(tabs, -1, dp(56));
+        root.addView(tabs, -1, dp(60));
         setContentView(root);
 
         for (int i = 0; i < 4; i++) {
@@ -89,43 +96,164 @@ public class GkdActivity extends Activity {
         switchTab(0);
     }
 
-    // ===== Tab1 仪表盘 =====
-    private TextView a11yStatus, hitStatus;
+    // ===== Tab1 首页(仪表盘) 1:1 图1 =====
+    private TextView a11yStatus, statLine, recentLine;
+    private TextView buildDashCard(LinearLayout p, String icon, String title, String sub) {
+        LinearLayout c = card();
+        LinearLayout head = new LinearLayout(this);
+        head.setOrientation(LinearLayout.HORIZONTAL);
+        head.setGravity(Gravity.CENTER_VERTICAL);
+        TextView iv = txt(icon, 18, 0xFFFFFFFF, false);
+        iv.setGravity(Gravity.CENTER);
+        GradientDrawable ig = new GradientDrawable();
+        ig.setColor(0xFF1E6FA8); ig.setShape(GradientDrawable.OVAL);
+        iv.setBackground(ig);
+        head.addView(iv, dp(44), dp(44));
+        LinearLayout hl = new LinearLayout(this);
+        hl.setOrientation(LinearLayout.VERTICAL);
+        TextView tv = txt(title, 16, txtMain, true); tv.setPadding(dp(14), 0, 0, 0);
+        TextView sv = txt(sub, 13, txtSub, false); sv.setPadding(dp(14), dp(2), 0, 0);
+        hl.addView(tv); hl.addView(sv);
+        head.addView(hl, new LinearLayout.LayoutParams(0, -2, 1f));
+        TextView arrow = txt("›", 20, txtSub, false);
+        head.addView(arrow);
+        c.addView(head);
+        p.addView(c);
+        return sv;
+    }
     private void buildDashboard() {
         LinearLayout p = pages[0];
-        LinearLayout c1 = card();
-        TextView t1 = txt("无障碍服务", 16, txtMain, true); c1.addView(t1);
-        a11yStatus = txt("", 13, txtSub, false); a11yStatus.setPadding(0, dp(6), 0, 0); c1.addView(a11yStatus);
+        // 无障碍卡(官方 Privilege 卡位)
+        LinearLayout c0 = card();
+        a11yStatus = txt("", 13, txtSub, false);
+        LinearLayout h0 = new LinearLayout(this);
+        h0.setOrientation(LinearLayout.HORIZONTAL); h0.setGravity(Gravity.CENTER_VERTICAL);
+        TextView i0 = txt("♿", 18, 0xFFFFFFFF, false); i0.setGravity(Gravity.CENTER);
+        GradientDrawable g0 = new GradientDrawable(); g0.setColor(0xFF1E6FA8); g0.setShape(GradientDrawable.OVAL);
+        i0.setBackground(g0);
+        h0.addView(i0, dp(44), dp(44));
+        LinearLayout l0 = new LinearLayout(this); l0.setOrientation(LinearLayout.VERTICAL);
+        TextView tt0 = txt("无障碍权限", 16, txtMain, true); tt0.setPadding(dp(14), 0, 0, 0);
+        a11yStatus.setPadding(dp(14), dp(2), 0, 0);
+        l0.addView(tt0); l0.addView(a11yStatus);
+        h0.addView(l0, new LinearLayout.LayoutParams(0, -2, 1f));
+        c0.addView(h0);
         TextView btn = bigBtn("去开启无障碍");
         btn.setOnClickListener(v -> {
             try { startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)); }
             catch (Throwable t) { Toast.makeText(this, "打不开设置", Toast.LENGTH_SHORT).show(); }
         });
-        c1.addView(btn);
-        p.addView(c1);
+        c0.addView(btn);
+        p.addView(c0);
 
-        LinearLayout c2 = card();
-        c2.addView(txt("运行情况", 16, txtMain, true));
-        hitStatus = txt("", 13, txtSub, false);
-        hitStatus.setPadding(0, dp(6), 0, 0); c2.addView(hitStatus);
-        p.addView(c2);
-
-        LinearLayout c3 = card();
-        c3.addView(txt("最近日志", 16, txtMain, true));
-        TextView lg = txt(GkdStore.logs(this).isEmpty() ? "暂无日志" : GkdStore.logs(this), 12, txtSub, false);
-        lg.setPadding(0, dp(6), 0, 0); lg.setMaxLines(8); lg.setEllipsize(TextUtils.TruncateAt.END);
-        c3.addView(lg);
-        p.addView(c3);
+        // 触发记录卡 1:1
+        LinearLayout pr = new LinearLayout(this); pr.setOrientation(LinearLayout.VERTICAL);
+        TextView rs = buildDashCard(pr, "🕘", "触发记录", "规则误触可定位关闭");
+        rs.setTextColor(blue);
+        pr.setOnClickListener(v -> {
+            String logs = GkdStore.logs(this);
+            new android.app.AlertDialog.Builder(this)
+                    .setTitle("触发记录")
+                    .setMessage(logs.isEmpty() ? "暂无触发记录" : logs)
+                    .setPositiveButton("清空", (d, w) -> { GkdStore.clearLogs(this); refreshDashboard(); })
+                    .setNegativeButton("关闭", null).show();
+        });
+        p.addView(pr, new LinearLayout.LayoutParams(-1, -2));
+        refreshDashboard();
     }
 
-    // ===== Tab2 应用列表 =====
+    private void refreshDashboard() {
+        // 异步统计, 避免阻塞 UI
+        final LinearLayout p = pages[0];
+        new Thread(() -> {
+            final int[] st = GkdStore.stats(this);
+            final String subName = GkdStore.subName(this);
+            final String logs = GkdStore.logs(this);
+            final String recent = logs.isEmpty() ? "暂无触发" : logs.split("\n")[0];
+            runOnUiThread(() -> {
+                // 移除旧概览卡重建
+                for (int i = p.getChildCount() - 1; i >= 0; i--) {
+                    View ch = p.getChildAt(i);
+                    if (ch.getTag() != null && "ov".equals(ch.getTag())) p.removeView(ch);
+                }
+                LinearLayout ov = new LinearLayout(this);
+                ov.setTag("ov");
+                ov.setOrientation(LinearLayout.VERTICAL);
+                LinearLayout c = card();
+                LinearLayout head = new LinearLayout(this);
+                head.setOrientation(LinearLayout.HORIZONTAL); head.setGravity(Gravity.CENTER_VERTICAL);
+                TextView iv = txt("📊", 18, 0xFFFFFFFF, false); iv.setGravity(Gravity.CENTER);
+                GradientDrawable ig = new GradientDrawable(); ig.setColor(0xFF1E6FA8); ig.setShape(GradientDrawable.OVAL);
+                iv.setBackground(ig);
+                head.addView(iv, dp(44), dp(44));
+                LinearLayout hl = new LinearLayout(this); hl.setOrientation(LinearLayout.VERTICAL);
+                TextView tv = txt("数据概览", 16, txtMain, true); tv.setPadding(dp(14), 0, 0, 0);
+                TextView sv = txt("已开启 " + (GkdStore.subRaw(this).isEmpty() ? 0 : 1) + " 条订阅", 13, txtSub, false);
+                sv.setPadding(dp(14), dp(2), 0, 0);
+                hl.addView(tv); hl.addView(sv);
+                head.addView(hl, new LinearLayout.LayoutParams(0, -2, 1f));
+                head.addView(txt("›", 20, txtSub, false));
+                c.addView(head);
+                TextView line1 = txt("📊 " + st[0] + "全局/" + st[1] + "应用/" + st[2] + "规则/" + st[3] + "触发", 14, txtMain, true);
+                line1.setPadding(dp(4), dp(10), 0, 0);
+                c.addView(line1);
+                TextView line2 = txt("最近触发: " + recent, 13, blue, true);
+                line2.setPadding(dp(4), dp(4), 0, 0);
+                line2.setMaxLines(2); line2.setEllipsize(TextUtils.TruncateAt.END);
+                c.addView(line2);
+                ov.addView(c);
+                p.addView(ov, 1);
+            });
+        }).start();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshA11y();
+        refreshDashboard();
+    }
+
+    private void refreshA11y() {
+        if (a11yStatus == null) return;
+        boolean on = GkdAccessibilityService.running;
+        a11yStatus.setText(on ? "✓ 服务运行中 · 引擎已就绪" : "未开启 · 开启后规则引擎才能生效");
+        a11yStatus.setTextColor(on ? green : txtSub);
+    }
+
+    // ===== Tab 应用 1:1 图2 =====
     private java.util.List<android.content.pm.ApplicationInfo> appInfos;
+    private java.util.List<android.content.pm.ApplicationInfo> shown;
     private ListView lv;
+    private String query = "";
+    private boolean onlySub = false;
     private void buildAppList() {
-        LinearLayout p = pages[1];
-        TextView hint = txt("勾选要开启自动跳广告的应用（GKD 规则将在这些应用内生效）", 12, txtSub, false);
-        hint.setPadding(dp(4), dp(2), dp(4), dp(8));
-        p.addView(hint);
+        LinearLayout p = pages[2];
+        // 顶栏: 应用 + 筛选
+        LinearLayout top = new LinearLayout(this);
+        top.setOrientation(LinearLayout.HORIZONTAL); top.setGravity(Gravity.CENTER_VERTICAL);
+        TextView title = txt("应用", 22, txtMain, true);
+        top.addView(title, new LinearLayout.LayoutParams(0, -2, 1f));
+        TextView fBtn = txt(onlySub ? "◧" : "▤", 18, onlySub ? blue : txtSub, false);
+        fBtn.setPadding(dp(12), 0, dp(12), 0);
+        fBtn.setOnClickListener(v -> { onlySub = !onlySub; applyFilter(); });
+        top.addView(fBtn);
+        TextView sBtn = txt("🔍", 16, txtSub, false);
+        sBtn.setPadding(dp(12), 0, dp(4), 0);
+        sBtn.setOnClickListener(v -> {
+            android.widget.EditText et = new android.widget.EditText(this);
+            et.setHint("搜索应用名/包名");
+            et.setText(query);
+            new android.app.AlertDialog.Builder(this)
+                    .setTitle("搜索")
+                    .setView(et)
+                    .setPositiveButton("确定", (d, w) -> { query = et.getText().toString().trim(); applyFilter(); })
+                    .setNegativeButton("清除", (d, w) -> { query = ""; applyFilter(); })
+                    .show();
+        });
+        top.addView(sBtn);
+        top.setPadding(dp(6), dp(4), dp(6), dp(8));
+        p.addView(top);
         appInfos = new ArrayList<>();
         try {
             for (android.content.pm.ApplicationInfo ai : getPackageManager().getInstalledApplications(0)) {
@@ -133,33 +261,75 @@ public class GkdActivity extends Activity {
                 if (getPackageManager().getLaunchIntentForPackage(ai.packageName) != null) appInfos.add(ai);
             }
         } catch (Throwable ignored) {}
+        shown = new ArrayList<>(appInfos);
         lv = new ListView(this);
         lv.setDivider(null);
         lv.setAdapter(new BaseAdapter() {
-            public int getCount() { return appInfos.size(); }
-            public Object getItem(int i) { return appInfos.get(i); }
+            public int getCount() { return shown.size(); }
+            public Object getItem(int i) { return shown.get(i); }
             public long getItemId(int i) { return i; }
             public View getView(int i, View v, ViewGroup parent) {
-                android.content.pm.ApplicationInfo ai = appInfos.get(i);
+                android.content.pm.ApplicationInfo ai = shown.get(i);
                 LinearLayout row = new LinearLayout(GkdActivity.this);
                 row.setOrientation(LinearLayout.HORIZONTAL);
                 row.setGravity(Gravity.CENTER_VERTICAL);
-                row.setPadding(dp(10), dp(10), dp(10), dp(10));
-                TextView name = txt(getPackageManager().getApplicationLabel(ai).toString(), 14, txtMain, false);
-                TextView pk = txt(ai.packageName, 11, txtSub, false);
+                row.setPadding(dp(10), dp(8), dp(10), dp(8));
+                // 图标
+                android.widget.ImageView ic = new android.widget.ImageView(GkdActivity.this);
+                try {
+                    android.graphics.drawable.Drawable dw = getPackageManager().getApplicationIcon(ai.packageName);
+                    ic.setImageDrawable(dw);
+                } catch (Throwable t) { ic.setImageResource(android.R.drawable.sym_def_app_icon); }
+                GradientDrawable clip = new GradientDrawable();
+                clip.setCornerRadius(dp(12));
+                ic.setClipToOutline(true);
+                ic.setBackground(clip);
+                row.addView(ic, dp(46), dp(46));
+                // 名称+计数
                 LinearLayout left = new LinearLayout(GkdActivity.this);
                 left.setOrientation(LinearLayout.VERTICAL);
-                left.addView(name); left.addView(pk);
+                TextView name = txt(getPackageManager().getApplicationLabel(ai).toString(), 15, txtMain, true);
+                name.setPadding(dp(12), 0, 0, 0);
+                left.addView(name);
+                int[] info = GkdStore.appGroupInfo(GkdActivity.this, ai.packageName);
+                String sub;
+                if (info == null) sub = "无订阅规则";
+                else {
+                    sub = info[0] + "全局/" + info[1] + "组规则";
+                    if (info[1] > 0 && (info[2] != info[1])) sub += "/" + info[2] + "启用/" + info[3] + "关闭";
+                }
+                if (GkdStore.isAppEnabled(GkdActivity.this, ai.packageName)) sub += " · 已启用";
+                TextView pk = txt(sub, 12, txtSub, false);
+                pk.setPadding(dp(12), dp(1), 0, 0);
+                left.addView(pk);
                 left.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1f));
                 row.addView(left);
-                android.widget.CheckBox cb = new android.widget.CheckBox(GkdActivity.this);
-                cb.setChecked(GkdStore.isAppEnabled(GkdActivity.this, ai.packageName));
-                cb.setOnCheckedChangeListener((b, on) -> GkdStore.setAppEnabled(GkdActivity.this, ai.packageName, on));
-                row.addView(cb);
+                // 右侧开关状态
+                boolean on = GkdStore.isAppEnabled(GkdActivity.this, ai.packageName);
+                TextView st = txt(on ? "✓" : "⃠", 16, on ? green : txtSub, false);
+                st.setPadding(dp(8), 0, dp(8), 0);
+                row.addView(st);
+                row.setOnClickListener(vv -> {
+                    GkdStore.setAppEnabled(GkdActivity.this, ai.packageName, !on);
+                    applyFilter();
+                });
                 return row;
             }
         });
         p.addView(lv, new LinearLayout.LayoutParams(-1, 0, 1f));
+    }
+
+    private void applyFilter() {
+        shown = new ArrayList<>();
+        for (android.content.pm.ApplicationInfo ai : appInfos) {
+            if (onlySub && GkdStore.appGroupInfo(this, ai.packageName) == null) continue;
+            if (query.length() > 0) {
+                String n = getPackageManager().getApplicationLabel(ai).toString();
+                if (!n.toLowerCase().contains(query.toLowerCase()) && !ai.packageName.toLowerCase().contains(query.toLowerCase())) continue;
+            }
+            shown.add(ai);
+        }
+        ((BaseAdapter) lv.getAdapter()).notifyDataSetChanged();
     }
 
     // ===== Tab3 订阅 =====
@@ -167,7 +337,7 @@ public class GkdActivity extends Activity {
     private TextView subStatus;
     private String raw = "";
     private void buildSubs() {
-        LinearLayout p = pages[2];
+        LinearLayout p = pages[1];
         LinearLayout c = card();
         c.addView(txt("规则订阅", 16, txtMain, true));
         subInput = new EditText(this);
@@ -277,23 +447,20 @@ public class GkdActivity extends Activity {
     private void switchTab(int idx) {
         for (int i = 0; i < 4; i++) {
             pages[i].setVisibility(i == idx ? View.VISIBLE : View.GONE);
-            tabViews[i].setTextColor(i == idx ? blue : txtSub);
-            tabViews[i].setTypeface(null, i == idx ? Typeface.BOLD : Typeface.NORMAL);
+            LinearLayout it = tabItems[i];
+            GradientDrawable cap = new GradientDrawable();
+            cap.setColor(i == idx ? 0x338090A0 : 0x00000000);
+            cap.setCornerRadius(dp(18));
+            it.setBackground(cap);
+            TextView lb = (TextView) it.getChildAt(1);
+            lb.setTextColor(i == idx ? txtMain : txtSub);
+            lb.setTypeface(null, i == idx ? Typeface.BOLD : Typeface.NORMAL);
+            ((TextView) it.getChildAt(0)).setTextColor(i == idx ? blue : txtSub);
         }
-        if (idx == 0) refreshDash();
+        if (idx == 0) refreshDashboard();
     }
 
-    @Override
-    protected void onResume() { super.onResume(); refreshDash(); }
-
-    private void refreshDash() {
-        boolean on = GkdAccessibilityService.running;
-        a11yStatus.setText(on ? "● 运行中 — 规则匹配已生效" : "○ 未开启 — 开启后才能自动跳广告");
-        a11yStatus.setTextColor(on ? green : txtSub);
-        int apps = GkdStore.enabledApps(this).size();
-        hitStatus.setText("启用应用 " + apps + " 个 · 累计命中 " + GkdAccessibilityService.hitCount + " 次"
-                + (GkdStore.subRaw(this).isEmpty() ? "\n⚠ 还没下载订阅，规则库为空" : ""));
-    }
+    private void refreshDash() { refreshA11y(); }
 
     private LinearLayout card() {
         LinearLayout c = new LinearLayout(this);
