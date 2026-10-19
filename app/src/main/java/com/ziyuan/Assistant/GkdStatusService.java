@@ -8,15 +8,18 @@ import android.os.IBinder;
 
 /** GKD 官方「常驻通知」: 显示运行状态及统计数据 */
 public class GkdStatusService extends Service {
-    private static final String CH = "gkd_status";
+    private static final String CH = "gkd_status2";
     private static final int ID = 37201;
 
     @Override
     public void onCreate() {
         super.onCreate();
         android.app.NotificationManager nm = (android.app.NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        NotificationChannel ch = new NotificationChannel(CH, "GKD 状态", android.app.NotificationManager.IMPORTANCE_LOW);
+        NotificationChannel ch = new NotificationChannel(CH, "GKD 状态", android.app.NotificationManager.IMPORTANCE_DEFAULT);
+        ch.setShowBadge(false);
         nm.createNotificationChannel(ch);
+        // 删旧 LOW 渠道 (重要性改不动, 只能换id)
+        nm.deleteNotificationChannel("gkd_status");
         startForeground(ID, build());
     }
 
