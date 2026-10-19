@@ -146,7 +146,17 @@ public class GkdAccessibilityService extends AccessibilityService {
             Object target = sel.match(root, adapter);
             if (!(target instanceof AccessibilityNodeInfo)) return false;
             AccessibilityNodeInfo t = (AccessibilityNodeInfo) target;
-            // 目标不可点时向下/向上找可点节点
+            // 官方行为: 手势坐标点击优先 (广告 SDK 屏蔽 performAction 点击)
+            android.graphics.Rect rr = new android.graphics.Rect();
+            t.getBoundsInScreen(rr);
+            if (rr.isEmpty()) return false;
+            android.graphics.Path path = new android.graphics.Path();
+            path.moveTo(rr.centerX(), rr.centerY());
+            android.accessibilityservice.GestureDescription.Builder gb =
+                    new android.accessibilityservice.GestureDescription.Builder();
+            gb.addStroke(new android.accessibilityservice.GestureDescription.StrokeDescription(path, 0, 40));
+            if (dispatchGesture(gb.build(), null, null)) return true;
+            // 手势失败回退 performAction: 目标不可点时向下/向上找可点节点
             if (t.isClickable()) return t.performAction(AccessibilityNodeInfo.ACTION_CLICK);
             for (int i = 0; i < t.getChildCount(); i++) {
                 AccessibilityNodeInfo c = t.getChild(i);

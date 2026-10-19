@@ -352,6 +352,28 @@ public class GkdStore {
             return p == null ? null : p.optJSONArray("custom");
         } catch (Throwable t) { return null; }
     }
+    public static void setCustomEnabled(Context c, String pkg, int idx, boolean on) {
+        try {
+            JSONObject all = ovAll(c);
+            JSONObject p = all.optJSONObject(pkg);
+            JSONArray cs = p == null ? null : p.optJSONArray("custom");
+            JSONObject cu = cs == null ? null : cs.optJSONObject(idx);
+            if (cu != null) { cu.put("enabled", on); saveOv(c, all); }
+        } catch (Throwable ignored) {}
+    }
+    public static void removeCustom(Context c, String pkg, int idx) {
+        try {
+            JSONObject all = ovAll(c);
+            JSONObject p = all.optJSONObject(pkg);
+            JSONArray cs = p == null ? null : p.optJSONArray("custom");
+            if (cs != null) {
+                JSONArray out = new JSONArray();
+                for (int i = 0; i < cs.length(); i++) if (i != idx) out.put(cs.opt(i));
+                p.put("custom", out);
+                saveOv(c, all);
+            }
+        } catch (Throwable ignored) {}
+    }
 
     // ===== 应用白名单(屏蔽匹配) + 触发计数 =====
     public static java.util.Set<String> blockedApps(Context c) {
@@ -422,11 +444,11 @@ public class GkdStore {
                     out.put(g2);
                 }
             }
-            // 自定义组
+            // 自定义组 (enabled 过滤)
             JSONArray cs = customGroups(c, pkg);
             if (cs != null) for (int i = 0; i < cs.length(); i++) {
                 JSONObject cu = cs.optJSONObject(i);
-                if (cu == null) continue;
+                if (cu == null || !cu.optBoolean("enabled", true)) continue;
                 JSONObject g2 = new JSONObject();
                 g2.put("name", cu.optString("name", "自定义"));
                 JSONArray ms = new JSONArray(); ms.put(cu.optString("matches", ""));

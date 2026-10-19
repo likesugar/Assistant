@@ -148,9 +148,23 @@ public class GkdAppRulesActivity extends Activity {
         if (cs != null && cs.length() > 0) {
             list.addView(section("自定义规则"));
             for (int i = 0; i < cs.length(); i++) {
+                final int ci = i;
                 JSONObject cu = cs.optJSONObject(i);
                 if (cu == null) continue;
-                list.addView(groupRow("✎ " + cu.optString("name", "自定义"), cu.optString("matches", ""), true, null, false));
+                final boolean con = cu.optBoolean("enabled", true);
+                View row = groupRow("✎ " + cu.optString("name", "自定义"), cu.optString("matches", ""), con, v -> {
+                    GkdStore.setCustomEnabled(this, pkg, ci, !con);
+                    rebuild();
+                }, false);
+                row.setOnLongClickListener(v -> {
+                    new android.app.AlertDialog.Builder(this)
+                            .setTitle("删除自定义规则")
+                            .setMessage(cu.optString("name", ""))
+                            .setPositiveButton("删除", (d, w) -> { GkdStore.removeCustom(this, pkg, ci); rebuild(); })
+                            .setNegativeButton("取消", null).show();
+                    return true;
+                });
+                list.addView(row);
             }
         }
         if (list.getChildCount() <= 1) {
