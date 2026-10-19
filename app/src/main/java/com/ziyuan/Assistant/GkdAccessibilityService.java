@@ -84,6 +84,10 @@ public class GkdAccessibilityService extends AccessibilityService {
 
     private final java.util.concurrent.ExecutorService exec = java.util.concurrent.Executors.newSingleThreadExecutor();
     private final android.os.Handler mainHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    // ===== 官方触发调度 1:1: matchTime/actionMaximum/resetMatch =====
+    private static final class RuleState { long start; int count; String act; }
+    private final Map<String, RuleState> ruleStates = new HashMap<>();
+    private String currentPkg = null;
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
@@ -106,6 +110,8 @@ public class GkdAccessibilityService extends AccessibilityService {
             if (groups == null || groups.length() == 0) return;
             AccessibilityNodeInfo root = getRootInActiveWindow();
             if (root == null) return;
+            // app 切换时重置全部规则状态 (resetMatch: app)
+            if (!pkg.equals(currentPkg)) { ruleStates.clear(); currentPkg = pkg; }
             boolean hit = false; String lastGroup = null; int lastKey = 0; boolean lastGl = false;
             for (int g = 0; g < groups.length() && !hit; g++) {
                 Object gobj = groups.opt(g);
@@ -124,6 +130,16 @@ public class GkdAccessibilityService extends AccessibilityService {
                         } else continue;
                     }
                     if (!rule.optBoolean("enable", true)) continue;
+                    // 官方触发调度: matchTime / actionMaximum / resetMatch
+                    long matchTime = rule.optLong("matchTime", 0);
+                    int actMax = rule.optInt("actionMaximum", 0);
+                    String resetMatch = rule.optString("resetMatch", "app");
+                    String rk = pkg + "|" + grp.optInt("key", g) + "|" + rule.optInt("key", r);
+                    RuleState stt = ruleStates.get(rk);
+                    if (stt == null) { stt = new RuleState(); stt.start = now; stt.act = activity; ruleStates.put(rk, stt); }
+                    if ("activity".equals(resetMatch) && activity != null && !activity.equals(stt.act)) { stt.count = 0; stt.start = now; stt.act = activity; }
+                    if (matchTime > 0 && now - stt.start > matchTime) continue;
+                    if (actMax > 0 && stt.count >= actMax) continue;
                     String action = rule.optString("action", "click");
                     // back 动作: 引擎已启用仅可见节点匹配, 隐藏锚点不再误触发, 恢复官方行为
                     JSONArray src = asArray(rule, "matches");
@@ -147,6 +163,7 @@ public class GkdAccessibilityService extends AccessibilityService {
                             lastGroup = grp.optString("name", "");
                             lastKey = rule.optInt("key", grp.optInt("key", 0));
                             lastGl = grp.optBoolean("_gl", false);
+                            stt.count++;
                         }
                     }
                 }
