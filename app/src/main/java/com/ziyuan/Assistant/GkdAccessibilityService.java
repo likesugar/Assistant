@@ -66,7 +66,8 @@ public class GkdAccessibilityService extends AccessibilityService {
         AccessibilityServiceInfo i = new AccessibilityServiceInfo();
         i.eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED | AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED;
         i.feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC;
-        i.flags = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS | AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS;
+        i.flags = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS | AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS
+                | AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
         i.notificationTimeout = 100;
         setServiceInfo(i);
     }
@@ -184,27 +185,39 @@ public class GkdAccessibilityService extends AccessibilityService {
         if (s == null) return "无障碍服务未运行";
         StringBuilder sb = new StringBuilder();
         try {
-            boolean any = false;
+            // 优先 123云盘, 跳过自己/systemui (下拉通知面板会盖住焦点)
+            java.util.List<android.view.accessibility.AccessibilityWindowInfo> wins = new ArrayList<>();
             for (android.view.accessibility.AccessibilityWindowInfo w : s.getWindows()) {
                 AccessibilityNodeInfo r = w.getRoot();
                 if (r == null) continue;
                 String pk = r.getPackageName() == null ? "" : r.getPackageName().toString();
-                if (pk.equals("com.ziyuan.Assistant")) continue;
-                any = true;
-                sb.append("== pkg=").append(pk).append(" ==\n");
-                dumpNode(r, 0, sb);
+                if (pk.equals("com.ziyuan.Assistant") || pk.equals("com.android.systemui")) continue;
+                wins.add(w);
             }
-            if (!any) {
+            // 目标应用排前
+            wins.sort((x, y) -> {
+                boolean ax = x.getRoot().getPackageName().toString().contains("mfcloud");
+                boolean by = y.getRoot().getPackageName().toString().contains("mfcloud");
+                return ax == by ? 0 : (ax ? -1 : 1);
+            });
+            if (wins.isEmpty()) {
                 AccessibilityNodeInfo root = s.getRootInActiveWindow();
                 if (root == null) return "当前无可访问窗口";
                 sb.append("== pkg=").append(root.getPackageName()).append(" ==\n");
                 dumpNode(root, 0, sb);
+            } else {
+                for (android.view.accessibility.AccessibilityWindowInfo w : wins) {
+                    AccessibilityNodeInfo r = w.getRoot();
+                    if (sb.length() > 100000) { sb.append("\n(截断)"); break; }
+                    sb.append("== pkg=").append(r.getPackageName()).append(" type=").append(w.getType()).append(" ==\n");
+                    dumpNode(r, 0, sb);
+                }
             }
         } catch (Throwable t) { sb.append("dump err: ").append(t); }
         return sb.toString();
     }
     private static void dumpNode(AccessibilityNodeInfo n, int depth, StringBuilder sb) {
-        if (n == null || depth > 30 || sb.length() > 60000) return;
+        if (n == null || depth > 30 || sb.length() > 100000) return;
         StringBuilder ind = new StringBuilder();
         for (int i = 0; i < depth; i++) ind.append("  ");
         String cls = n.getClassName() == null ? "?" : n.getClassName().toString();
