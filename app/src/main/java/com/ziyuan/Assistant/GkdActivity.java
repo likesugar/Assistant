@@ -300,6 +300,7 @@ public class GkdActivity extends Activity {
     private java.util.List<android.content.pm.ApplicationInfo> appInfos;
     private java.util.List<android.content.pm.ApplicationInfo> shown;
     private Map<String, int[]> infoMap;
+    private Map<String, Integer> trigCount;
     private ListView lv;
     private String query = "";
     private boolean onlySub = false;
@@ -405,7 +406,7 @@ public class GkdActivity extends Activity {
                 name.setText(getPackageManager().getApplicationLabel(ai).toString());
                 int[] info = infoMap != null ? infoMap.get(ai.packageName) : null;
                 String sub;
-                if (editMode) sub = GkdStore.isBlocked(this, ai.packageName) ? "已屏蔽匹配" : "参与匹配";
+                if (editMode) sub = GkdStore.isBlocked(GkdActivity.this, ai.packageName) ? "已屏蔽匹配" : "参与匹配";
                 else if (info == null) sub = ai.packageName; // 官方: 无规则时显示 appId
                 else {
                     sub = info[0] + "全局/" + info[1] + "组规则";
@@ -414,14 +415,14 @@ public class GkdActivity extends Activity {
                 boolean on = !editMode && GkdStore.isAppEnabled(GkdActivity.this, ai.packageName);
                 if (on) sub += " · 已启用";
                 pk.setText(sub);
-                pk.setTextColor(editMode ? (GkdStore.isBlocked(this, ai.packageName) ? blue : txtSub) : txtSub);
+                pk.setTextColor(editMode ? (GkdStore.isBlocked(GkdActivity.this, ai.packageName) ? blue : txtSub) : txtSub);
                 TextView st = row.findViewById(103);
                 Integer tc = trigCount != null ? trigCount.get(ai.packageName) : null;
                 if (!editMode && tc != null && tc > 0) {
                     st.setTextColor(blue); st.setText(String.valueOf(tc));
                 } else {
                     st.setTextColor(on ? green : txtSub);
-                    st.setText(editMode ? (GkdStore.isBlocked(this, ai.packageName) ? "⊘" : "□") : (on ? "✓" : "⃠"));
+                    st.setText(editMode ? (GkdStore.isBlocked(GkdActivity.this, ai.packageName) ? "⊘" : "□") : (on ? "✓" : "⃠"));
                 }
                 row.setOnClickListener(vv -> {
                     if (editMode) {
@@ -434,7 +435,7 @@ public class GkdActivity extends Activity {
                     ri.putExtra("name", getPackageManager().getApplicationLabel(ai).toString());
                     startActivity(ri);
                 });
-                row.setAlpha(editMode || !GkdStore.isBlocked(this, ai.packageName) ? 1f : 0.55f);
+                row.setAlpha(editMode || !GkdStore.isBlocked(GkdActivity.this, ai.packageName) ? 1f : 0.55f);
                 return row;
             }
         });
