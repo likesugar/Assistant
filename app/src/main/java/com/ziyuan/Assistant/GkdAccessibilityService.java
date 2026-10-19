@@ -58,9 +58,11 @@ public class GkdAccessibilityService extends AccessibilityService {
         public Object getRoot(Object n) { return getRootInActiveWindow(); }
     };
 
+    public static volatile GkdAccessibilityService instance;
     @Override
     public void onServiceConnected() {
         running = true;
+        instance = this;
         AccessibilityServiceInfo i = new AccessibilityServiceInfo();
         i.eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED | AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED;
         i.feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC;
@@ -174,6 +176,40 @@ public class GkdAccessibilityService extends AccessibilityService {
             }
             return t.performAction(AccessibilityNodeInfo.ACTION_SELECT);
         } catch (Throwable t) { return false; }
+    }
+
+    /** 界面快照: 递归 dump 当前窗口树 (调规则用) */
+    public static String dumpTree() {
+        GkdAccessibilityService s = instance;
+        if (s == null) return "无障碍服务未运行";
+        AccessibilityNodeInfo root = s.getRootInActiveWindow();
+        if (root == null) return "当前无可访问窗口";
+        StringBuilder sb = new StringBuilder();
+        String pkg = root.getPackageName() == null ? "" : root.getPackageName().toString();
+        sb.append("pkg=").append(pkg).append(" act=").append(
+                s.getWindows() != null && !s.getWindows().isEmpty() && s.getWindows().get(0).getRoot() != null
+                        && s.getWindows().get(0).getRoot().getPackageName() != null ? "" : "").append("\n");
+        dumpNode(root, 0, sb);
+        return sb.toString();
+    }
+    private static void dumpNode(AccessibilityNodeInfo n, int depth, StringBuilder sb) {
+        if (n == null || depth > 30 || sb.length() > 60000) return;
+        StringBuilder ind = new StringBuilder();
+        for (int i = 0; i < depth; i++) ind.append("  ");
+        String cls = n.getClassName() == null ? "?" : n.getClassName().toString();
+        int dot = cls.lastIndexOf('.'); if (dot >= 0) cls = cls.substring(dot + 1);
+        String vid = n.getViewIdResourceName();
+        android.graphics.Rect r = new android.graphics.Rect();
+        n.getBoundsInScreen(r);
+        sb.append(ind).append(cls);
+        if (vid != null) sb.append(" vid=").append(vid.substring(vid.lastIndexOf('/') + 1));
+        if (n.getText() != null && n.getText().length() > 0) sb.append(" text=\"").append(n.getText()).append('"');
+        if (n.getContentDescription() != null && n.getContentDescription().length() > 0) sb.append(" desc=\"").append(n.getContentDescription()).append('"');
+        if (n.isClickable()) sb.append(" clickable");
+        sb.append(" w=").append(r.width()).append(" h=").append(r.height());
+        sb.append(" ch=").append(n.getChildCount());
+        sb.append('\n');
+        for (int i = 0; i < n.getChildCount(); i++) dumpNode(n.getChild(i), depth + 1, sb);
     }
 
     /** rules/matches/anyMatches 官方订阅里可能是字符串也可能是数组 */

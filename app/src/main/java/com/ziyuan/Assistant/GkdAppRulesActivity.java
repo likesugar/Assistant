@@ -231,6 +231,20 @@ public class GkdAppRulesActivity extends Activity {
                     rebuild();
                 })
                 .setNegativeButton("取消", null).show();
+                // 抓取当前界面树: 切到目标弹窗界面后点此按钮, 把文本截图发开发者即可写精准规则
+                TextView snap = txt("📷 抓取当前界面快照 (切到弹窗界面后点我)", 13, blue, true);
+                snap.setPadding(dp(4), dp(12), 0, 0);
+                snap.setOnClickListener(v2 -> {
+                    String tree = GkdAccessibilityService.dumpTree();
+                    android.widget.ScrollView sv2 = new android.widget.ScrollView(this);
+                    TextView tv2 = txt(tree, 11, txtMain, false);
+                    sv2.addView(tv2);
+                    new android.app.AlertDialog.Builder(this)
+                            .setTitle("界面快照 (截图发开发者)")
+                            .setView(sv2)
+                            .setPositiveButton("关闭", null).show();
+                });
+                box.addView(snap);
     }
 
     private TextView section(String s) {
