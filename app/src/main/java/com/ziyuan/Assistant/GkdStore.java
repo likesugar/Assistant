@@ -11,7 +11,9 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /** GKD 复刻: 订阅存储/下载 + 规则索引 + 日志 */
 public class GkdStore {
