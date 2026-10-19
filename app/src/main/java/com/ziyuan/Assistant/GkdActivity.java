@@ -347,8 +347,10 @@ public class GkdActivity extends Activity {
                 st.setTextColor(on ? green : txtSub);
                 st.setText(on ? "✓" : "⃠");
                 row.setOnClickListener(vv -> {
-                    GkdStore.setAppEnabled(GkdActivity.this, ai.packageName, !GkdStore.isAppEnabled(GkdActivity.this, ai.packageName));
-                    ((BaseAdapter) lv.getAdapter()).notifyDataSetChanged();
+                    Intent ri = new Intent(GkdActivity.this, GkdAppRulesActivity.class);
+                    ri.putExtra("pkg", ai.packageName);
+                    ri.putExtra("name", getPackageManager().getApplicationLabel(ai).toString());
+                    startActivity(ri);
                 });
                 return row;
             }

@@ -53,6 +53,7 @@
         <activity android:name=".TapperActivity" android:exported="false"/>
         <activity android:name=".MetronomeActivity" android:exported="false"/>
         <activity android:name=".GkdActivity" android:exported="false"/>
+        <activity android:name=".GkdAppRulesActivity" android:exported="false"/>
         <service android:name=".GkdAccessibilityService"
             android:exported="false"
             android:label="GKD 去广告"

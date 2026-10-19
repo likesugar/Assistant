@@ -93,7 +93,76 @@ public class GkdStore {
     public static String subRaw(Context c) { return sp(c).getString("sub_raw", ""); }
     public static String subUrl(Context c) { return sp(c).getString("sub_url", DEFAULT_SUB); }
 
-    /** 取某包启用的规则组(仅该包在启用列表中才返回) */
+    // ===== per-app 开关覆盖 + 自定义组 (复刻官方应用规则管理页) =====
+    /** ov JSON: {pkg:{ov:{"G组名"/"组key":bool}, custom:[{name,matches}]}} */
+    private static JSONObject ovAll(Context c) {
+        try { return new JSONObject(sp(c).getString("ov", "{}")); } catch (Throwable t) { return new JSONObject(); }
+    }
+    private static void saveOv(Context c, JSONObject all) { sp(c).edit().putString("ov", all.toString()).apply(); }
+    private static JSONObject ovPkg(Context c, String pkg) {
+        try { return ovAll(c).optJSONObject(pkg); } catch (Throwable t) { return null; }
+    }
+    private static void setOv(Context c, String pkg, String key, boolean on) {
+        try {
+            JSONObject all = ovAll(c);
+            JSONObject p = all.optJSONObject(pkg);
+            if (p == null) { p = new JSONObject(); all.put(pkg, p); }
+            JSONObject o = p.optJSONObject("ov");
+            if (o == null) { o = new JSONObject(); p.put("ov", o); }
+            o.put(key, on);
+            saveOv(c, all);
+        } catch (Throwable ignored) {}
+    }
+    public static Boolean ovOf(Context c, String pkg, String key) {
+        try {
+            JSONObject o = ovPkg(c, pkg) == null ? null : ovPkg(c, pkg).optJSONObject("ov");
+            if (o == null || !o.has(key)) return null;
+            return o.getBoolean(key);
+        } catch (Throwable t) { return null; }
+    }
+    public static boolean effGlobalOn(Context c, String pkg, String name, boolean def) {
+        Boolean v = ovOf(c, pkg, "G" + name);
+        return v == null ? def : v;
+    }
+    public static boolean effGroupOn(Context c, String pkg, int key, boolean def) {
+        Boolean v = ovOf(c, pkg, String.valueOf(key));
+        return v == null ? def : v;
+    }
+    public static void setGlobalOv(Context c, String pkg, String name, boolean on) { setOv(c, pkg, "G" + name, on); }
+    public static void setGroupOv(Context c, String pkg, int key, boolean on) { setOv(c, pkg, String.valueOf(key), on); }
+
+    public static JSONArray globalGroups(Context c) { try { JSONObject r = subRoot(c); return r == null ? null : r.optJSONArray("globalGroups"); } catch (Throwable t) { return null; } }
+    public static JSONArray appGroupsRaw(Context c, String pkg) {
+        try {
+            JSONObject r = subRoot(c); if (r == null) return null;
+            JSONArray apps = r.optJSONArray("apps");
+            if (apps != null) for (int i = 0; i < apps.length(); i++) {
+                JSONObject a = apps.optJSONObject(i);
+                if (a != null && pkg.equals(a.optString("id"))) return a.optJSONArray("groups");
+            }
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
+    public static void addCustom(Context c, String pkg, String name, String matches) {
+        try {
+            JSONObject all = ovAll(c);
+            JSONObject p = all.optJSONObject(pkg);
+            if (p == null) { p = new JSONObject(); all.put(pkg, p); }
+            JSONArray cs = p.optJSONArray("custom");
+            if (cs == null) { cs = new JSONArray(); p.put("custom", cs); }
+            cs.put(new JSONObject().put("name", name).put("matches", matches));
+            saveOv(c, all);
+        } catch (Throwable ignored) {}
+    }
+    public static JSONArray customGroups(Context c, String pkg) {
+        try {
+            JSONObject p = ovPkg(c, pkg);
+            return p == null ? null : p.optJSONArray("custom");
+        } catch (Throwable t) { return null; }
+    }
+
+    /** 取某包启用的规则组(含 per-app 覆盖开关与自定义组) */
     public static JSONArray enabledRules(Context c, String pkg) {
         if (!isAppEnabled(c, pkg)) return null;
         try {
@@ -101,17 +170,41 @@ public class GkdStore {
             JSONArray global = root.optJSONArray("globalGroups");
             JSONArray groups = root.optJSONArray("groups");
             JSONArray out = new JSONArray();
-            collectAppGroups(groups, root.optJSONArray("apps"), pkg, out);
-            // 全局组对所有启用包生效
+            // 应用专属组: effGroupOn 尊重 per-app 覆盖
+            JSONArray agr = appGroupsRaw(c, pkg);
+            if (agr != null) for (int j = 0; j < agr.length(); j++) {
+                JSONObject g = agr.optJSONObject(j);
+                if (g == null) continue;
+                if (effGroupOn(c, pkg, g.optInt("key", j), g.optBoolean("enable", true))) out.put(g);
+            }
+            if (groups != null) for (int i = 0; i < groups.length(); i++) {
+                JSONObject g = groups.optJSONObject(i);
+                if (g != null && g.optBoolean("enable", true)) out.put(g);
+            }
+            // 全局组: effGlobalOn 尊重 per-app 覆盖
             if (global != null) {
                 for (int i = 0; i < global.length(); i++) {
                     JSONObject g = global.optJSONObject(i);
-                    if (g != null && g.optBoolean("enable", true)) {
-                        JSONObject g2 = new JSONObject(g.toString());
-                        g2.put("rules", g2.optJSONArray("rules") != null ? g2.optJSONArray("rules") : g2.optJSONArray("groups"));
-                        out.put(g2);
-                    }
+                    if (g == null) continue;
+                    String name = g.optString("name", "全局" + i);
+                    if (!effGlobalOn(c, pkg, name, g.optBoolean("enable", true))) continue;
+                    JSONObject g2 = new JSONObject(g.toString());
+                    g2.put("rules", g2.optJSONArray("rules") != null ? g2.optJSONArray("rules") : g2.optJSONArray("groups"));
+                    out.put(g2);
                 }
+            }
+            // 自定义组
+            JSONArray cs = customGroups(c, pkg);
+            if (cs != null) for (int i = 0; i < cs.length(); i++) {
+                JSONObject cu = cs.optJSONObject(i);
+                if (cu == null) continue;
+                JSONObject g2 = new JSONObject();
+                g2.put("name", cu.optString("name", "自定义"));
+                JSONArray ms = new JSONArray(); ms.put(cu.optString("matches", ""));
+                JSONObject r2 = new JSONObject(); r2.put("matches", ms);
+                JSONArray rs = new JSONArray(); rs.put(r2);
+                g2.put("rules", rs);
+                out.put(g2);
             }
             return out;
         } catch (Throwable t) { return null; }
@@ -234,7 +327,7 @@ public class GkdStore {
                 int n = gs == null ? 0 : gs.length(), on = 0;
                 if (gs != null) for (int j = 0; j < gs.length(); j++) {
                     JSONObject g = gs.optJSONObject(j);
-                    if (g != null && g.optBoolean("enable", true)) on++;
+                    if (g != null && effGroupOn(c, pkg, g.optInt("key", j), g.optBoolean("enable", true))) on++;
                 }
                 return new int[]{global, n, on, n - on};
             }
