@@ -452,9 +452,10 @@ public class GkdActivity extends Activity {
         int[] selSort = {sortMode};
         android.widget.RadioGroup rg = new android.widget.RadioGroup(this);
         for (int i = 0; i < sorts.length; i++) {
+            final int fi = i;
             android.widget.RadioButton rb = new android.widget.RadioButton(this);
             rb.setText(sorts[i]); rb.setChecked(i == sortMode); rb.setTextSize(14);
-            rb.setOnClickListener(v -> selSort[0] = i);
+            rb.setOnClickListener(v -> selSort[0] = fi);
             rg.addView(rb);
         }
         box.addView(rg);
