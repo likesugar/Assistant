@@ -16,7 +16,7 @@ import java.util.List;
 /** GKD 复刻: 订阅存储/下载 + 规则索引 + 日志 */
 public class GkdStore {
     private static final String PREF = "gkd";
-    public static final String DEFAULT_SUB = "https://registry.npmmirror.com/@gkd-kit/subscribe/latest/files/gkd.json5";
+    public static final String DEFAULT_SUB = "https://registry.npmmirror.com/@gkd-kit/subscription/latest/files/dist/gkd.json5";
 
     public static SharedPreferences sp(Context c) { return c.getSharedPreferences(PREF, Context.MODE_PRIVATE); }
 
@@ -124,21 +124,34 @@ public class GkdStore {
         } catch (Throwable ignored) {}
     }
 
+    /** JSON5 -> JSON: 去注释 + 单引号转双引号 + 裸 key 加引号 */
     static String stripJson5(String s) {
-        StringBuilder b = new StringBuilder();
+        StringBuilder b = new StringBuilder(s.length() + 64);
         boolean inStr = false, inLine = false, inBlock = false;
         char q = 0;
         for (int i = 0; i < s.length(); i++) {
             char ch = s.charAt(i), nx = i + 1 < s.length() ? s.charAt(i + 1) : 0;
             if (inLine) { if (ch == '\n') { inLine = false; b.append(ch); } continue; }
             if (inBlock) { if (ch == '*' && nx == '/') { inBlock = false; i++; } continue; }
-            if (inStr) { b.append(ch); if (ch == q) inStr = false; continue; }
-            if (ch == '"' || ch == '\'') { inStr = true; q = ch; b.append(ch); continue; }
+            if (inStr) {
+                if (ch == '\\' && i + 1 < s.length()) {
+                    char n2 = s.charAt(i + 1);
+                    if (n2 == '\'') { b.append('\''); } // JSON5 的 \' 在 JSON 里就是 '
+                    else { b.append('\\').append(n2); }
+                    i++;
+                    continue;
+                }
+                if (ch == q) { inStr = false; b.append('"'); continue; } // 单引号收尾转双
+                if (q == '\'' && ch == '"') { b.append('\\').append('"'); continue; }
+                b.append(ch); continue;
+            }
+            if (ch == '"' || ch == '\'') { inStr = true; q = ch; b.append('"'); continue; }
             if (ch == '/' && nx == '/') { inLine = true; continue; }
             if (ch == '/' && nx == '*') { inBlock = true; i++; continue; }
             b.append(ch);
         }
-        return b.toString();
+        // 裸 key: ({,后) 标识符: -> "标识符":
+        return b.toString().replaceAll("(\\{|,)(\\s*)([A-Za-z_$][A-Za-z0-9_$]*)\\s*:", "$1$2\"$3\":");
     }
 
     public static void log(Context c, String pkg) {

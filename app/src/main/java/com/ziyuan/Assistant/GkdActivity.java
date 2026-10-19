@@ -216,8 +216,9 @@ public class GkdActivity extends Activity {
             String err = null;
             try {
                 String raw = GkdStore.downloadSub(GkdActivity.this, url);
-                GkdStore.stripJson5(raw);
-                new JSONObject(GkdStore.stripJson5(raw)); // 校验可解析
+                JSONObject root = new JSONObject(GkdStore.stripJson5(raw));
+                if (root.optJSONArray("groups") == null && root.optJSONArray("globalGroups") == null && root.optJSONArray("apps") == null)
+                    throw new Exception("内容不是GKD订阅规则");
             } catch (Throwable t) { err = t.getMessage(); }
             final String e = err;
             runOnUiThread(() -> {
