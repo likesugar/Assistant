@@ -85,17 +85,17 @@ public class GkdAccessibilityService extends AccessibilityService {
         Long cd = pkgCooldown.get(pkg);
         if (cd != null && now - cd < 1500) return;
         // 匹配全程后台单线程, 不占主线程 (防卡顿/ANR)
-        exec.execute(() -> doMatch(pkg));
+        exec.execute(() -> doMatch(pkg, event.getClassName() == null ? null : event.getClassName().toString()));
     }
 
-    private void doMatch(String pkg) {
+    private void doMatch(String pkg, String activity) {
         try {
             long now = System.currentTimeMillis();
             JSONArray groups = GkdStore.enabledRules(this, pkg);
             if (groups == null || groups.length() == 0) return;
             AccessibilityNodeInfo root = getRootInActiveWindow();
             if (root == null) return;
-            boolean hit = false; String lastGroup = null;
+            boolean hit = false; String lastGroup = null; int lastKey = 0; boolean lastGl = false;
             for (int g = 0; g < groups.length() && !hit; g++) {
                 Object gobj = groups.opt(g);
                 JSONObject grp = gobj instanceof JSONObject ? (JSONObject) gobj : null;
@@ -120,14 +120,18 @@ public class GkdAccessibilityService extends AccessibilityService {
                         String sel = src.optString(m, "");
                         if (sel.length() == 0) continue;
                         hit = tryMatchAndClick(root, sel);
-                        if (hit) lastGroup = grp.optString("name", "") + (rule.has("key") ? "#" + rule.optInt("key") : "");
+                        if (hit) {
+                            lastGroup = grp.optString("name", "");
+                            lastKey = rule.optInt("key", grp.optInt("key", 0));
+                            lastGl = grp.optBoolean("_gl", false);
+                        }
                     }
                 }
             }
             if (hit) {
                 hitCount++;
                 pkgCooldown.put(pkg, now);
-                GkdStore.log(this, pkg, lastGroup);
+                GkdStore.logHit(this, pkg, activity, lastGroup, lastKey, lastGl, GkdStore.activeSubInfo(this)[0], GkdStore.activeSubInfo(this)[1]);
                 GkdStatusService.refresh(this);
             } else {
                 pkgCooldown.put(pkg, now - 1200);

@@ -441,6 +441,7 @@ public class GkdStore {
                     if (!effGlobalOn(c, pkg, name, g.optBoolean("enable", true))) continue;
                     JSONObject g2 = new JSONObject(g.toString());
                     g2.put("rules", g2.optJSONArray("rules") != null ? g2.optJSONArray("rules") : g2.optJSONArray("groups"));
+                    g2.put("_gl", true);
                     out.put(g2);
                 }
             }
@@ -575,7 +576,48 @@ public class GkdStore {
         return n;
     }
 
-    /** 应用列表副标题: {全局数, 组数, 启用组, 关闭组} 未覆盖返回 null */
+    /** 结构化触发记录 (官方 1:1): [{t,pkg,act,grp,key,gl,sub,ver}] */
+    public static void logHit(Context c, String pkg, String act, String grp, int key, boolean isGlobal, String sub, int ver) {
+        try {
+            SharedPreferences p = sp(c);
+            org.json.JSONArray arr = new org.json.JSONArray(p.getString("log_v2", "[]"));
+            JSONObject e = new JSONObject();
+            e.put("t", System.currentTimeMillis());
+            e.put("pkg", pkg);
+            if (act != null) e.put("act", act);
+            e.put("grp", grp == null ? "规则" : grp);
+            e.put("key", key);
+            e.put("gl", isGlobal);
+            e.put("sub", sub == null ? "" : sub);
+            e.put("ver", ver);
+            JSONArray out = new JSONArray();
+            out.put(e);
+            for (int i = 0; i < arr.length() && i < 59; i++) out.put(arr.get(i));
+            p.edit().putString("log_v2", out.toString()).apply();
+            // 兼容旧仪表盘文本
+            String old = p.getString("logs", "");
+            String line = new java.text.SimpleDateFormat("MM-dd HH:mm", java.util.Locale.CHINA)
+                    .format(new java.util.Date()) + " · " + (grp == null ? "规则" : grp) + " · " + pkg;
+            String[] lines = (line + "\n" + old).split("\n");
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < lines.length && i < 60; i++) { if (i > 0) sb.append('\n'); sb.append(lines[i]); }
+            p.edit().putString("logs", sb.toString()).apply();
+        } catch (Throwable ignored) {}
+    }
+    public static org.json.JSONArray logV2(Context c) {
+        try { return new org.json.JSONArray(sp(c).getString("log_v2", "[]")); } catch (Throwable t) { return new org.json.JSONArray(); }
+    }
+    public static void clearLogV2(Context c) { sp(c).edit().remove("log_v2").remove("logs").apply(); }
+    /** 启用订阅的 名称+版本 (记录展示用) */
+    public static String[] activeSubInfo(Context c) {
+        JSONArray s = subs(c);
+        for (int i = 0; i < s.length(); i++) {
+            JSONObject o = s.optJSONObject(i);
+            if (o != null && o.optBoolean("enabled", true) && o.optString("data", "").length() > 0)
+                return new String[]{o.optString("name", ""), o.optInt("version", 0)};
+        }
+        return new String[]{"", 0};
+    }
     public static int[] appGroupInfo(Context c, String pkg) {
         try {
             JSONObject root = subRoot(c);

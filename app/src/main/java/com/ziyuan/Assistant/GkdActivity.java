@@ -157,14 +157,7 @@ public class GkdActivity extends Activity {
         triggerBody = txt("", 12, txtSub, false);
         triggerBody.setPadding(dp(18), dp(8), dp(6), 0);
         pr.addView(triggerBody);
-        pr.setOnClickListener(v -> {
-            String logs = GkdStore.logs(this);
-            new android.app.AlertDialog.Builder(this)
-                    .setTitle("触发记录")
-                    .setMessage(logs.isEmpty() ? "暂无触发记录" : logs)
-                    .setPositiveButton("清空", (d, w) -> { GkdStore.clearLogs(this); refreshDashboard(); })
-                    .setNegativeButton("关闭", null).show();
-        });
+        pr.setOnClickListener(v -> startActivity(new Intent(this, GkdLogActivity.class)));
         p.addView(pr, new LinearLayout.LayoutParams(-1, -2));
 
         // 常驻通知卡 (官方 PageSwitchItemCard)
