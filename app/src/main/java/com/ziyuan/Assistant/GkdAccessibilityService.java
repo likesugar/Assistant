@@ -126,13 +126,33 @@ public class GkdAccessibilityService extends AccessibilityService {
                         } else continue;
                     }
                     if (!rule.optBoolean("enable", true)) continue;
+                    // activityIds 界面限定 (官方语义: 规则只在指定界面生效)
+                    org.json.JSONArray aids = rule.optJSONArray("activityIds");
+                    if (aids != null && aids.length() > 0) {
+                        boolean am = false;
+                        for (int ai = 0; ai < aids.length(); ai++) {
+                            String a2 = aids.optString(ai, "");
+                            if (a2.length() == 0) continue;
+                            if (activity != null && (activity.endsWith(a2) || activity.endsWith(a2.startsWith(".") ? a2.substring(1) : a2))) { am = true; break; }
+                        }
+                        if (!am) continue;
+                    }
+                    String action = rule.optString("action", "click");
                     JSONArray src = asArray(rule, "matches");
                     if (src == null) src = asArray(rule, "anyMatches");
                     if (src == null) continue;
                     for (int m = 0; m < src.length() && !hit; m++) {
                         String sel = src.optString(m, "");
                         if (sel.length() == 0) continue;
-                        hit = tryMatchAndClick(root, sel);
+                        if (action.equals("back")) {
+                            // 动作=按返回键 (关闭弹窗类规则)
+                            if (sel.match(root, adapter) != null) {
+                                hit = true;
+                                performGlobalAction(GLOBAL_ACTION_BACK);
+                            }
+                        } else {
+                            hit = tryMatchAndClick(root, sel);
+                        }
                         if (hit) {
                             lastGroup = grp.optString("name", "");
                             lastKey = rule.optInt("key", grp.optInt("key", 0));
