@@ -258,7 +258,7 @@ public class GkdActivity extends Activity {
                 head.addView(iv, dp(44), dp(44));
                 LinearLayout hl = new LinearLayout(this); hl.setOrientation(LinearLayout.VERTICAL);
                 TextView tv = txt("数据概览", 16, txtMain, true); tv.setPadding(dp(14), 0, 0, 0);
-                TextView sv = txt("已开启 " + (GkdStore.subRaw(this).isEmpty() ? 0 : 1) + " 条订阅", 13, txtSub, false);
+                TextView sv = txt("已开启 " + GkdStore.enabledSubCount(this) + " 条订阅", 13, txtSub, false);
                 sv.setPadding(dp(14), dp(2), 0, 0);
                 hl.addView(tv); hl.addView(sv);
                 head.addView(hl, new LinearLayout.LayoutParams(0, -2, 1f));
@@ -268,7 +268,7 @@ public class GkdActivity extends Activity {
                 line1.setPadding(dp(4), dp(10), 0, 0);
                 c.addView(line1);
                 if (subName != null) {
-                    TextView line0 = txt("订阅: " + subName + " · " + (GkdStore.subUrl(this).contains("gkd-kit/subscription") ? "官方源" : "自定义源"), 12, txtSub, false);
+                    TextView line0 = txt("订阅: " + subName, 12, txtSub, false);
                     line0.setPadding(dp(4), dp(6), 0, 0);
                     line0.setMaxLines(1); line0.setEllipsize(TextUtils.TruncateAt.END);
                     c.addView(line0);
@@ -531,104 +531,177 @@ public class GkdActivity extends Activity {
         }).start();
     }
 
-    // ===== Tab3 订阅 =====
-    private EditText subInput;
-    private TextView subStatus;
-    private String raw = "";
-    private void buildSubs() {
-        LinearLayout p = pages[1];
-        LinearLayout c = card();
-        c.addView(txt("规则订阅", 16, txtMain, true));
-        subInput = new EditText(this);
-        subInput.setText(GkdStore.subUrl(this));
-        subInput.setTextSize(12);
-        subInput.setTextColor(txtMain);
-        subInput.setSingleLine(false);
-        subInput.setMaxLines(3);
-        subInput.setPadding(dp(10), dp(8), dp(10), dp(8));
-        GradientDrawable eb = new GradientDrawable();
-        eb.setColor(dark ? 0xFF171A1F : 0xFFEEF1F5); eb.setCornerRadius(dp(8));
-        eb.setStroke(1, dark ? 0xFF3A4149 : 0xFFD7DDE4);
-        subInput.setBackground(eb);
-        LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(-1, -2);
-        ilp.topMargin = dp(8);
-        subInput.setLayoutParams(ilp);
-        c.addView(subInput);
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setPadding(0, dp(10), 0, 0);
-        TextView dl = bigBtn("下载/更新订阅");
-        dl.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1f));
-        dl.setOnClickListener(v -> doDownload());
-        TextView clr = bigBtn("删除订阅");
-        clr.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1f));
-        GradientDrawable g2 = new GradientDrawable();
-        g2.setColor(dark ? 0xFF2A2F36 : 0xFFE9EDF2); g2.setCornerRadius(dp(10));
-        clr.setBackground(g2); clr.setTextColor(txtMain);
-        LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(0, -2, 1f);
-        lp2.leftMargin = dp(10);
-        clr.setLayoutParams(lp2);
-        clr.setOnClickListener(v -> { GkdStore.sp(this).edit().remove("sub_raw").remove("sub_time").apply(); refreshSubStatus(); Toast.makeText(this, "已删除", Toast.LENGTH_SHORT).show(); });
-        row.addView(dl); row.addView(clr);
-        c.addView(row);
-        subStatus = txt("", 12, txtSub, false);
-        subStatus.setPadding(0, dp(10), 0, 0);
-        c.addView(subStatus);
-        p.addView(c);
-        refreshSubStatus();
+    // ===== 隐藏系统导航栏 (API30+ InsetsController, realme 旧flag无效) =====
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) hideNav();
+    }
+    private void hideNav() {
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= 30) {
+                getWindow().setNavigationBarContrastEnforced(false);
+                getWindow().getInsetsController().hide(android.view.WindowInsets.Type.navigationBars());
+            } else {
+                getWindow().getDecorView().setSystemUiVisibility(
+                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+            }
+        } catch (Throwable ignored) {}
     }
 
-    private void doDownload() {
-        final String url = subInput.getText().toString().trim();
-        if (url.length() == 0) { Toast.makeText(this, "先填订阅地址", Toast.LENGTH_SHORT).show(); return; }
-        subStatus.setText("下载中…");
+    // ===== Tab3 订阅 (官方多订阅列表 1:1) =====
+    private LinearLayout subsList;
+    private void buildSubs() {
+        LinearLayout p = pages[1];
+        LinearLayout top = new LinearLayout(this);
+        top.setOrientation(LinearLayout.HORIZONTAL); top.setGravity(Gravity.CENTER_VERTICAL);
+        top.addView(txt("订阅", 22, txtMain, true), new LinearLayout.LayoutParams(0, -2, 1f));
+        TextView up = txt("⚡", 18, txtSub, false);
+        up.setPadding(dp(14), 0, dp(6), 0);
+        up.setOnClickListener(v -> refreshAllSubs());
+        top.addView(up);
+        TextView add = txt("＋", 20, txtSub, false);
+        add.setPadding(dp(10), 0, dp(4), 0);
+        add.setOnClickListener(v -> showAddSubDialog());
+        top.addView(add);
+        top.setPadding(dp(6), dp(4), dp(6), dp(8));
+        p.addView(top);
+        subsList = new LinearLayout(this);
+        subsList.setOrientation(LinearLayout.VERTICAL);
+        p.addView(subsList, new LinearLayout.LayoutParams(-1, -2));
+        renderSubs();
+    }
+
+    private void renderSubs() {
+        subsList.removeAllViews();
+        org.json.JSONArray subs = GkdStore.subs(this);
+        for (int i = 0; i < subs.length(); i++) {
+            final int idx = i;
+            JSONObject o = subs.optJSONObject(i);
+            if (o == null) continue;
+            LinearLayout card = new LinearLayout(this);
+            card.setOrientation(LinearLayout.VERTICAL);
+            card.setPadding(dp(16), dp(14), dp(16), dp(14));
+            GradientDrawable g = new GradientDrawable();
+            g.setColor(cardBg); g.setCornerRadius(dp(12));
+            card.setBackground(g);
+            LinearLayout head = new LinearLayout(this);
+            head.setOrientation(LinearLayout.HORIZONTAL); head.setGravity(Gravity.CENTER_VERTICAL);
+            LinearLayout lt = new LinearLayout(this); lt.setOrientation(LinearLayout.VERTICAL);
+            TextView name = txt((i + 1) + ". " + o.optString("name", o.optString("url", "")), 16, txtMain, true);
+            name.setEllipsize(TextUtils.TruncateAt.END); name.setMaxLines(1);
+            lt.addView(name);
+            int[] st2 = subStats(o);
+            String sub = st2[0] > 0 || st2[1] > 0 ? st2[0] + "全局/" + st2[1] + "应用/" + st2[2] + "规则"
+                    : (o.optString("data", "").isEmpty() ? "暂无规则" : "已加载");
+            TextView stats = txt(sub, 14, txtMain, false); stats.setPadding(0, dp(2), 0, 0);
+            lt.addView(stats);
+            String meta = (o.optString("author", "").length() > 0 ? o.optString("author") + "  " : "")
+                    + (o.optInt("version", 0) > 0 ? "v" + o.optInt("version") + "  " : "")
+                    + relTime(o.optLong("time", 0));
+            TextView mv = txt(meta, 12, txtSub, true); mv.setPadding(0, dp(3), 0, 0);
+            lt.addView(mv);
+            head.addView(lt, new LinearLayout.LayoutParams(0, -2, 1f));
+            android.widget.Switch sw = new android.widget.Switch(this);
+            sw.setChecked(o.optBoolean("enabled", true));
+            sw.setOnClickListener(v -> {
+                GkdStore.setSubEnabled(this, idx, sw.isChecked());
+                renderSubs();
+            });
+            head.addView(sw);
+            card.addView(head);
+            card.setOnLongClickListener(v -> {
+                new android.app.AlertDialog.Builder(this)
+                        .setTitle("删除订阅")
+                        .setMessage(o.optString("name"))
+                        .setPositiveButton("删除", (d, w) -> { GkdStore.removeSub(this, idx); renderSubs(); })
+                        .setNegativeButton("取消", null).show();
+                return true;
+            });
+            card.setOnClickListener(v -> refreshOne(idx));
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+            lp.bottomMargin = dp(10);
+            card.setLayoutParams(lp);
+            subsList.addView(card);
+        }
+        TextView hint = txt("点卡片更新 · 长按删除 · + 添加订阅", 12, txtSub, false);
+        hint.setPadding(dp(6), dp(4), 0, dp(8));
+        subsList.addView(hint);
+    }
+
+    private int[] subStats(JSONObject o) {
+        int[] out = new int[3];
+        try {
+            JSONObject r = new JSONObject(o.optString("data", "{}"));
+            org.json.JSONArray gl = r.optJSONArray("globalGroups");
+            out[0] = gl == null ? 0 : gl.length();
+            org.json.JSONArray as = r.optJSONArray("apps");
+            out[1] = as == null ? 0 : as.length();
+            int t = 0;
+            if (as != null) for (int i = 0; i < as.length(); i++) {
+                JSONObject a = as.optJSONObject(i);
+                org.json.JSONArray gs = a == null ? null : a.optJSONArray("groups");
+                if (gs != null) t += gs.length();
+            }
+            out[2] = t;
+        } catch (Throwable ignored) {}
+        return out;
+    }
+
+    private String relTime(long t) {
+        if (t <= 0) return "";
+        long d = System.currentTimeMillis() - t;
+        if (d < 60000) return "刚刚";
+        if (d < 3600000) return (d / 60000) + "分钟前";
+        if (d < 86400000) return (d / 3600000) + "小时前";
+        return (d / 86400000) + "天前";
+    }
+
+    private void refreshOne(int idx) {
+        Toast.makeText(this, "更新中…", Toast.LENGTH_SHORT).show();
         new Thread(() -> {
             String err = null;
-            try {
-                String raw = GkdStore.downloadSub(GkdActivity.this, url);
-                JSONObject root = new JSONObject(GkdStore.stripJson5(raw));
-                if (root.optJSONArray("groups") == null && root.optJSONArray("globalGroups") == null && root.optJSONArray("apps") == null)
-                    throw new Exception("内容不是GKD订阅规则");
-            } catch (Throwable t) { err = t.getMessage(); }
+            try { GkdStore.refreshSub(this, idx); } catch (Throwable t) { err = t.getMessage(); }
             final String e = err;
             runOnUiThread(() -> {
-                if (e != null) { subStatus.setText("下载失败: " + e); return; }
-                refreshSubStatus();
-                Toast.makeText(this, "订阅已更新", Toast.LENGTH_SHORT).show();
+                if (e != null) Toast.makeText(this, "更新失败: " + e, Toast.LENGTH_LONG).show();
+                else Toast.makeText(this, "已更新", Toast.LENGTH_SHORT).show();
+                renderSubs();
+                refreshDashboard();
             });
         }).start();
     }
 
-    private void refreshSubStatus() {
-        // 清理 vc351 误存的旧错误地址订阅
-        String saved = GkdStore.subUrl(this);
-        if (saved.contains("@gkd-kit/subscribe/")) {
-            GkdStore.sp(this).edit().putString("sub_url", GkdStore.DEFAULT_SUB).remove("sub_raw").remove("sub_time").apply();
-            subInput.setText(GkdStore.DEFAULT_SUB);
-            raw = "";
-        } else {
-            raw = GkdStore.subRaw(this);
-        }
-        if (raw.isEmpty()) { subStatus.setText("未添加订阅\n官方订阅地址默认已填好，点【下载/更新订阅】即可拉取 GKD 官方规则库"); return; }
-        String info = "已加载 · " + new java.text.SimpleDateFormat("MM-dd HH:mm", java.util.Locale.CHINA)
-                .format(new java.util.Date(GkdStore.sp(this).getLong("sub_time", 0)));
-        try {
-            JSONObject root = new JSONObject(GkdStore.stripJson5(raw));
-            org.json.JSONArray as = root.optJSONArray("apps");
-            org.json.JSONArray gl = root.optJSONArray("globalGroups");
-            int na = as != null ? as.length() : 0;
-            int ng = gl != null ? gl.length() : 0;
-            int total = 0;
-            if (as != null) for (int i = 0; i < as.length(); i++) {
-                JSONObject a = as.optJSONObject(i);
-                org.json.JSONArray ag = a == null ? null : a.optJSONArray("groups");
-                if (ag != null) total += ag.length();
+    private void refreshAllSubs() {
+        Toast.makeText(this, "更新全部订阅…", Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            org.json.JSONArray subs = GkdStore.subs(this);
+            for (int i = 0; i < subs.length(); i++) {
+                try { GkdStore.refreshSub(this, i); } catch (Throwable ignored) {}
             }
-            info += "\n覆盖应用 " + na + " · 应用规则组 " + total + " · 全局组 " + ng
-                    + "\n订阅名: " + root.optString("name", "-")
-                    + " v" + root.optString("version", "-");
-        } catch (Throwable ignored) {}
-        subStatus.setText(info);
+            runOnUiThread(() -> { renderSubs(); refreshDashboard(); Toast.makeText(this, "完成", Toast.LENGTH_SHORT).show(); });
+        }).start();
+    }
+
+    void showAddSubDialog() {
+        EditText et = new EditText(this);
+        et.setHint("订阅 URL");
+        et.setText(GkdStore.AISOULER_SUB);
+        et.setTextSize(12);
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("添加订阅")
+                .setView(et)
+                .setPositiveButton("添加", (d, w) -> {
+                    String u = et.getText().toString().trim();
+                    if (u.length() == 0) return;
+                    Toast.makeText(this, "下载中…", Toast.LENGTH_SHORT).show();
+                    new Thread(() -> {
+                        try { GkdStore.addSub(this, u); runOnUiThread(() -> { renderSubs(); refreshDashboard(); Toast.makeText(this, "已添加", Toast.LENGTH_SHORT).show(); }); }
+                        catch (Throwable t) { runOnUiThread(() -> Toast.makeText(this, "失败: " + t.getMessage(), Toast.LENGTH_LONG).show()); }
+                    }).start();
+                })
+                .setNegativeButton("取消", null).show();
     }
 
     // ===== Tab4 设置 =====

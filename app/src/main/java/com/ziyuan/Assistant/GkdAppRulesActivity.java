@@ -95,9 +95,13 @@ public class GkdAppRulesActivity extends Activity {
 
     private void rebuild() {
         list.removeAllViews();
-        // 诊断行: 解析状态直接可见
-        String dbg = "诊断: subRaw=" + GkdStore.subRaw(this).length() + "B root=" + (GkdStore.subRoot(this) != null ? "OK" : "FAIL")
-                + (GkdStore.lastParseError != null ? " err=" + GkdStore.lastParseError : "");
+        JSONArray subs = GkdStore.subs(this);
+        int en = 0, tot = 0;
+        for (int i = 0; i < subs.length(); i++) {
+            JSONObject o = subs.optJSONObject(i);
+            if (o != null && o.optBoolean("enabled", true)) { en++; tot += subLen(o); }
+        }
+        String dbg = "诊断: 订阅" + en + "条 规则" + tot + "组 root=" + (GkdStore.subRoot(this) != null ? "OK" : "FAIL");
         TextView dbgV = txt(dbg, 11, 0xFFFF7043, false);
         dbgV.setPadding(dp(6), dp(2), 0, dp(2));
         list.addView(dbgV);
@@ -149,6 +153,39 @@ public class GkdAppRulesActivity extends Activity {
             empty.setPadding(0, dp(60), 0, 0);
             list.addView(empty);
         }
+    }
+
+    private int subLen(JSONObject o) {
+        try {
+            JSONObject r = new JSONObject(o.optString("data", "{}"));
+            int t = 0;
+            org.json.JSONArray as = r.optJSONArray("apps");
+            if (as != null) for (int i = 0; i < as.length(); i++) {
+                JSONObject a = as.optJSONObject(i);
+                org.json.JSONArray gs = a == null ? null : a.optJSONArray("groups");
+                if (gs != null) t += gs.length();
+            }
+            return t;
+        } catch (Throwable t2) { return 0; }
+    }
+
+    // ===== 隐藏系统导航栏 =====
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) hideNav();
+    }
+    private void hideNav() {
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= 30) {
+                getWindow().setNavigationBarContrastEnforced(false);
+                getWindow().getInsetsController().hide(android.view.WindowInsets.Type.navigationBars());
+            } else {
+                getWindow().getDecorView().setSystemUiVisibility(
+                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+            }
+        } catch (Throwable ignored) {}
     }
 
     private void addCustomDialog() {

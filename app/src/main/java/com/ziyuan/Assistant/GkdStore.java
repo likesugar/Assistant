@@ -21,25 +21,139 @@ import java.util.Set;
 public class GkdStore {
     private static final String PREF = "gkd";
 
-    private static volatile JSONObject cachedRoot; private static String cachedRawSig = "";
-    public static volatile String lastParseError = null;
-    /** 订阅解析一次全局缓存 (卡顿根因: 每行重解析 545KB) */
-    public static JSONObject subRoot(Context c) {
-        String raw = subRaw(c);
-        if (raw.length() == 0) { cachedRoot = null; cachedRawSig = ""; lastParseError = "订阅为空"; return null; }
-        if (cachedRoot != null && raw.length() == cachedRawSig.length() && raw.equals(cachedRawSig)) return cachedRoot;
-        try {
-            String j = stripJson5(raw);
-            cachedRoot = new JSONObject(j);
-            cachedRawSig = raw;
-            lastParseError = null;
-        } catch (Throwable t) {
-            cachedRoot = null;
-            lastParseError = t.getClass().getSimpleName() + ": " + t.getMessage();
-        }
-        return cachedRoot;
-    }
     public static final String DEFAULT_SUB = "https://registry.npmmirror.com/@gkd-kit/subscription/latest/files/dist/gkd.json5";
+    public static final String AISOULER_SUB = "https://registry.npmmirror.com/@aisouler/gkd_subscription/latest/files/dist/AIsouler_gkd.json5";
+
+    // ===== 多订阅模型 (官方订阅页 1:1): subs_json=[{url,name,author,version,enabled,time,data}] =====
+    public static JSONArray subs(Context c) {
+        try {
+            JSONArray s = new JSONArray(sp(c).getString("subs_json", "[]"));
+            if (s.length() == 0) {
+                String oldRaw = sp(c).getString("sub_raw", "");
+                if (oldRaw.length() > 0) {
+                    JSONObject o = new JSONObject();
+                    o.put("url", sp(c).getString("sub_url", DEFAULT_SUB));
+                    o.put("enabled", true);
+                    JSONObject r = new JSONObject(stripJson5(oldRaw));
+                    o.put("data", r.toString());
+                    o.put("name", r.optString("name"));
+                    o.put("author", r.optString("author"));
+                    o.put("version", r.optInt("version"));
+                    s.put(o);
+                } else {
+                    s.put(new JSONObject().put("url", AISOULER_SUB).put("enabled", true).put("name", "AIsouler的GKD订阅"));
+                }
+                sp(c).edit().putString("subs_json", s.toString()).apply();
+            }
+            return s;
+        } catch (Throwable t) { return new JSONArray(); }
+    }
+    public static void saveSubs(Context c, JSONArray s) { sp(c).edit().putString("subs_json", s.toString()).apply(); cachedMerge = null; }
+    public static void addSub(Context c, String url) {
+        JSONArray s = subs(c);
+        s.put(new JSONObject().put("url", url).put("enabled", true).put("name", url));
+        saveSubs(c, s);
+        try { refreshSub(c, s.length() - 1); } catch (Throwable ignored) {}
+    }
+    public static void removeSub(Context c, int idx) {
+        JSONArray out = new JSONArray();
+        JSONArray s = subs(c);
+        for (int i = 0; i < s.length(); i++) if (i != idx) out.put(s.optJSONObject(i));
+        saveSubs(c, out);
+    }
+    public static void setSubEnabled(Context c, int idx, boolean on) {
+        JSONArray s = subs(c);
+        JSONObject o = s.optJSONObject(idx);
+        if (o != null) { try { o.put("enabled", on); } catch (Throwable ignored) {} saveSubs(c, s); }
+    }
+    public static String refreshSub(Context c, int idx) throws Exception {
+        JSONArray s = subs(c);
+        JSONObject o = s.optJSONObject(idx);
+        if (o == null) throw new Exception("订阅不存在");
+        String url = o.optString("url");
+        String raw = httpGet(url);
+        JSONObject root = new JSONObject(stripJson5(raw));
+        if (root.optJSONArray("groups") == null && root.optJSONArray("globalGroups") == null && root.optJSONArray("apps") == null)
+            throw new Exception("内容不是GKD订阅规则");
+        o.put("data", root.toString());
+        o.put("name", root.optString("name", url));
+        o.put("author", root.optString("author", ""));
+        o.put("version", root.optInt("version", 0));
+        o.put("time", System.currentTimeMillis());
+        saveSubs(c, s);
+        return o.optString("name");
+    }
+    public static String httpGet(String url) throws Exception {
+        HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
+        con.setConnectTimeout(15000); con.setReadTimeout(30000);
+        con.setRequestProperty("User-Agent", "Assistant-GKD/1.0");
+        InputStream in = con.getResponseCode() < 400 ? con.getInputStream() : con.getErrorStream();
+        ByteArrayOutputStream bo = new ByteArrayOutputStream();
+        byte[] buf = new byte[8192]; int n;
+        while ((n = in.read(buf)) > 0) bo.write(buf, 0, n);
+        in.close();
+        return bo.toString("UTF-8");
+    }
+
+    private static volatile JSONObject cachedMerge;
+    /** 合并所有启用订阅: globalGroups concat + apps by id 合并(key 重写 si*100000+key) + 顶层 groups concat */
+    public static JSONObject subRoot(Context c) {
+        try {
+            JSONArray subs = subs(c);
+            if (cachedMerge != null) return cachedMerge;
+            JSONObject merged = new JSONObject();
+            JSONArray gl = new JSONArray(), apps = new JSONArray(), grps = new JSONArray();
+            Map<String, JSONObject> appById = new HashMap<>();
+            boolean any = false;
+            Set<String> gNames = new HashSet<>();
+            for (int si = 0; si < subs.length(); si++) {
+                JSONObject o = subs.optJSONObject(si);
+                if (o == null || !o.optBoolean("enabled", true)) continue;
+                String data = o.optString("data", "");
+                if (data.length() == 0) continue;
+                JSONObject r;
+                try { r = new JSONObject(data); } catch (Throwable t) { continue; }
+                any = true;
+                JSONArray g0 = r.optJSONArray("globalGroups");
+                if (g0 != null) for (int i = 0; i < g0.length(); i++) {
+                    JSONObject g = g0.optJSONObject(i);
+                    if (g == null) continue;
+                    try {
+                        String nm = g.optString("name", "全局" + i);
+                        if (gNames.contains(nm)) g.put("name", nm + "(" + (si + 1) + ")");
+                        gNames.add(g.optString("name"));
+                    } catch (Throwable ignored) {}
+                    gl.put(g);
+                }
+                JSONArray aps = r.optJSONArray("apps");
+                if (aps != null) for (int i = 0; i < aps.length(); i++) {
+                    JSONObject a = aps.optJSONObject(i);
+                    if (a == null) continue;
+                    String id = a.optString("id");
+                    JSONArray gs = a.optJSONArray("groups");
+                    if (gs != null) for (int j = 0; j < gs.length(); j++) {
+                        JSONObject g = gs.optJSONObject(j);
+                        if (g != null) { try { g.put("key", si * 100000 + g.optInt("key", j)); } catch (Throwable ignored) {} }
+                    }
+                    JSONObject exist = appById.get(id);
+                    if (exist == null) { appById.put(id, a); apps.put(a); }
+                    else {
+                        JSONArray eg = exist.optJSONArray("groups");
+                        if (eg == null) { eg = new JSONArray(); exist.put("groups", eg); }
+                        if (gs != null) for (int j = 0; j < gs.length(); j++) { JSONObject g = gs.optJSONObject(j); if (g != null) eg.put(g); }
+                    }
+                }
+                JSONArray gss = r.optJSONArray("groups");
+                if (gss != null) for (int i = 0; i < gss.length(); i++) { JSONObject g = gss.optJSONObject(i); if (g != null) grps.put(g); }
+            }
+            if (!any) return null;
+            merged.put("globalGroups", gl);
+            merged.put("apps", apps);
+            merged.put("groups", grps);
+            cachedMerge = merged;
+            return merged;
+        } catch (Throwable t) { return null; }
+    }
 
     public static SharedPreferences sp(Context c) { return c.getSharedPreferences(PREF, Context.MODE_PRIVATE); }
 
@@ -350,8 +464,24 @@ public class GkdStore {
     }
 
     public static String subName(Context c) {
-        try { JSONObject r = subRoot(c); return r == null ? null : r.optString("name", null); }
-        catch (Throwable t) { return null; }
+        try {
+            JSONArray s = subs(c);
+            for (int i = 0; i < s.length(); i++) {
+                JSONObject o = s.optJSONObject(i);
+                if (o != null && o.optBoolean("enabled", true) && o.optString("data", "").length() > 0)
+                    return o.optString("name", null);
+            }
+            return null;
+        } catch (Throwable t) { return null; }
+    }
+    public static int enabledSubCount(Context c) {
+        int n = 0;
+        JSONArray s = subs(c);
+        for (int i = 0; i < s.length(); i++) {
+            JSONObject o = s.optJSONObject(i);
+            if (o != null && o.optBoolean("enabled", true) && o.optString("data", "").length() > 0) n++;
+        }
+        return n;
     }
 
     /** 应用列表副标题: {全局数, 组数, 启用组, 关闭组} 未覆盖返回 null */
