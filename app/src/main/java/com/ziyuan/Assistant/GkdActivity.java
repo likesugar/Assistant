@@ -245,10 +245,18 @@ public class GkdActivity extends Activity {
                 .format(new java.util.Date(GkdStore.sp(this).getLong("sub_time", 0)));
         try {
             JSONObject root = new JSONObject(GkdStore.stripJson5(raw));
-            org.json.JSONArray gs = root.optJSONArray("groups");
             org.json.JSONArray as = root.optJSONArray("apps");
-            int ng = gs != null ? gs.length() : 0, na = as != null ? as.length() : 0;
-            info += "\n应用规则组 " + ng + " · 覆盖应用 " + na + "\n订阅名: " + root.optString("name", "-")
+            org.json.JSONArray gl = root.optJSONArray("globalGroups");
+            int na = as != null ? as.length() : 0;
+            int ng = gl != null ? gl.length() : 0;
+            int total = 0;
+            if (as != null) for (int i = 0; i < as.length(); i++) {
+                JSONObject a = as.optJSONObject(i);
+                org.json.JSONArray ag = a == null ? null : a.optJSONArray("groups");
+                if (ag != null) total += ag.length();
+            }
+            info += "\n覆盖应用 " + na + " · 应用规则组 " + total + " · 全局组 " + ng
+                    + "\n订阅名: " + root.optString("name", "-")
                     + " v" + root.optString("version", "-");
         } catch (Throwable ignored) {}
         subStatus.setText(info);
