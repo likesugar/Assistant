@@ -131,7 +131,8 @@ public class GkdAccessibilityService extends AccessibilityService {
             if (hit) {
                 hitCount++;
                 pkgCooldown.put(pkg, now);
-                GkdStore.logHit(this, pkg, activity, lastGroup, lastKey, lastGl, GkdStore.activeSubInfo(this)[0], GkdStore.activeSubInfo(this)[1]);
+                String[] asi = GkdStore.activeSubInfo(this);
+                GkdStore.logHit(this, pkg, activity, lastGroup, lastKey, lastGl, asi[0], asi[1] == null ? 0 : Integer.parseInt(asi[1].replaceAll("[^0-9]", "")));
                 GkdStatusService.refresh(this);
             } else {
                 pkgCooldown.put(pkg, now - 1200);
