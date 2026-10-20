@@ -108,7 +108,6 @@ public class H5EditorActivity extends Activity {
         editorPane = new FrameLayout(this);
         // WebCat 同款编辑器组件: rosemoe sora-editor (行号/高亮/自动缩进)
         code = new io.github.rosemoe.sora.widget.CodeEditor(this);
-        code.getProps().completionEnabled = false;
         code.setTextSize(13 * getResources().getDisplayMetrics().density);
         code.setTypefaceText(Typeface.MONOSPACE);
         code.setPadding(dp(10), dp(10), dp(10), dp(10));
