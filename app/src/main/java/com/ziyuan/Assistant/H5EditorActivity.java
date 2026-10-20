@@ -32,7 +32,7 @@ public class H5EditorActivity extends Activity {
     private H5HttpServer server;
     private File curFile;
     private LinearLayout sideTag;
-    private EditText code;
+    private io.github.rosemoe.sora.widget.CodeEditor code;
     private TextView curPath;
     private LinearLayout fileList;
     private android.webkit.WebView web;
@@ -103,14 +103,10 @@ public class H5EditorActivity extends Activity {
         sideTag = side;
         // 右侧: 编辑区 / 预览区 (Tab 切换)
         editorPane = new FrameLayout(this);
-        code = new EditText(this);
-        code.setTextSize(13);
-        code.setTextColor(0xFFD4D4D4);
-        code.setBackgroundColor(0xFF17181A);
-        code.setGravity(Gravity.TOP);
-        code.setTypeface(Typeface.MONOSPACE);
-        code.setHorizontallyScrolling(true);
-        code.setImeOptions(android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);
+        // WebCat 同款编辑器组件: rosemoe sora-editor (行号/高亮/自动缩进)
+        code = new io.github.rosemoe.sora.widget.CodeEditor(this);
+        code.setTextSize(13 * getResources().getDisplayMetrics().density);
+        code.setTypefaceText(Typeface.MONOSPACE);
         code.setPadding(dp(10), dp(10), dp(10), dp(10));
         editorPane.addView(code, new FrameLayout.LayoutParams(-1, -1));
         previewPane = new FrameLayout(this);
