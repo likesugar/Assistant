@@ -38,7 +38,7 @@ public class H5EditorActivity extends Activity {
     private android.webkit.WebView web;
     private FrameLayout editorPane, previewPane;
     private TextView tabCode, tabPrev;
-    private Switch swVc, swVue;
+    private boolean useVc = true, useVue = false;
     private static final int REQ_IMPORT = 51;
     private int bg = 0xFF121212, cardBg = 0xFF1E1E20, txtMain = 0xFFE8EAED, txtSub = 0xFF9AA0A6, blue = 0xFF4FC3F7;
 
@@ -67,26 +67,19 @@ public class H5EditorActivity extends Activity {
         back.setPadding(dp(6), 0, dp(10), 0);
         back.setOnClickListener(v -> finish());
         top.addView(back);
-        // ☰ 收起/展开左侧文件栏 (WebCat 同款)
+        // ☰ 布局 (收起/展开左侧文件栏)
         top.addView(toolBtn("☰", v -> {
             if (sideTag.getVisibility() == View.VISIBLE) sideTag.setVisibility(View.GONE);
             else sideTag.setVisibility(View.VISIBLE);
         }));
-        TextView name = txt(projName, 16, txtMain, true);
-        name.setEllipsize(TextUtils.TruncateAt.END);
-        name.setMaxLines(1);
-        top.addView(name, new LinearLayout.LayoutParams(0, -2, 1f));
+        top.addView(txt("布局", 16, txtMain, true));
+        TextView name = txt("", 1, txtMain, false);
+        name.setLayoutParams(new LinearLayout.LayoutParams(0, 1, 1f));
+        top.addView(name);
         // WebCat 同款: 撤销 / 重做 / 运行
         top.addView(toolBtn("↶", v -> code.undo()));
         top.addView(toolBtn("↷", v -> code.redo()));
         top.addView(toolBtn("▶", v -> { saveCur(); runHtml(currentHtml()); }));
-        top.addView(toolBtn("＋", v -> newFileDialog()));
-        top.addView(toolBtn("⬆", v -> {
-            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-            i.addCategory(Intent.CATEGORY_OPENABLE);
-            i.setType("*/*");
-            startActivityForResult(i, REQ_IMPORT);
-        }));
         root.addView(top, -1, dp(46));
         // 主区: 左侧文件树 + 右侧编辑/预览
         LinearLayout main = new LinearLayout(this);
@@ -136,7 +129,7 @@ public class H5EditorActivity extends Activity {
             @Override
             public void onPageFinished(WebView v, String url) {
                 // vConsole 开关: 注入调试台
-                if (swVc != null && swVc.isChecked()) v.evaluateJavascript("try{window.vConsole=new VConsole();}catch(e){}", null);
+                if (useVc) v.evaluateJavascript("try{window.vConsole=new VConsole();}catch(e){}", null);
             }
         });
         previewPane.addView(web, new FrameLayout.LayoutParams(-1, -1));
@@ -145,38 +138,28 @@ public class H5EditorActivity extends Activity {
         main.addView(editorPane, new LinearLayout.LayoutParams(0, -1, 1f));
         main.addView(previewPane, new LinearLayout.LayoutParams(0, -1, 1f));
         root.addView(main, new LinearLayout.LayoutParams(-1, 0, 1f));
-        // 底部 Tab: 代码 | 预览 + 插件开关
+        // WebCat 同款 Tab 行: 左=文件名, 右=设计/代码/退出
         LinearLayout tabs = new LinearLayout(this);
         tabs.setOrientation(LinearLayout.HORIZONTAL);
         tabs.setBackgroundColor(cardBg);
         tabs.setGravity(Gravity.CENTER_VERTICAL);
+        tabs.setPadding(dp(10), 0, dp(6), 0);
+        tabFile = txt("index.html", 14, txtMain, true);
+        tabFile.setEllipsize(TextUtils.TruncateAt.END);
+        tabFile.setMaxLines(1);
+        tabs.addView(tabFile, new LinearLayout.LayoutParams(0, -2, 1f));
+        tabPrev = tabBtn("设计", false);
+        tabs.addView(tabPrev);
         tabCode = tabBtn("代码", true);
-        tabPrev = tabBtn("预览", false);
-        tabs.addView(tabCode, new LinearLayout.LayoutParams(0, -2, 1f));
-        tabs.addView(tabPrev, new LinearLayout.LayoutParams(0, -2, 1f));
-        LinearLayout plg = new LinearLayout(this);
-        plg.setOrientation(LinearLayout.HORIZONTAL);
-        plg.setGravity(Gravity.CENTER);
-        plg.setPadding(dp(6), 0, dp(6), 0);
-        swVc = new Switch(this);
-        swVc.setChecked(true);
-        plg.addView(swVc);
-        plg.addView(txt("调试", 12, txtSub, false));
-        swVue = new Switch(this);
-        swVue.setChecked(false);
-        LinearLayout.LayoutParams p2 = new LinearLayout.LayoutParams(-2, -2);
-        p2.leftMargin = dp(10);
-        swVue.setLayoutParams(p2);
-        plg.addView(swVue);
-        plg.addView(txt("Vue", 12, txtSub, false));
-        tabs.addView(plg, new LinearLayout.LayoutParams(-2, -2));
+        tabs.addView(tabCode);
+        tabs.addView(exitBtn());
         root.addView(tabs, -1, dp(44));
         // WebCat 同款: 底部符号快捷条 (插入光标处)
         LinearLayout sym = new LinearLayout(this);
         sym.setOrientation(LinearLayout.HORIZONTAL);
         sym.setBackgroundColor(0xFF17181A);
         sym.setGravity(Gravity.CENTER);
-        String[] syms = {"<", ">", "/", "=", "\"", ":", ";", "(", ")", "{", "}", "$"};
+        String[] syms = {"<", ">", "/", "=", "\"", ":", ";", "(", ")"};
         for (String s2 : syms) {
             TextView st = txt(s2, 16, txtMain, false);
             int pd = dp(10);
@@ -209,6 +192,13 @@ public class H5EditorActivity extends Activity {
         return null;
     }
 
+    private TextView tabFile;
+    private TextView exitBtn() {
+        TextView t = txt("退出", 14, txtMain, false);
+        t.setPadding(dp(12), dp(4), dp(12), dp(4));
+        t.setOnClickListener(v -> finish());
+        return t;
+    }
     private TextView toolBtn(String s, View.OnClickListener l) {
         TextView t = txt(s, 16, txtMain, false);
         t.setPadding(dp(12), 0, dp(12), 0);
@@ -241,6 +231,7 @@ public class H5EditorActivity extends Activity {
         curFile = f;
         if (H5Store.isTextFile(f.getName())) {
             code.setText(H5Store.readFile(f));
+            tabFile.setText(f.getName());
             switchTab("代码");
         } else {
             saveCur();
