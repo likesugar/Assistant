@@ -110,7 +110,7 @@ public class H5ProjectListActivity extends Activity {
             lt.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1f));
             row.addView(lt);
             row.setOnClickListener(v -> {
-                Intent i = new Intent(this, H5ProjectActivity.class);
+                Intent i = new Intent(this, H5EditorActivity.class);
                 i.putExtra("name", name);
                 startActivity(i);
             });
