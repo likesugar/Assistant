@@ -2,6 +2,7 @@ package com.ziyuan.Assistant;
 
 import android.content.Context;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
