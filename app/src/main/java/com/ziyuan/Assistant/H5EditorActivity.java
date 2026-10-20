@@ -1,180 +1,334 @@
 package com.ziyuan.Assistant;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
-import android.view.inputmethod.EditorInfo;
+import android.view.ViewGroup;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.json.JSONObject;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.util.List;
 
-/** HTML5 编辑器 — 代码编辑 + 运行预览 + 插件(vConsole/Vue)注入 (HBuilderX 风格) */
+/** HTML5 编辑器 — 左侧文件树 + 多文件编辑 + file:// 运行(相对引用生效) + vConsole/Vue 注入 */
 public class H5EditorActivity extends Activity {
-    private int idx;
-    private JSONObject proj;
+    private String projName;
+    private File projDir;
+    private File curFile;
     private EditText code;
-    private WebView web;
-    private TextView tabHtml, tabPrev;
-    private boolean dark = true;
+    private TextView curPath;
+    private LinearLayout fileList;
+    private android.webkit.WebView web;
+    private FrameLayout editorPane, previewPane;
+    private TextView tabCode, tabPrev;
+    private Switch swVc, swVue;
+    private static final int REQ_IMPORT = 51;
     private int bg = 0xFF121212, cardBg = 0xFF1E1E20, txtMain = 0xFFE8EAED, txtSub = 0xFF9AA0A6, blue = 0xFF4FC3F7;
 
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
-        idx = getIntent().getIntExtra("idx", 0);
-        try { proj = H5Store.projects(this).optJSONObject(idx); } catch (Throwable t) { proj = null; }
-        if (proj == null) { finish(); return; }
-        if (getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", false)) { /* dark default anyway */ }
+        projName = getIntent().getStringExtra("name");
+        projDir = H5Store.projectDir(this, projName);
+        if (projDir == null || !projDir.exists()) { finish(); return; }
+        buildUi();
+        hideNav();
+    }
 
+    private void buildUi() {
+        FrameLayout rootF = new FrameLayout(this);
+        rootF.setBackgroundColor(bg);
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(bg);
-        // 顶栏: ← 项目名 | 插件选择
+        // 顶栏: ← 项目名 | ▶ | ⊕新建 | ⬆导入
         LinearLayout top = new LinearLayout(this);
         top.setOrientation(LinearLayout.HORIZONTAL);
         top.setGravity(Gravity.CENTER_VERTICAL);
-        top.setPadding(dp(8), dp(12), dp(12), dp(12));
+        top.setPadding(dp(8), dp(10), dp(10), dp(10));
         TextView back = txt("←", 20, txtMain, false);
-        back.setPadding(dp(6), 0, dp(12), 0);
+        back.setPadding(dp(6), 0, dp(10), 0);
         back.setOnClickListener(v -> finish());
         top.addView(back);
-        TextView name = txt(proj.optString("name", "项目"), 17, txtMain, true);
-        name.setEllipsize(TextUtils.TruncateAt.END); name.setMaxLines(1);
+        TextView name = txt(projName, 16, txtMain, true);
+        name.setEllipsize(TextUtils.TruncateAt.END);
+        name.setMaxLines(1);
         top.addView(name, new LinearLayout.LayoutParams(0, -2, 1f));
-        TextView vc = txt("vC", 13, pluginOn("vconsole") ? 0xFF4FC3F7 : txtSub, true);
-        vc.setPadding(dp(10), dp(4), dp(10), dp(4));
-        vc.setOnClickListener(v -> {
-            togglePlugin("vconsole");
-            vc.setTextColor(pluginOn("vconsole") ? 0xFF4FC3F7 : txtSub);
-            Toast.makeText(this, "vConsole " + (pluginOn("vconsole") ? "已开启" : "已关闭"), Toast.LENGTH_SHORT).show();
-        });
-        top.addView(vc);
-        TextView vue = txt("Vue", 13, pluginOn("vue") ? 0xFF4FC3F7 : txtSub, true);
-        vue.setPadding(dp(10), dp(4), dp(6), dp(4));
-        vue.setOnClickListener(v -> {
-            togglePlugin("vue");
-            vue.setTextColor(pluginOn("vue") ? 0xFF4FC3F7 : txtSub);
-            Toast.makeText(this, "Vue " + (pluginOn("vue") ? "已开启" : "已关闭"), Toast.LENGTH_SHORT).show();
-        });
-        top.addView(vue);
-        root.addView(top);
-        // 工具行: 代码/预览 tab + 运行
-        LinearLayout tools = new LinearLayout(this);
-        tools.setOrientation(LinearLayout.HORIZONTAL);
-        tools.setGravity(Gravity.CENTER_VERTICAL);
-        tools.setPadding(dp(10), 0, dp(10), 0);
-        tabHtml = tab("代码");
-        tabPrev = tab("预览");
-        tools.addView(tabHtml); tools.addView(tabPrev);
-        TextView run = txt("▶ 运行", 13, 0xFFFFFFFF, true);
-        run.setGravity(Gravity.CENTER);
-        GradientDrawable rg = new GradientDrawable();
-        rg.setColor(0xFF2E7D32); rg.setCornerRadius(dp(14));
-        run.setBackground(rg);
-        run.setPadding(dp(14), dp(6), dp(14), dp(6));
-        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(0, -2, 1f);
-        rlp.gravity = Gravity.END; rlp.width = -2; rlp.weight = 0;
-        rlp.leftMargin = dp(10);
-        run.setLayoutParams(rlp);
-        run.setOnClickListener(v -> runPreview());
-        tools.addView(run);
-        root.addView(tools, -1, dp(40));
-        // 代码区
+        top.addView(toolBtn("▶", v -> { saveCur(); runHtml(currentHtml()); }));
+        top.addView(toolBtn("＋", v -> newFileDialog()));
+        top.addView(toolBtn("⬆", v -> {
+            Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            i.addCategory(Intent.CATEGORY_OPENABLE);
+            i.setType("*/*");
+            startActivityForResult(i, REQ_IMPORT);
+        }));
+        root.addView(top, -1, dp(46));
+        // 主区: 左侧文件树 + 右侧编辑/预览
+        LinearLayout main = new LinearLayout(this);
+        main.setOrientation(LinearLayout.HORIZONTAL);
+        // 左侧栏
+        LinearLayout side = new LinearLayout(this);
+        side.setOrientation(LinearLayout.VERTICAL);
+        side.setBackgroundColor(0xFF17181A);
+        side.setPadding(dp(4), dp(8), dp(4), dp(8));
+        TextView sideTitle = txt("文件", 12, txtSub, true);
+        sideTitle.setPadding(dp(8), 0, 0, dp(6));
+        side.addView(sideTitle);
+        fileList = new LinearLayout(this);
+        fileList.setOrientation(LinearLayout.VERTICAL);
+        side.addView(fileList, new LinearLayout.LayoutParams(-1, -2));
+        main.addView(side, dp(190), -1);
+        // 右侧: 编辑区 / 预览区 (Tab 切换)
+        editorPane = new FrameLayout(this);
         code = new EditText(this);
-        code.setText(proj.optString("html", ""));
         code.setTextSize(13);
         code.setTextColor(0xFFD4D4D4);
         code.setBackgroundColor(0xFF17181A);
         code.setGravity(Gravity.TOP);
         code.setTypeface(Typeface.MONOSPACE);
-        code.setMinLines(6);
         code.setHorizontallyScrolling(true);
-        code.setImeOptions(EditorInfo.IME_FLAG_NO_EXTRACT_UI);
+        code.setImeOptions(android.view.inputmethod.EditorInfo.IME_FLAG_NO_EXTRACT_UI);
         code.setPadding(dp(10), dp(10), dp(10), dp(10));
-        root.addView(code, new LinearLayout.LayoutParams(-1, 0, 1f));
-        // 预览区 (默认隐藏)
+        editorPane.addView(code, new FrameLayout.LayoutParams(-1, -1));
+        previewPane = new FrameLayout(this);
+        previewPane.setBackgroundColor(0xFFFFFFFF);
         web = new WebView(this);
         android.webkit.WebSettings ws = web.getSettings();
         ws.setJavaScriptEnabled(true);
         ws.setDomStorageEnabled(true);
-        web.setBackgroundColor(0xFFFFFFFF);
-        View pv = web;
-        root.addView(pv, new LinearLayout.LayoutParams(-1, 0, 1f));
-        pv.setVisibility(View.GONE);
-        // 底部状态
-        TextView status = txt("HTML · vConsole/Vue 插件点顶部 vC/Vue 切换", 11, txtSub, false);
-        status.setPadding(dp(12), dp(6), dp(12), dp(6));
-        root.addView(status);
-        setContentView(root);
-        hideNav();
-        // tab 切换
-        tabHtml.setOnClickListener(v -> { code.setVisibility(View.VISIBLE); pv.setVisibility(View.GONE); selTab(true); });
-        tabPrev.setOnClickListener(v -> { runPreview(); code.setVisibility(View.GONE); pv.setVisibility(View.VISIBLE); selTab(false); });
-        selTab(true);
+        ws.setAllowFileAccess(true);
+        web.setWebViewClient(new WebViewClient() {
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView v, String url) {
+                // 插件离线拦截: <script src="vconsole.min.js"> / vue.global.prod.js 直接可用
+                if (url.endsWith("vconsole.min.js")) return assetResp("vconsole.min.js", "application/javascript");
+                if (url.endsWith("vue.global.prod.js") || url.endsWith("vue.min.js")) return assetResp("vue.global.prod.js", "application/javascript");
+                return null;
+            }
+            @Override
+            public void onPageFinished(WebView v, String url) {
+                // vConsole 开关: 注入调试台
+                if (swVc != null && swVc.isChecked()) v.evaluateJavascript("try{window.vConsole=new VConsole();}catch(e){}", null);
+            }
+        });
+        previewPane.addView(web, new FrameLayout.LayoutParams(-1, -1));
+        editorPane.setVisibility(View.VISIBLE);
+        previewPane.setVisibility(View.GONE);
+        main.addView(editorPane, new LinearLayout.LayoutParams(0, -1, 1f));
+        main.addView(previewPane, new LinearLayout.LayoutParams(0, -1, 1f));
+        root.addView(main, new LinearLayout.LayoutParams(-1, 0, 1f));
+        // 底部 Tab: 代码 | 预览 + 插件开关
+        LinearLayout tabs = new LinearLayout(this);
+        tabs.setOrientation(LinearLayout.HORIZONTAL);
+        tabs.setBackgroundColor(cardBg);
+        tabs.setGravity(Gravity.CENTER_VERTICAL);
+        tabCode = tabBtn("代码", true);
+        tabPrev = tabBtn("预览", false);
+        tabs.addView(tabCode, new LinearLayout.LayoutParams(0, -2, 1f));
+        tabs.addView(tabPrev, new LinearLayout.LayoutParams(0, -2, 1f));
+        LinearLayout plg = new LinearLayout(this);
+        plg.setOrientation(LinearLayout.HORIZONTAL);
+        plg.setGravity(Gravity.CENTER);
+        plg.setPadding(dp(6), 0, dp(6), 0);
+        swVc = new Switch(this);
+        swVc.setChecked(true);
+        plg.addView(swVc);
+        plg.addView(txt("调试", 12, txtSub, false));
+        swVue = new Switch(this);
+        swVue.setChecked(false);
+        LinearLayout.LayoutParams p2 = (LinearLayout.LayoutParams) swVue.getLayoutParams();
+        p2.leftMargin = dp(10);
+        swVue.setLayoutParams(p2);
+        plg.addView(swVue);
+        plg.addView(txt("Vue", 12, txtSub, false));
+        tabs.addView(plg, new LinearLayout.LayoutParams(-2, -2));
+        root.addView(tabs, -1, dp(44));
+        rootF.addView(root, new FrameLayout.LayoutParams(-1, -1));
+        // 当前文件路径条
+        curPath = txt("", 11, txtSub, false);
+        curPath.setPadding(dp(10), dp(2), dp(6), dp(2));
+        FrameLayout.LayoutParams clp = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.START);
+        curPath.setBackgroundColor(0x88000000);
+        rootF.addView(curPath, clp);
+        setContentView(rootF);
+        // 默认打开 index.html
+        File idx = new File(projDir, "index.html");
+        openFile(idx.exists() ? idx : firstFile());
+        renderFileList();
     }
 
-    private void selTab(boolean htmlTab) {
-        tabHtml.setTextColor(htmlTab ? blue : txtSub);
-        tabPrev.setTextColor(htmlTab ? txtSub : blue);
+    private File firstFile() {
+        List<String> t = H5Store.listTree(projDir);
+        for (String s : t) if (!s.endsWith("/") && H5Store.isHtml(s)) return new File(projDir, s);
+        for (String s : t) if (!s.endsWith("/")) return new File(projDir, s);
+        return null;
     }
 
-    private TextView tab(String s) {
-        TextView t = txt(s, 14, txtSub, true);
-        t.setPadding(dp(12), dp(8), dp(12), dp(8));
+    private TextView toolBtn(String s, View.OnClickListener l) {
+        TextView t = txt(s, 16, txtMain, false);
+        t.setPadding(dp(12), 0, dp(12), 0);
+        t.setOnClickListener(l);
         return t;
     }
 
-    private void runPreview() {
-        // 保存
-        proj = optProj();
-        if (proj == null) return;
-        try { proj.put("html", code.getText().toString()); } catch (Throwable ignored) {}
-        H5Store.saveProject(this, idx, proj);
-        String html = code.getText().toString();
-        // 注入插件 (head 前置)
-        StringBuilder inject = new StringBuilder();
-        if (pluginOn("vconsole")) {
-            String vc = H5Store.asset(this, "vconsole.min.js");
-            inject.append("<script>").append(vc).append("</script>\n");
+    private TextView tabBtn(String s, boolean sel) {
+        TextView t = txt(s, 14, sel ? txtMain : txtSub, sel);
+        t.setGravity(Gravity.CENTER);
+        t.setPadding(0, dp(10), 0, dp(10));
+        t.setOnClickListener(v -> switchTab(s));
+        return t;
+    }
+
+    private void switchTab(String s) {
+        boolean codeTab = s.equals("代码");
+        editorPane.setVisibility(codeTab ? View.VISIBLE : View.GONE);
+        previewPane.setVisibility(codeTab ? View.GONE : View.VISIBLE);
+        tabCode.setTextColor(codeTab ? txtMain : txtSub);
+        tabPrev.setTextColor(codeTab ? txtSub : txtMain);
+        tabCode.setTypeface(null, codeTab ? Typeface.BOLD : Typeface.NORMAL);
+        tabPrev.setTypeface(null, codeTab ? Typeface.BOLD : Typeface.NORMAL);
+        if (!codeTab) saveCur();
+    }
+
+    private void openFile(File f) {
+        if (f == null || !f.exists()) return;
+        saveCur();
+        curFile = f;
+        if (H5Store.isTextFile(f.getName())) {
+            code.setText(H5Store.readFile(f));
+            switchTab("代码");
+        } else {
+            saveCur();
+            runHtml(f);
         }
-        if (pluginOn("vue")) {
-            String vue = H5Store.asset(this, "vue.global.prod.js");
-            inject.append("<script>").append(vue).append("</script>\n");
-        }
-        String out;
-        if (html.contains("<head>")) out = html.replace("<head>", "<head>\n" + inject);
-        else out = inject + html;
-        web.loadDataWithBaseURL(null, out, "text/html", "UTF-8", null);
+        curPath.setText(rel(f));
     }
 
-    private JSONObject optProj() {
-        try { return H5Store.projects(this).optJSONObject(idx); } catch (Throwable t) { return proj; }
+    private String rel(File f) {
+        String p = f.getAbsolutePath(), b = projDir.getAbsolutePath();
+        return p.startsWith(b) ? p.substring(b.length() + 1) : f.getName();
     }
 
-    private boolean pluginOn(String k) {
-        JSONObject pl = proj == null ? null : proj.optJSONObject("plugins");
-        return pl != null && pl.optBoolean(k, false);
+    private void saveCur() {
+        if (curFile != null && curFile.exists() && H5Store.isTextFile(curFile.getName()))
+            H5Store.writeFile(curFile, code.getText().toString());
     }
 
-    private void togglePlugin(String k) {
+    private File currentHtml() {
+        if (curFile != null && H5Store.isHtml(curFile.getName())) return curFile;
+        File idx = new File(projDir, "index.html");
+        return idx.exists() ? idx : firstFile();
+    }
+
+    private void runHtml(File f) {
+        if (f == null) { Toast.makeText(this, "没有 HTML 文件", Toast.LENGTH_SHORT).show(); return; }
+        switchTab("预览");
+        web.loadUrl("file://" + f.getAbsolutePath());
+    }
+
+    private WebResourceResponse assetResp(String name, String mime) {
         try {
-            JSONObject pl = proj.optJSONObject("plugins");
-            if (pl == null) { pl = new JSONObject(); proj.put("plugins", pl); }
-            pl.put(k, !pl.optBoolean(k, false));
-            H5Store.saveProject(this, idx, proj);
-        } catch (Throwable ignored) {}
+            String s = H5Store.asset(this, name);
+            return new WebResourceResponse(mime, "utf-8", new ByteArrayInputStream(s.getBytes("UTF-8")));
+        } catch (Throwable t) { return null; }
     }
 
-    // ===== 隐藏系统导航栏 =====
+    private void renderFileList() {
+        fileList.removeAllViews();
+        List<String> tree = H5Store.listTree(projDir);
+        for (String rel : tree) {
+            final boolean isDir = rel.endsWith("/");
+            final String name = isDir ? rel.substring(0, rel.length() - 1) : rel;
+            TextView t = txt((isDir ? "📁 " : iconOf(name) + " ") + name, 12, isDir ? txtMain : txtSub, false);
+            t.setSingleLine(true);
+            t.setEllipsize(TextUtils.TruncateAt.START);
+            t.setPadding(dp(8), dp(6), dp(4), dp(6));
+            t.setOnClickListener(v -> {
+                if (isDir) return;
+                openFile(new File(projDir, name));
+            });
+            t.setOnLongClickListener(v -> {
+                new android.app.AlertDialog.Builder(this)
+                        .setTitle("删除文件")
+                        .setMessage(name)
+                        .setPositiveButton("删除", (d, w) -> { new File(projDir, name).delete(); renderFileList(); })
+                        .setNegativeButton("取消", null).show();
+                return true;
+            });
+            fileList.addView(t);
+        }
+        if (tree.isEmpty()) fileList.addView(txt("(空项目)", 12, txtSub, false));
+    }
+
+    private String iconOf(String name) {
+        String n = name.toLowerCase();
+        if (n.endsWith(".html") || n.endsWith(".htm")) return "🌐";
+        if (n.endsWith(".css")) return "🎨";
+        if (n.endsWith(".js")) return "📜";
+        if (n.endsWith(".png") || n.endsWith(".jpg") || n.endsWith(".jpeg") || n.endsWith(".gif") || n.endsWith(".webp")) return "🖼";
+        return "📄";
+    }
+
+    private void newFileDialog() {
+        EditText et = new EditText(this);
+        et.setHint("路径, 如 jc/4/8.html 或 style.css");
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("新建文件")
+                .setView(et)
+                .setPositiveButton("创建", (d, w) -> {
+                    String p = et.getText().toString().trim();
+                    if (p.length() == 0) return;
+                    File f = new File(projDir, p);
+                    if (f.exists()) { Toast.makeText(this, "已存在", Toast.LENGTH_SHORT).show(); return; }
+                    if (H5Store.isHtml(p)) H5Store.writeFile(f, H5Store.DEFAULT_HTML);
+                    else H5Store.writeFile(f, "");
+                    renderFileList();
+                    openFile(f);
+                })
+                .setNegativeButton("取消", null).show();
+    }
+
+    @Override
+    protected void onActivityResult(int req, int res, Intent data) {
+        super.onActivityResult(req, res, data);
+        if (req == REQ_IMPORT && res == RESULT_OK && data != null && data.getData() != null) {
+            Uri u = data.getData();
+            String dn = "file_" + System.currentTimeMillis();
+            try {
+                android.database.Cursor c = getContentResolver().query(u, null, null, null, null);
+                if (c != null) {
+                    int ix = c.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                    if (c.moveToFirst() && ix >= 0) dn = c.getString(ix);
+                    c.close();
+                }
+            } catch (Throwable ignored) {}
+            H5Store.importFrom(this, projDir, u, dn);
+            renderFileList();
+            Toast.makeText(this, "已导入 " + dn, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        saveCur();
+        super.onBackPressed();
+    }
+
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
