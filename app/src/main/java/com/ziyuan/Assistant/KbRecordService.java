@@ -10,7 +10,7 @@ import android.os.IBinder;
 /** KB 后台录制前台服务：保活+通知栏停止按钮 */
 public class KbRecordService extends Service {
 
-    private static final String CHANNEL = "kbrecord";
+    private static final String CHANNEL = "kbrecord_v2";   // 旧kbrecord是LOW不出状态栏图标, 换id升级
     public static final String ACTION_STOP = "com.ziyuan.Assistant.KB_STOP";
 
     private android.os.PowerManager.WakeLock wl;
@@ -71,7 +71,7 @@ public class KbRecordService extends Service {
 
     private Notification buildNotification(String text) {
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        NotificationChannel ch = new NotificationChannel(CHANNEL, "直播录制", NotificationManager.IMPORTANCE_LOW);
+        NotificationChannel ch = new NotificationChannel(CHANNEL, "直播录制", NotificationManager.IMPORTANCE_DEFAULT);
         nm.createNotificationChannel(ch);
         // 点通知本体 = 进入解析页查看
         android.app.PendingIntent openPi = android.app.PendingIntent.getActivity(this, 2,
