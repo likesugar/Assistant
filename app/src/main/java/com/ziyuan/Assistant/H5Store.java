@@ -88,8 +88,18 @@ public class H5Store {
             return bo.toString("UTF-8");
         } catch (Throwable t) { return ""; }
     }
-    public static void writeFile(File f, String content) {
+    public static String queryName(android.net.Uri uri, android.content.Context c) {
+        android.database.Cursor cur = null;
         try {
+            cur = c.getContentResolver().query(uri, null, null, null, null);
+            if (cur != null && cur.moveToFirst()) {
+                int i = cur.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                if (i >= 0) { String n = cur.getString(i); if (n != null && n.length() > 0) return n; }
+            }
+        } catch (Throwable ignored) {}
+        return "import_" + System.currentTimeMillis();
+    }
+    public static void writeFile(File f, String content) {        try {
             File p = f.getParentFile();
             if (p != null && !p.exists()) p.mkdirs();
             FileOutputStream out = new FileOutputStream(f);

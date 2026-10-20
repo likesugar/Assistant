@@ -56,6 +56,7 @@
         <activity android:name=".GkdAppRulesActivity" android:exported="false"/>
         <activity android:name=".GkdLogActivity" android:exported="false"/>
         <activity android:name=".H5ProjectListActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".H5ProjectActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".H5EditorActivity" android:exported="false" android:windowSoftInputMode="adjustResize" android:configChanges="orientation|screenSize|keyboardHidden"/>
         <receiver android:name=".GkdSnapReceiver" android:exported="false"/>
         <service android:name=".GkdStatusService" android:exported="false" android:foregroundServiceType="dataSync"/>

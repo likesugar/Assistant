@@ -31,6 +31,7 @@ public class H5EditorActivity extends Activity {
     private File projDir;
     private H5HttpServer server;
     private File curFile;
+    private LinearLayout sideTag;
     private EditText code;
     private TextView curPath;
     private LinearLayout fileList;
@@ -66,6 +67,11 @@ public class H5EditorActivity extends Activity {
         back.setPadding(dp(6), 0, dp(10), 0);
         back.setOnClickListener(v -> finish());
         top.addView(back);
+        // ☰ 收起/展开左侧文件栏 (WebCat 同款)
+        top.addView(toolBtn("☰", v -> {
+            if (sideTag.getVisibility() == View.VISIBLE) sideTag.setVisibility(View.GONE);
+            else sideTag.setVisibility(View.VISIBLE);
+        }));
         TextView name = txt(projName, 16, txtMain, true);
         name.setEllipsize(TextUtils.TruncateAt.END);
         name.setMaxLines(1);
@@ -94,6 +100,7 @@ public class H5EditorActivity extends Activity {
         fileList.setOrientation(LinearLayout.VERTICAL);
         side.addView(fileList, new LinearLayout.LayoutParams(-1, -2));
         main.addView(side, dp(190), -1);
+        sideTag = side;
         // 右侧: 编辑区 / 预览区 (Tab 切换)
         editorPane = new FrameLayout(this);
         code = new EditText(this);
