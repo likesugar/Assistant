@@ -26,6 +26,9 @@ public class H5ProjectListActivity extends Activity {
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         int bg = 0xFF121212, txtMain = 0xFFE8EAED, txtSub = 0xFF9AA0A6;
+        // 最外层 FrameLayout: 内容列 + FAB 悬浮层 (LinearLayout 里 match_parent 悬浮层会挤掉列表)
+        android.widget.FrameLayout rootF = new android.widget.FrameLayout(this);
+        rootF.setBackgroundColor(bg);
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(bg);
@@ -34,12 +37,12 @@ public class H5ProjectListActivity extends Activity {
         top.setOrientation(LinearLayout.HORIZONTAL);
         top.setGravity(Gravity.CENTER_VERTICAL);
         top.setPadding(dp(16), dp(18), dp(16), dp(18));
-        TextView gear = txt("⚙", 22, txtMain, false);
-        LinearLayout.LayoutParams glp = new LinearLayout.LayoutParams(-2, -2);
-        glp.gravity = Gravity.END;
+        TextView title = txt("HBuilderX", 20, txtMain, true);
         TextView spacer = txt("", 1, txtMain, false);
         spacer.setLayoutParams(new LinearLayout.LayoutParams(0, 1, 1f));
+        top.addView(title);
         top.addView(spacer);
+        TextView gear = txt("⚙", 22, txtMain, false);
         top.addView(gear);
         gear.setOnClickListener(v -> Toast.makeText(this, "H5 编辑器 · vConsole/Vue 插件在项目内选择", Toast.LENGTH_SHORT).show());
         root.addView(top);
@@ -50,6 +53,7 @@ public class H5ProjectListActivity extends Activity {
         list.setPadding(dp(10), 0, dp(10), dp(90));
         sv.addView(list, new LinearLayout.LayoutParams(-1, -2));
         root.addView(sv, new LinearLayout.LayoutParams(-1, 0, 1f));
+        rootF.addView(root, new android.widget.FrameLayout.LayoutParams(-1, -1));
         // FAB +
         android.widget.FrameLayout fl = new android.widget.FrameLayout(this);
         TextView fab = txt("＋", 24, 0xFFFFFFFF, false);
@@ -74,8 +78,8 @@ public class H5ProjectListActivity extends Activity {
                     })
                     .setNegativeButton("取消", null).show();
         });
-        root.addView(fl, new android.widget.FrameLayout.LayoutParams(-1, -1));
-        setContentView(root);
+        rootF.addView(fl, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        setContentView(rootF);
         render();
     }
 
