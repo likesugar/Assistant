@@ -76,6 +76,9 @@ public class H5EditorActivity extends Activity {
         name.setEllipsize(TextUtils.TruncateAt.END);
         name.setMaxLines(1);
         top.addView(name, new LinearLayout.LayoutParams(0, -2, 1f));
+        // WebCat 同款: 撤销 / 重做 / 运行
+        top.addView(toolBtn("↶", v -> code.undo()));
+        top.addView(toolBtn("↷", v -> code.redo()));
         top.addView(toolBtn("▶", v -> { saveCur(); runHtml(currentHtml()); }));
         top.addView(toolBtn("＋", v -> newFileDialog()));
         top.addView(toolBtn("⬆", v -> {
@@ -137,6 +140,35 @@ public class H5EditorActivity extends Activity {
             }
         });
         previewPane.addView(web, new FrameLayout.LayoutParams(-1, -1));
+        // WebCat 同款: 预览悬浮按钮 — 绿色 vConsole + 蓝色 调试
+        TextView fvc = txt("vConsole", 12, 0xFFFFFFFF, true);
+        GradientDrawable gv = new GradientDrawable();
+        gv.setColor(0xFF1B9C4B); gv.setCornerRadius(dp(18));
+        fvc.setBackground(gv);
+        fvc.setPadding(dp(14), dp(8), dp(14), dp(8));
+        FrameLayout.LayoutParams vp = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.END);
+        vp.bottomMargin = dp(24); vp.rightMargin = dp(14);
+        fvc.setLayoutParams(vp);
+        fvc.setOnClickListener(v -> {
+            swVc.setChecked(true);
+            web.reload();
+            Toast.makeText(this, "vConsole 已开启", Toast.LENGTH_SHORT).show();
+        });
+        previewPane.addView(fvc);
+        TextView fdbg = txt("调试", 12, 0xFFFFFFFF, true);
+        GradientDrawable gd2 = new GradientDrawable();
+        gd2.setColor(0xFF2E7CF6); gd2.setCornerRadius(dp(18));
+        fdbg.setBackground(gd2);
+        fdbg.setPadding(dp(14), dp(8), dp(14), dp(8));
+        FrameLayout.LayoutParams dp2 = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.END);
+        dp2.bottomMargin = dp(72); dp2.rightMargin = dp(14);
+        fdbg.setLayoutParams(dp2);
+        fdbg.setOnClickListener(v -> {
+            swVc.setChecked(!swVc.isChecked());
+            web.reload();
+            Toast.makeText(this, swVc.isChecked() ? "调试开" : "调试关", Toast.LENGTH_SHORT).show();
+        });
+        previewPane.addView(fdbg);
         editorPane.setVisibility(View.VISIBLE);
         previewPane.setVisibility(View.GONE);
         main.addView(editorPane, new LinearLayout.LayoutParams(0, -1, 1f));
@@ -168,6 +200,23 @@ public class H5EditorActivity extends Activity {
         plg.addView(txt("Vue", 12, txtSub, false));
         tabs.addView(plg, new LinearLayout.LayoutParams(-2, -2));
         root.addView(tabs, -1, dp(44));
+        // WebCat 同款: 底部符号快捷条 (插入光标处)
+        LinearLayout sym = new LinearLayout(this);
+        sym.setOrientation(LinearLayout.HORIZONTAL);
+        sym.setBackgroundColor(0xFF17181A);
+        sym.setGravity(Gravity.CENTER);
+        String[] syms = {"<", ">", "/", "=", "\"", ":", ";", "(", ")", "{", "}", "$"};
+        for (String s2 : syms) {
+            TextView st = txt(s2, 16, txtMain, false);
+            int pd = dp(10);
+            st.setPadding(pd, dp(6), pd, dp(6));
+            st.setOnClickListener(v -> {
+                int cur = code.getCursor().getLeft();
+                code.getText().insert(cur, cur, s2);
+            });
+            sym.addView(st);
+        }
+        root.addView(sym, -1, dp(40));
         rootF.addView(root, new FrameLayout.LayoutParams(-1, -1));
         // 当前文件路径条
         curPath = txt("", 11, txtSub, false);
