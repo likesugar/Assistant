@@ -118,6 +118,7 @@ public class H5EditorActivity extends Activity {
                 // 插件离线拦截: <script src="vconsole.min.js"> / vue.global.prod.js 直接可用
                 if (url.endsWith("vconsole.min.js")) return assetResp("vconsole.min.js", "application/javascript");
                 if (url.endsWith("vue.global.prod.js") || url.endsWith("vue.min.js")) return assetResp("vue.global.prod.js", "application/javascript");
+                if (url.endsWith("hls.min.js") || url.endsWith("hls.js")) return assetResp("hls.min.js", "application/javascript");
                 return null;
             }
             @Override
@@ -151,7 +152,7 @@ public class H5EditorActivity extends Activity {
         plg.addView(txt("调试", 12, txtSub, false));
         swVue = new Switch(this);
         swVue.setChecked(false);
-        LinearLayout.LayoutParams p2 = (LinearLayout.LayoutParams) swVue.getLayoutParams();
+        LinearLayout.LayoutParams p2 = new LinearLayout.LayoutParams(-2, -2);
         p2.leftMargin = dp(10);
         swVue.setLayoutParams(p2);
         plg.addView(swVue);
