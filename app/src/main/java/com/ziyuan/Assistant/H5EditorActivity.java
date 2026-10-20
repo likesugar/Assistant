@@ -29,6 +29,7 @@ import java.util.List;
 public class H5EditorActivity extends Activity {
     private String projName;
     private File projDir;
+    private H5HttpServer server;
     private File curFile;
     private EditText code;
     private TextView curPath;
@@ -112,6 +113,11 @@ public class H5EditorActivity extends Activity {
         ws.setJavaScriptEnabled(true);
         ws.setDomStorageEnabled(true);
         ws.setAllowFileAccess(true);
+        // 对齐 WebCat: 不拦 http 明文流/自动播/视频回调和全屏支持
+        ws.setMediaPlaybackRequiresUserGesture(false);
+        ws.setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        ws.setDomStorageEnabled(true);
+        web.setWebChromeClient(new android.webkit.WebChromeClient());
         web.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView v, String url) {
@@ -238,8 +244,13 @@ public class H5EditorActivity extends Activity {
 
     private void runHtml(File f) {
         if (f == null) { Toast.makeText(this, "没有 HTML 文件", Toast.LENGTH_SHORT).show(); return; }
+        // 对齐 WebCat: 本地 HTTP 服务器加载, 相对引用/明文流/视频拖动原生生效
+        if (server != null) server.stop();
+        server = new H5HttpServer(H5HttpServer.dirResponder(projDir));
+        server.start();
+        String rel = projDir.toPath().relativize(f.toPath()).toString().replace(File.separatorChar, '/');
         switchTab("预览");
-        web.loadUrl("file://" + f.getAbsolutePath());
+        web.loadUrl(server.base() + rel);
     }
 
     private WebResourceResponse assetResp(String name, String mime) {
@@ -329,6 +340,9 @@ public class H5EditorActivity extends Activity {
         saveCur();
         super.onBackPressed();
     }
+
+    @Override
+    protected void onDestroy() { if (server != null) server.stop(); super.onDestroy(); }
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
