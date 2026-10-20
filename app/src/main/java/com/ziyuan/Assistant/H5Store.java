@@ -88,7 +88,7 @@ public class H5Store {
             return bo.toString("UTF-8");
         } catch (Throwable t) { return ""; }
     }
-    public static String queryName(android.net.Uri uri, android.content.Context c) {
+    public static String queryName(Context c, android.net.Uri uri) {
         android.database.Cursor cur = null;
         try {
             cur = c.getContentResolver().query(uri, null, null, null, null);
