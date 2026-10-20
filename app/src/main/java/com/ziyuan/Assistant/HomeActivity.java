@@ -804,6 +804,9 @@ public class HomeActivity extends Activity {
         findViewById(R.id.cardGkd).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, GkdActivity.class)); }
         });
+        findViewById(R.id.cardH5Ed).setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) { startActivity(new Intent(HomeActivity.this, H5ProjectListActivity.class)); }
+        });
         findViewById(R.id.cardEnt).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, EntertainmentActivity.class)); }
         });
