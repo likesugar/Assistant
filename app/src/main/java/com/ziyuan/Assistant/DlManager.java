@@ -20,6 +20,7 @@ public class DlManager {
         public volatile long total = -1;
         public volatile long doneBytes = 0;
         public volatile String state = "连接中…";
+        public volatile boolean notified = false;   // 通知栏已发结果
         public java.io.File file;   // 直连模式=目标文件；HLS模式=分段目录
     }
 
