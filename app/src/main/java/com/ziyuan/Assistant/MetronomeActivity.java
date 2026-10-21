@@ -1167,7 +1167,7 @@ public class MetronomeActivity extends Activity {
         grid.removeAllViews();
         boolean hwOn = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroH24Weather", false);
         boolean hrOn = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroH24Rain", false);
-        ((TextView) findViewById(R.id.h24Sub)).setText("Open-Meteo · 逐时");
+        ((TextView) findViewById(R.id.h24Sub)).setText("当日天气");
         if (hwOn && hws != null && !hws.isEmpty()) {
             TextView t1 = new TextView(this);
             t1.setText("24h 天气"); t1.setTextColor(tc()); t1.setTextSize(16); t1.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
