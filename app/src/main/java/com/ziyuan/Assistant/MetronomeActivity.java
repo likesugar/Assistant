@@ -1065,7 +1065,9 @@ public class MetronomeActivity extends Activity {
         final android.widget.LinearLayout grid = findViewById(R.id.h24Grid);
         if (grid == null) return;
         grid.removeAllViews();
-        ((TextView) findViewById(R.id.h24Sub)).setText("获取中…");
+        TextView subT = findViewById(R.id.h24Sub);
+        subT.setText("获取中…");
+        subT.setOnClickListener(v -> { h24Fetched = false; lastH24At = 0; refreshH24(); });
         new Thread(() -> {
             try {
                 android.content.SharedPreferences sp = getSharedPreferences("settings", MODE_PRIVATE);
@@ -1073,19 +1075,32 @@ public class MetronomeActivity extends Activity {
                 if (cname.length() == 0) cname = ipCity();
                 String latS = sp.getString("h24Lat", ""), lonS = sp.getString("h24Lon", "");
                 if (latS.length() == 0 || !sp.getString("h24GeoName", "").equals(cname)) {
-                    String g = httpGet("https://geocoding-api.open-meteo.com/v1/search?count=1&language=zh&name="
-                        + java.net.URLEncoder.encode(cname, "UTF-8"), "https://geocoding-api.open-meteo.com/");
-                    org.json.JSONArray res = new org.json.JSONObject(g).optJSONArray("results");
-                    if (res == null || res.length() == 0) throw new Exception("定位失败: " + cname);
-                    org.json.JSONObject r0 = res.getJSONObject(0);
-                    latS = String.valueOf(r0.optDouble("latitude"));
-                    lonS = String.valueOf(r0.optDouble("longitude"));
-                    sp.edit().putString("h24Lat", latS).putString("h24Lon", lonS).putString("h24GeoName", cname).apply();
+                    String lastGeoErr = "无结果";
+                    // 城市名变体重试: 原名 / 去市 / 去区县
+                    String[] variants = {cname,
+                        cname.endsWith("市") ? cname.substring(0, cname.length() - 1) : "",
+                        (cname.endsWith("区") || cname.endsWith("县")) ? cname.substring(0, cname.length() - 1) : ""};
+                    for (String nm : variants) {
+                        if (nm.length() == 0) continue;
+                        try {
+                            String g = httpGet2("https://geocoding-api.open-meteo.com/v1/search?count=1&language=zh&name="
+                                + java.net.URLEncoder.encode(nm, "UTF-8"));
+                            org.json.JSONArray res = new org.json.JSONObject(g).optJSONArray("results");
+                            if (res == null || res.length() == 0) continue;
+                            org.json.JSONObject r0 = res.getJSONObject(0);
+                            latS = String.valueOf(r0.optDouble("latitude"));
+                            lonS = String.valueOf(r0.optDouble("longitude"));
+                            sp.edit().putString("h24Lat", latS).putString("h24Lon", lonS).putString("h24GeoName", cname).apply();
+                            lastGeoErr = null;
+                            break;
+                        } catch (Throwable ge) { lastGeoErr = ge.getClass().getSimpleName() + (ge.getMessage() == null ? "" : ":" + ge.getMessage()); }
+                    }
+                    if (lastGeoErr != null) throw new Exception("定位失败 " + cname + " (" + lastGeoErr + ")");
                 }
                 String u = "https://api.open-meteo.com/v1/forecast?latitude=" + latS + "&longitude=" + lonS
                     + "&hourly=temperature_2m,weather_code,rain,precipitation_probability"
                     + "&forecast_hours=24&timezone=Asia%2FShanghai";
-                String w = httpGet(u, "https://api.open-meteo.com/");
+                String w = httpGet2(u);
                 org.json.JSONObject hourly = new org.json.JSONObject(w).getJSONObject("hourly");
                 org.json.JSONArray tm = hourly.getJSONArray("time");
                 org.json.JSONArray ta = hourly.getJSONArray("temperature_2m");
@@ -1119,9 +1134,25 @@ public class MetronomeActivity extends Activity {
                 uiTick.post(() -> buildH24(fh, fl, fv));
             } catch (Throwable e) {
                 String msg = e.getMessage();
-                uiTick.post(() -> { TextView s2 = findViewById(R.id.h24Sub); if (s2 != null) s2.setText("获取失败, 点击重试"); h24Fetched = false; lastH24At = 0; });
+                uiTick.post(() -> {
+                    TextView s2 = findViewById(R.id.h24Sub);
+                    if (s2 != null) s2.setText("失败:" + (msg == null || msg.length() == 0 ? e.getClass().getSimpleName() : msg) + " 点击重试");
+                    h24Fetched = false; lastH24At = 0;
+                });
             }
         }, "h24").start();
+    }
+
+    /** 长超时版 httpGet (open-meteo 国内直连偏慢) */
+    private String httpGet2(String u) throws Throwable {
+        java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(u).openConnection();
+        c.setConnectTimeout(20000); c.setReadTimeout(25000);
+        c.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile Safari/537.36");
+        java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(c.getInputStream(), "UTF-8"));
+        StringBuilder sb = new StringBuilder(); String line;
+        while ((line = r.readLine()) != null) sb.append(line);
+        r.close();
+        return sb.toString();
     }
 
     private void buildH24(java.util.List<String[]> hws, String[] rLbl, float[] rVal) {
