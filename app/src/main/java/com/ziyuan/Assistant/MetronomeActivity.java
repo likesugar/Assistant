@@ -1076,10 +1076,10 @@ public class MetronomeActivity extends Activity {
                 String latS = sp.getString("h24Lat", ""), lonS = sp.getString("h24Lon", "");
                 if (latS.length() == 0 || !sp.getString("h24GeoName", "").equals(cname)) {
                     String lastGeoErr = "无结果";
-                    // 城市名变体重试: 原名 / 去市 / 去区县
-                    String[] variants = {cname,
-                        cname.endsWith("市") ? cname.substring(0, cname.length() - 1) : "",
-                        (cname.endsWith("区") || cname.endsWith("县")) ? cname.substring(0, cname.length() - 1) : ""};
+                    // 城市名变体重试: 原名 / 加市 (open-meteo 中文库多为"xx市") / 去市区县后缀
+                    String base = cname.endsWith("市") || cname.endsWith("区") || cname.endsWith("县")
+                        ? cname.substring(0, cname.length() - 1) : cname;
+                    String[] variants = {cname, base + "市", base};
                     for (String nm : variants) {
                         if (nm.length() == 0) continue;
                         try {
