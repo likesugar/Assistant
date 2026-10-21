@@ -128,6 +128,12 @@ public class MetroSettingsActivity extends Activity {
         card2.addView(switchRow("天气", "打拍页显示百度天气生活指数 (开启才联网)", prefs.getBoolean("metroLifeService", false), (on) -> {
             prefs.edit().putBoolean("metroLifeService", on).apply();
         }));
+        card2.addView(switchRow("24h天气", "打拍页显示未来 24 小时逐时温度/天气 (Open-Meteo, 开启才联网)", prefs.getBoolean("metroH24Weather", false), (on) -> {
+            prefs.edit().putBoolean("metroH24Weather", on).apply();
+        }));
+        card2.addView(switchRow("24h降雨", "打拍页显示未来 24 小时逐时降雨量柱状图 (与 24h天气 同源)", prefs.getBoolean("metroH24Rain", false), (on) -> {
+            prefs.edit().putBoolean("metroH24Rain", on).apply();
+        }));
         root.addView(card2);
 
         // ===== 洛天依 =====

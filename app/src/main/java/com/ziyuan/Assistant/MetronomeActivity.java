@@ -843,9 +843,16 @@ public class MetronomeActivity extends Activity {
     private long lastWeatherAt = 0;
 
     private void refreshLifeCard() {
-        boolean on = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroLifeService", false);
+        android.content.SharedPreferences sp0 = getSharedPreferences("settings", MODE_PRIVATE);
+        boolean lifeOn = sp0.getBoolean("metroLifeService", false);
+        boolean hwOn = sp0.getBoolean("metroH24Weather", false);
+        boolean hrOn = sp0.getBoolean("metroH24Rain", false);
+        android.widget.LinearLayout h24c = findViewById(R.id.h24Card);
+        if (h24c != null) h24c.setVisibility((hwOn || hrOn) ? View.VISIBLE : View.GONE);
         android.widget.LinearLayout lc = findViewById(R.id.lifeCard);
-        if (!on) { lc.setVisibility(View.GONE); return; }
+        if (!lifeOn && !hwOn && !hrOn) { lc.setVisibility(View.GONE); return; }
+        if (hwOn || hrOn) refreshH24();
+        if (!lifeOn) { lc.setVisibility(View.GONE); return; }
         lc.setBackgroundResource(dark() ? R.drawable.bg_card_md3_dark : R.drawable.bg_card_md3);
         lc.setVisibility(View.VISIBLE);
         long now = android.os.SystemClock.elapsedRealtime();
@@ -1029,6 +1036,191 @@ public class MetronomeActivity extends Activity {
                 String msg = e.getMessage(); uiTick.post(() -> { ((TextView) findViewById(R.id.lifeTemp)).setText("获取失败:" + (msg == null || msg.length() == 0 ? e.getClass().getSimpleName() : msg) + " 点击重试"); lifeFetched = false; lastWeatherAt = 0; });
             }
         }, "weather").start();
+    }
+
+    // ===== 24h 天气/降雨 (Open-Meteo, 移植 PCLDailyWeatherPage) =====
+    private boolean h24Fetched = false;
+    private long lastH24At = 0;
+
+    private static String wmoText(int c) {
+        switch (c) {
+            case 0: return "晴"; case 1: return "基本晴"; case 2: return "局部多云"; case 3: return "阴";
+            case 45: case 48: return "雾";
+            case 51: return "毛毛雨"; case 53: return "毛毛雨"; case 55: return "浓毛毛雨";
+            case 56: case 57: return "冻毛毛雨";
+            case 61: return "小雨"; case 63: return "中雨"; case 65: return "大雨";
+            case 66: case 67: return "冻雨";
+            case 71: return "小雪"; case 73: return "中雪"; case 75: return "大雪"; case 77: return "霰";
+            case 80: return "阵雨"; case 81: return "阵雨"; case 82: return "强阵雨";
+            case 85: case 86: return "阵雪";
+            case 95: return "雷阵雨"; case 96: case 99: return "雷雨伴冰雹";
+            default: return "--";
+        }
+    }
+
+    private void refreshH24() {
+        long now2 = android.os.SystemClock.elapsedRealtime();
+        if (h24Fetched && now2 - lastH24At < 30 * 60 * 1000) return;
+        h24Fetched = true; lastH24At = now2;
+        final android.widget.LinearLayout grid = findViewById(R.id.h24Grid);
+        if (grid == null) return;
+        grid.removeAllViews();
+        ((TextView) findViewById(R.id.h24Sub)).setText("获取中…");
+        new Thread(() -> {
+            try {
+                android.content.SharedPreferences sp = getSharedPreferences("settings", MODE_PRIVATE);
+                String cname = sp.getString("lifeCityName", "");
+                if (cname.length() == 0) cname = ipCity();
+                String latS = sp.getString("h24Lat", ""), lonS = sp.getString("h24Lon", "");
+                if (latS.length() == 0 || !sp.getString("h24GeoName", "").equals(cname)) {
+                    String g = httpGet("https://geocoding-api.open-meteo.com/v1/search?count=1&language=zh&name="
+                        + java.net.URLEncoder.encode(cname, "UTF-8"), "https://geocoding-api.open-meteo.com/");
+                    org.json.JSONArray res = new org.json.JSONObject(g).optJSONArray("results");
+                    if (res == null || res.length() == 0) throw new Exception("定位失败: " + cname);
+                    org.json.JSONObject r0 = res.getJSONObject(0);
+                    latS = String.valueOf(r0.optDouble("latitude"));
+                    lonS = String.valueOf(r0.optDouble("longitude"));
+                    sp.edit().putString("h24Lat", latS).putString("h24Lon", lonS).putString("h24GeoName", cname).apply();
+                }
+                String u = "https://api.open-meteo.com/v1/forecast?latitude=" + latS + "&longitude=" + lonS
+                    + "&hourly=temperature_2m,weather_code,rain,precipitation_probability"
+                    + "&forecast_hours=24&timezone=Asia%2FShanghai";
+                String w = httpGet(u, "https://api.open-meteo.com/");
+                org.json.JSONObject hourly = new org.json.JSONObject(w).getJSONObject("hourly");
+                org.json.JSONArray tm = hourly.getJSONArray("time");
+                org.json.JSONArray ta = hourly.getJSONArray("temperature_2m");
+                org.json.JSONArray ca = hourly.getJSONArray("weather_code");
+                org.json.JSONArray ra = hourly.optJSONArray("rain");
+                org.json.JSONArray pa = hourly.optJSONArray("precipitation_probability");
+                java.util.List<String[]> hws = new java.util.ArrayList<>();
+                java.util.List<String> rLbl = new java.util.ArrayList<>();
+                java.util.List<Float> rVal = new java.util.ArrayList<>();
+                java.text.SimpleDateFormat inf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm", java.util.Locale.US);
+                long nowMs = System.currentTimeMillis();
+                for (int i = 0; i < tm.length(); i++) {
+                    long t;
+                    try { t = inf.parse(tm.getString(i)).getTime(); } catch (Throwable x) { t = nowMs; }
+                    if (t + 3600000L < nowMs) continue; // 跳过已过整点
+                    String hh = tm.getString(i).substring(11, 13) + "时";
+                    String tv = String.valueOf(Math.round(ta.optDouble(i, 0))) + "°";
+                    String wt = wmoText(ca.optInt(i, -1));
+                    double rain = ra == null ? 0 : ra.optDouble(i, 0);
+                    int pp = pa == null ? -1 : pa.optInt(i, -1);
+                    String extra = rain > 0 ? String.format(java.util.Locale.US, "%.1fmm", rain)
+                        : (pp > 0 ? "降水" + pp + "%" : "");
+                    hws.add(new String[]{hh, tv, wt, extra});
+                    rLbl.add(hh);
+                    rVal.add((float) Math.max(0, rain));
+                }
+                final java.util.List<String[]> fh = hws;
+                final String[] fl = rLbl.toArray(new String[0]);
+                final float[] fv = new float[rVal.size()];
+                for (int i = 0; i < fv.length; i++) fv[i] = rVal.get(i);
+                uiTick.post(() -> buildH24(fh, fl, fv));
+            } catch (Throwable e) {
+                String msg = e.getMessage();
+                uiTick.post(() -> { TextView s2 = findViewById(R.id.h24Sub); if (s2 != null) s2.setText("获取失败, 点击重试"); h24Fetched = false; lastH24At = 0; });
+            }
+        }, "h24").start();
+    }
+
+    private void buildH24(java.util.List<String[]> hws, String[] rLbl, float[] rVal) {
+        android.widget.LinearLayout grid = findViewById(R.id.h24Grid);
+        if (grid == null) return;
+        grid.removeAllViews();
+        boolean hwOn = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroH24Weather", false);
+        boolean hrOn = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroH24Rain", false);
+        ((TextView) findViewById(R.id.h24Sub)).setText("Open-Meteo · 逐时");
+        if (hwOn && hws != null && !hws.isEmpty()) {
+            TextView t1 = new TextView(this);
+            t1.setText("24h 天气"); t1.setTextColor(tc()); t1.setTextSize(16); t1.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            android.widget.LinearLayout.LayoutParams p1 = new android.widget.LinearLayout.LayoutParams(-2, -2);
+            p1.setMargins(dp(2), 0, 0, dp(6));
+            grid.addView(t1, p1);
+            HourView hv = new HourView(this, hws.toArray(new String[0][]));
+            grid.addView(hv, new android.widget.LinearLayout.LayoutParams(-1, dp(100)));
+        }
+        if (hrOn && rVal.length > 0) {
+            TextView t2 = new TextView(this);
+            t2.setText("24h 降雨"); t2.setTextColor(tc()); t2.setTextSize(16); t2.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            android.widget.LinearLayout.LayoutParams p2 = new android.widget.LinearLayout.LayoutParams(-2, -2);
+            p2.setMargins(dp(2), dp(10), 0, dp(6));
+            grid.addView(t2, p2);
+            RainView rv = new RainView(this, rLbl, rVal);
+            grid.addView(rv, new android.widget.LinearLayout.LayoutParams(-1, dp(110)));
+        }
+    }
+
+    /** 24h 降雨柱状图: 自绘横滑 (参照 PCLDailyWeatherPage hourly rain) */
+    private class RainView extends android.view.View {
+        private final String[] lbl;
+        private final float[] val;
+        private final int colW = dp(34);
+        private final android.graphics.Paint bar = new android.graphics.Paint(), txt = new android.graphics.Paint(), sub = new android.graphics.Paint(), axis = new android.graphics.Paint();
+        private final android.widget.Scroller sc = new android.widget.Scroller(getContext());
+        private android.view.VelocityTracker vt;
+        private float lastX, downX, downY; private boolean dragging; private int scroll;
+
+        RainView(android.content.Context c, String[] labels, float[] vals) {
+            super(c);
+            lbl = labels; val = vals;
+            bar.setColor(0xFF4A90D9); bar.setAntiAlias(true);
+            txt.setColor(0xFF1F2329); txt.setAntiAlias(true); txt.setTextAlign(android.graphics.Paint.Align.CENTER);
+            txt.setTextSize(dp(10));
+            sub.setColor(0xFF9AA0A8); sub.setAntiAlias(true); sub.setTextAlign(android.graphics.Paint.Align.CENTER);
+            sub.setTextSize(dp(9));
+            axis.setColor(0xFFE3E6EA); axis.setStrokeWidth(dp(1));
+        }
+        private int maxScroll() { return Math.max(0, colW * val.length - getWidth()); }
+        @Override public void computeScroll() { if (sc.computeScrollOffset()) { scroll = sc.getCurrX(); invalidate(); } }
+        @Override protected void onDraw(android.graphics.Canvas cv) {
+            super.onDraw(cv);
+            cv.save();
+            cv.translate(-Math.max(0, Math.min(scroll, maxScroll())), 0);
+            float base = getHeight() - dp(18);
+            float maxV = 0.1f;
+            for (float v : val) maxV = Math.max(maxV, v);
+            float chartH = base - dp(20);
+            float barW = dp(16);
+            for (int i = 0; i < val.length; i++) {
+                float cx = i * colW + colW / 2f;
+                float bh = val[i] <= 0 ? dp(2) : Math.max(dp(3), chartH * (val[i] / maxV));
+                if (val[i] > 0) {
+                    cv.drawRoundRect(new android.graphics.RectF(cx - barW / 2, base - bh, cx + barW / 2, base), dp(3), dp(3), bar);
+                    cv.drawText(String.format(java.util.Locale.US, "%.1f", val[i]), cx, base - bh - dp(4), txt);
+                } else {
+                    cv.drawLine(cx - barW / 2, base - dp(2), cx + barW / 2, base - dp(2), axis);
+                }
+                if (i % 3 == 0) cv.drawText(lbl[i], cx, getHeight() - dp(4), sub);
+            }
+            cv.restore();
+        }
+        @Override public boolean onTouchEvent(android.view.MotionEvent e) {
+            if (vt == null) vt = android.view.VelocityTracker.obtain();
+            vt.addMovement(e);
+            switch (e.getActionMasked()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    downX = e.getX(); downY = e.getY(); lastX = e.getX(); dragging = false;
+                    sc.forceFinished(true);
+                    return true;
+                case android.view.MotionEvent.ACTION_MOVE:
+                    if (!dragging && Math.abs(e.getX() - downX) > dp(8)) { dragging = true; sc.forceFinished(true); }
+                    if (dragging) scroll = Math.max(0, Math.min(scroll + (int) (lastX - e.getX()), maxScroll()));
+                    lastX = e.getX();
+                    invalidate();
+                    return true;
+                case android.view.MotionEvent.ACTION_UP:
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    if (dragging) {
+                        vt.computeCurrentVelocity(1000);
+                        sc.fling(scroll, 0, (int) -vt.getXVelocity(), 0, 0, maxScroll(), 0, 0);
+                    }
+                    if (vt != null) { vt.recycle(); vt = null; }
+                    invalidate();
+                    return true;
+            }
+            return super.onTouchEvent(e);
+        }
     }
 
     private String ipCity() throws Throwable {
