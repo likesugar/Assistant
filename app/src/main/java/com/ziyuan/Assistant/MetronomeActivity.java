@@ -1123,7 +1123,13 @@ public class MetronomeActivity extends Activity {
                     int pp = pa == null ? -1 : pa.optInt(i, -1);
                     String extra = rain > 0 ? String.format(java.util.Locale.US, "%.1fmm", rain)
                         : (pp > 0 ? "降水" + pp + "%" : "");
-                    hws.add(new String[]{hh, tv, wt, extra});
+                    String cloth = "";
+                    if (i % 2 == 0) { // 每2小时标注穿衣指数 (按该时气温)
+                        double t2 = ta.optDouble(i, 0);
+                        cloth = "穿:" + (t2 >= 30 ? "短袖类" : t2 >= 26 ? "短袖/薄外套" : t2 >= 22 ? "薄外套类"
+                            : t2 >= 18 ? "外套类" : t2 >= 12 ? "夹克/风衣" : t2 >= 6 ? "厚外套/毛衣" : "羽绒服类");
+                    }
+                    hws.add(new String[]{hh, tv, wt, extra, cloth});
                     rLbl.add(hh);
                     rVal.add((float) Math.max(0, rain));
                 }
@@ -1169,7 +1175,7 @@ public class MetronomeActivity extends Activity {
             p1.setMargins(dp(2), 0, 0, dp(6));
             grid.addView(t1, p1);
             HourView hv = new HourView(this, hws.toArray(new String[0][]));
-            grid.addView(hv, new android.widget.LinearLayout.LayoutParams(-1, dp(100)));
+            grid.addView(hv, new android.widget.LinearLayout.LayoutParams(-1, dp(120)));
         }
         if (hrOn && rVal.length > 0) {
             TextView t2 = new TextView(this);
@@ -1733,7 +1739,7 @@ public class MetronomeActivity extends Activity {
     private class HourView extends android.view.View {
         private final String[][] hs;
         private final int colW = dp(64);
-        private final android.graphics.Paint txt = new android.graphics.Paint(), sub = new android.graphics.Paint(), big = new android.graphics.Paint();
+        private final android.graphics.Paint txt = new android.graphics.Paint(), sub = new android.graphics.Paint(), big = new android.graphics.Paint(), tip = new android.graphics.Paint();
         private final android.widget.Scroller sc = new android.widget.Scroller(getContext());
         private android.view.VelocityTracker vt;
         private float lastX, downX, downY; private boolean dragging; private int scroll;
@@ -1747,6 +1753,8 @@ public class MetronomeActivity extends Activity {
             big.setTextSize(dp(17)); big.setFakeBoldText(true);
             sub.setColor(0xFF9AA0A8); sub.setAntiAlias(true); sub.setTextAlign(android.graphics.Paint.Align.CENTER);
             sub.setTextSize(dp(10));
+            tip.setColor(0xFF8A6D2F); tip.setAntiAlias(true); tip.setTextAlign(android.graphics.Paint.Align.CENTER);
+            tip.setTextSize(dp(10));
         }
         private int maxScroll() { return Math.max(0, colW * hs.length - getWidth()); }
         private void drawScrollBar(android.graphics.Canvas cv) {
@@ -1776,6 +1784,7 @@ public class MetronomeActivity extends Activity {
                 cv.drawText(hs[i][2], cx, dp(62), sub);
                 String pp = hs[i][3];
                 if (pp != null && pp.length() > 0) cv.drawText(pp, cx, dp(78), sub);
+                if (hs[i].length > 4 && hs[i][4] != null && hs[i][4].length() > 0) cv.drawText(hs[i][4], cx, dp(96), tip);
             }
             cv.restore();
             drawScrollBar(cv);
