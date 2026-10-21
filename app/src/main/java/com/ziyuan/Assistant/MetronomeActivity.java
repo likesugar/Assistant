@@ -1167,7 +1167,8 @@ public class MetronomeActivity extends Activity {
         grid.removeAllViews();
         boolean hwOn = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroH24Weather", false);
         boolean hrOn = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("metroH24Rain", false);
-        ((TextView) findViewById(R.id.h24Sub)).setText("当日天气");
+        String curType = wType == null ? "" : wType.trim();
+        ((TextView) findViewById(R.id.h24Sub)).setText(curType.length() == 0 ? "当日天气" : curType);
         if (hwOn && hws != null && !hws.isEmpty()) {
             TextView t1 = new TextView(this);
             t1.setText("24h 天气"); t1.setTextColor(tc()); t1.setTextSize(16); t1.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
@@ -1438,6 +1439,10 @@ public class MetronomeActivity extends Activity {
         wHours = hours.toArray(new String[0][]);
         wIndices = indices;
         wDays = days.toArray(new String[0][]); wCity = city; wType = type; wCurT = curT; wMn = mn; wMx = mx;
+        try { // 24h卡角标同步当日天气 (天气卡刷新完即更新)
+            TextView hs = findViewById(R.id.h24Sub);
+            if (hs != null) { String ct = type == null ? "" : type.trim(); hs.setText(ct.length() == 0 ? "当日天气" : ct); }
+        } catch (Throwable ignored) {}
         wHum = hum0; wWind = wind0; wPress = press0; wVis = vis0; wAqi = aqi0; selDay = 0;
         TextView t2 = findViewById(R.id.lifeTemp);
         t2.setText(city + " · 点击切换");
