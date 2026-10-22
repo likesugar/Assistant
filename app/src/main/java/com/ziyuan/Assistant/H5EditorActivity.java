@@ -37,6 +37,10 @@ public class H5EditorActivity extends Activity {
     private LinearLayout fileList;
     private android.webkit.WebView web;
     private FrameLayout editorPane, previewPane;
+    private LinearLayout topBar, tabsBar, symBar;
+    private FrameLayout rootFrame;
+    private boolean fullPreview = false;
+    private TextView fsClose;
     private TextView tabCode, tabPrev;
     private boolean useVc = true, useVue = false;
     private static final int REQ_IMPORT = 51;
@@ -53,13 +57,15 @@ public class H5EditorActivity extends Activity {
     }
 
     private void buildUi() {
-        FrameLayout rootF = new FrameLayout(this);
+        rootFrame = new FrameLayout(this);
+        FrameLayout rootF = rootFrame;
         rootF.setBackgroundColor(bg);
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(bg);
         // 顶栏: ← 项目名 | ▶ | ⊕新建 | ⬆导入
-        LinearLayout top = new LinearLayout(this);
+        topBar = new LinearLayout(this);
+        LinearLayout top = topBar;
         top.setOrientation(LinearLayout.HORIZONTAL);
         top.setGravity(Gravity.CENTER_VERTICAL);
         top.setPadding(dp(8), dp(10), dp(10), dp(10));
@@ -139,7 +145,8 @@ public class H5EditorActivity extends Activity {
         main.addView(previewPane, new LinearLayout.LayoutParams(0, -1, 1f));
         root.addView(main, new LinearLayout.LayoutParams(-1, 0, 1f));
         // WebCat 同款 Tab 行: 左=文件名, 右=设计/代码/退出
-        LinearLayout tabs = new LinearLayout(this);
+        tabsBar = new LinearLayout(this);
+        LinearLayout tabs = tabsBar;
         tabs.setOrientation(LinearLayout.HORIZONTAL);
         tabs.setBackgroundColor(cardBg);
         tabs.setGravity(Gravity.CENTER_VERTICAL);
@@ -155,7 +162,8 @@ public class H5EditorActivity extends Activity {
         tabs.addView(exitBtn());
         root.addView(tabs, -1, dp(44));
         // WebCat 同款: 底部符号快捷条 (插入光标处)
-        LinearLayout sym = new LinearLayout(this);
+        symBar = new LinearLayout(this);
+        LinearLayout sym = symBar;
         sym.setOrientation(LinearLayout.HORIZONTAL);
         sym.setBackgroundColor(0xFF17181A);
         sym.setGravity(Gravity.CENTER);
@@ -263,8 +271,42 @@ public class H5EditorActivity extends Activity {
         server = new H5HttpServer(H5HttpServer.dirResponder(projDir));
         server.start();
         String rel = projDir.toPath().relativize(f.toPath()).toString().replace(File.separatorChar, '/');
+        enterFullPreview();
+    }
+
+    /** ▶ 运行 = 全屏预览（隐藏顶栏/文件树/Tab/符号条，返回键或右上 ✕ 退出） */
+    private void enterFullPreview() {
+        fullPreview = true;
+        topBar.setVisibility(View.GONE);
+        sideTag.setVisibility(View.GONE);
+        tabsBar.setVisibility(View.GONE);
+        symBar.setVisibility(View.GONE);
         switchTab("预览");
+        if (fsClose == null) {
+            fsClose = txt("✕", 16, 0xFFE8EAED, true);
+            fsClose.setBackgroundColor(0x99000000);
+            int pd = dp(12);
+            fsClose.setPadding(pd, dp(8), pd, dp(8));
+            rootFrame.addView(fsClose, new FrameLayout.LayoutParams(-2, -2));
+        }
+        FrameLayout.LayoutParams fp = (FrameLayout.LayoutParams) fsClose.getLayoutParams();
+        fp.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
+        fp.topMargin = dp(16); fp.rightMargin = dp(16);
+        fsClose.setLayoutParams(fp);
+        fsClose.setVisibility(View.VISIBLE);
+        fsClose.setOnClickListener(v -> exitFullPreview());
         web.loadUrl(server.base() + rel);
+    }
+
+    private void exitFullPreview() {
+        fullPreview = false;
+        if (fsClose != null) fsClose.setVisibility(View.GONE);
+        topBar.setVisibility(View.VISIBLE);
+        sideTag.setVisibility(View.VISIBLE);
+        tabsBar.setVisibility(View.VISIBLE);
+        symBar.setVisibility(View.VISIBLE);
+        switchTab("代码");
+        hideNav();
     }
 
     private WebResourceResponse assetResp(String name, String mime) {
@@ -351,6 +393,7 @@ public class H5EditorActivity extends Activity {
 
     @Override
     public void onBackPressed() {
+        if (fullPreview) { exitFullPreview(); return; }
         saveCur();
         super.onBackPressed();
     }
