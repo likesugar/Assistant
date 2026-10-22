@@ -12,9 +12,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: '17' }
-      - uses: android-actions/setup-android@v3
       - name: Install SDK parts
-        run: yes | sdkmanager --licenses >/dev/null 2>&1 || true; sdkmanager "build-tools;34.0.0" "platforms;android-36" >/dev/null
+        run: |
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager "build-tools;34.0.0" "platforms;android-36" >/dev/null
       - name: Build APK
         run: bash ci/build.sh
         env:
