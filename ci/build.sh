@@ -46,13 +46,19 @@ stub+="  }\n}\n"
 od="build_out/gen_stub/com/yausername/youtubedl_android"
 os.makedirs(od,exist_ok=True); open(od+"/R.java","w").write(stub)
 print("R stub written")
+od2="build_out/gen_stub/io/github/rosemoe/sora"
+os.makedirs(od2,exist_ok=True)
+sora=open(od2+"/R_sora.java","w")
+sora.write(stub.replace("package com.yausername.youtubedl_android;","package io.github.rosemoe.sora;"))
+sora.close()
+print("sora R stub written")
 PYGEN
 
 echo "[3/6] ecj compile..."
 RJ=$(find build_out/gen -name R.java)
 mkdir -p build_out/classes
 java -jar $V/tools/ecj.jar -source 1.8 -target 1.8 -encoding UTF-8 -proc:none -nowarn \
-    -cp "$SDK:$V/mdc_all_classes.jar:$V/ffk_classes.jar:$(ls $V/ffk_sex/*.jar | tr '\n' ':')$(ls $V/ydl/*.jar | tr '\n' ':')app/libs/apksig.jar:app/libs/pinyin4j-2.5.0.jar" \
+    -cp "$SDK:$V/mdc_all_classes.jar:$V/ffk_classes.jar:$(ls $V/ffk_sex/*.jar | tr '\n' ':')$(ls $V/ydl/*.jar | tr '\n' ':')app/libs/sora-editor-classes.jar:app/libs/collection-jvm.jar:app/libs/annotation-jvm.jar:app/libs/apksig.jar:app/libs/pinyin4j-2.5.0.jar" \
     -d build_out/classes "$RJ" $(find build_out/gen_stub -name R.java) \
     app/src/main/java/com/ziyuan/Assistant/*.java \
     app/src/main/java/com/ziyuan/Assistant/cal/*.java \
