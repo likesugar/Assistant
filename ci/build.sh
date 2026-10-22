@@ -46,13 +46,12 @@ stub+="  }\n}\n"
 od="build_out/gen_stub/com/yausername/youtubedl_android"
 os.makedirs(od,exist_ok=True); open(od+"/R.java","w").write(stub)
 print("R stub written")
-od2="build_out/gen_stub/io/github/rosemoe/sora"
-os.makedirs(od2,exist_ok=True)
-sora=open(od2+"/R_sora.java","w")
-sora.write(stub.replace("package com.yausername.youtubedl_android;","package io.github.rosemoe.sora;"))
-sora.close()
-print("sora R stub written")
 PYGEN
+# sora 库 R: 主R换包名(资源值同表, 运行时命中) — 含 string/style/styleable 内部类
+SORA_R=$(find build_out/gen -name R.java | head -1)
+mkdir -p build_out/gen_stub/io/github/rosemoe/sora
+sed 's/package com\.ziyuan\.Assistant;/package io.github.rosemoe.sora;/' "$SORA_R" > build_out/gen_stub/io/github/rosemoe/sora/R.java
+echo "sora full R stub written"
 
 echo "[3/6] ecj compile..."
 RJ=$(find build_out/gen -name R.java)
