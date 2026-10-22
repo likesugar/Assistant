@@ -271,11 +271,11 @@ public class H5EditorActivity extends Activity {
         server = new H5HttpServer(H5HttpServer.dirResponder(projDir));
         server.start();
         String rel = projDir.toPath().relativize(f.toPath()).toString().replace(File.separatorChar, '/');
-        enterFullPreview();
+        enterFullPreview(rel);
     }
 
     /** ▶ 运行 = 全屏预览（隐藏顶栏/文件树/Tab/符号条，返回键或右上 ✕ 退出） */
-    private void enterFullPreview() {
+    private void enterFullPreview(String rel) {
         fullPreview = true;
         topBar.setVisibility(View.GONE);
         sideTag.setVisibility(View.GONE);
