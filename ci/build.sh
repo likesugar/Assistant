@@ -5,8 +5,8 @@ cd "$(dirname "$0")/.."
 ROOT=$(pwd)
 VC=${VC:-1}
 VN=${VN:-1.0}
-BT=/home/z/my-project/android_build/build-tools/34.0.0
-SDK=/home/z/my-project/android_build/platforms/android-36/android.jar
+BT="$ANDROID_HOME/build-tools/34.0.0"
+SDK="$ANDROID_HOME/platforms/android-36/android.jar"
 PROJ="$ROOT"
 V="$ROOT/ci/vendor"
 
