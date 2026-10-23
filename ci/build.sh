@@ -78,21 +78,16 @@ java -Xmx3g -cp "$BT/lib/d8.jar" com.android.tools.r8.R8 --release \
     $V/mdc_all_classes.jar $V/ffk_classes.jar $V/ffk_sex/*.jar
 
 echo "[5/6] pack + zipalign..."
-ls -la build_out/dex || echo "NO DEX DIR"
-ls build_out/dex/*.dex 2>/dev/null || echo "NO DEX FILES"
-cd build_out/dex && zip ../../app-unsigned.apk classes*.dex && cd ../..
-cp build_out/app-unsigned.apk "$ROOT/with-dex-debug.apk"
-unzip -l app-unsigned.apk | grep classes || echo "NO DEX IN APK"
+cd build_out/dex && zip ../app-unsigned.apk classes*.dex && cd ../..
 mkdir -p build_out/lib/arm64-v8a
 cp $V/lib/arm64-v8a/*.so build_out/lib/arm64-v8a/
 (cd build_out && zip -q -9 -r app-unsigned.apk lib)
-"$BT/zipalign" -f 4 build_out/app-unsigned.apk build_out/app-aligned.apk || echo "ZIPALIGN FAILED"
-unzip -l build_out/app-aligned.apk | grep -F classes.dex || echo "NO DEX AFTER ALIGN"
+"$BT/zipalign" -f 4 build_out/app-unsigned.apk build_out/app-aligned.apk
 
 echo "[6/6] sign..."
 "$BT/apksigner" sign --ks $V/keystore/debug.keystore --ks-pass pass:android --key-pass pass:android \
     --out Assistant.apk build_out/app-aligned.apk
 "$BT/apksigner" verify Assistant.apk
-unzip -l app-aligned.apk | grep -F "classes.dex" || echo "NO DEX IN ALIGNED"
+unzip -l build_out/app-aligned.apk | grep -F "classes.dex" || echo "NO DEX IN ALIGNED"
 unzip -l Assistant.apk | grep -F "classes.dex" || echo "NO DEX IN SIGNED"
 echo "=== BUILD OK: Assistant.apk ==="
