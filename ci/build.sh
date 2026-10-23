@@ -57,7 +57,7 @@ echo "[3/6] ecj compile..."
 RJ=$(find build_out/gen -name R.java)
 mkdir -p build_out/classes
 java -jar $V/tools/ecj.jar -source 1.8 -target 1.8 -encoding UTF-8 -proc:none -nowarn \
-    -cp "$SDK:$V/mdc_all_classes.jar:$V/ffk_classes.jar:$(ls $V/ffk_sex/*.jar | tr '\n' ':')$(ls $V/ydl/*.jar | tr '\n' ':')app/libs/sora-editor-classes.jar:app/libs/collection-jvm.jar:app/libs/annotation-jvm.jar:app/libs/apksig.jar:app/libs/pinyin4j-2.5.0.jar" \
+    -cp "$SDK:$V/mdc_all_classes.jar:$V/ffk_classes.jar:$(ls $V/ffk_sex/*.jar | tr '\n' ':')$(ls $V/ydl/*.jar | tr '\n' ':')app/libs/sora-editor-classes.jar:app/libs/collection-jvm.jar:app/libs/annotation-jvm.jar:app/libs/xz-1.9.jar:app/libs/apksig.jar:app/libs/pinyin4j-2.5.0.jar" \
     -d build_out/classes "$RJ" $(find build_out/gen_stub -name R.java) \
     app/src/main/java/com/ziyuan/Assistant/*.java \
     app/src/main/java/com/ziyuan/Assistant/cal/*.java \

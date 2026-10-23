@@ -126,6 +126,40 @@ public class H5Store {
             writeFileBytes(new File(projDir, displayName), bo.toByteArray());
         } catch (Throwable ignored) {}
     }
+    /** 导入 7z：用 commons-compress SevenZFile 解压（含 LZMA，需 xz） */
+    public static int import7z(Context c, File projDir, android.net.Uri uri) {
+        int count = 0;
+        try {
+            java.io.File tmp = new java.io.File(projDir, ".tmp_import_7z");
+            java.io.InputStream in = c.getContentResolver().openInputStream(uri);
+            java.io.FileOutputStream fo = new java.io.FileOutputStream(tmp);
+            byte[] buf = new byte[8192]; int r;
+            while ((r = in.read(buf)) > 0) fo.write(buf, 0, r);
+            fo.close(); in.close();
+            File root = projDir.getCanonicalFile();
+            org.apache.commons.compress.archivers.sevenz.SevenZFile z =
+                new org.apache.commons.compress.archivers.sevenz.SevenZFile(tmp);
+            org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry e;
+            while ((e = z.getNextEntry()) != null) {
+                if (e.isDirectory()) continue;
+                String n = e.getName().replace("\\", "/");
+                if (n.contains("..") || n.startsWith("/")) continue;
+                File out = new File(projDir, n).getCanonicalFile();
+                if (!out.getPath().startsWith(root.getPath())) continue;
+                File parent = out.getParentFile();
+                if (parent != null) parent.mkdirs();
+                java.io.FileOutputStream o = new java.io.FileOutputStream(out);
+                byte[] b2 = new byte[8192]; int r2;
+                while ((r2 = z.read(b2)) > 0) o.write(b2, 0, r2);
+                o.close();
+                count++;
+            }
+            z.close();
+            tmp.delete();
+        } catch (Throwable t) { return count; }
+        return count;
+    }
+
     /** 导入 zip：解压全部条目到 projDir（保留内部文件夹结构），返回解压文件数 */
     public static int importZip(Context c, File projDir, android.net.Uri uri) {
         int count = 0;
