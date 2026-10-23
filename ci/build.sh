@@ -5,8 +5,8 @@ cd "$(dirname "$0")/.."
 ROOT=$(pwd)
 VC=${VC:-1}
 VN=${VN:-1.0}
-BT="$ANDROID_HOME/build-tools/34.0.0"
-SDK="$ANDROID_HOME/platforms/android-36/android.jar"
+BT=/home/z/my-project/android_build/build-tools/34.0.0
+SDK=/home/z/my-project/android_build/platforms/android-36/android.jar
 PROJ="$ROOT"
 V="$ROOT/ci/vendor"
 
@@ -78,7 +78,10 @@ java -Xmx3g -cp "$BT/lib/d8.jar" com.android.tools.r8.R8 --release \
     $V/mdc_all_classes.jar $V/ffk_classes.jar $V/ffk_sex/*.jar
 
 echo "[5/6] pack + zipalign..."
-cd build_out/dex && zip -q ../../app-unsigned.apk classes*.dex && cd ../..
+ls -la build_out/dex || echo "NO DEX DIR"
+ls build_out/dex/*.dex 2>/dev/null || echo "NO DEX FILES"
+cd build_out/dex && zip ../../app-unsigned.apk classes*.dex && cd ../..
+unzip -l app-unsigned.apk | grep classes || echo "NO DEX IN APK"
 mkdir -p build_out/lib/arm64-v8a
 cp $V/lib/arm64-v8a/*.so build_out/lib/arm64-v8a/
 (cd build_out && zip -q -9 -r app-unsigned.apk lib)
