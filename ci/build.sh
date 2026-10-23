@@ -91,4 +91,6 @@ echo "[6/6] sign..."
 "$BT/apksigner" sign --ks $V/keystore/debug.keystore --ks-pass pass:android --key-pass pass:android \
     --out Assistant.apk build_out/app-aligned.apk
 "$BT/apksigner" verify Assistant.apk
+unzip -l app-aligned.apk | grep -F "classes.dex" || echo "NO DEX IN ALIGNED"
+unzip -l Assistant.apk | grep -F "classes.dex" || echo "NO DEX IN SIGNED"
 echo "=== BUILD OK: Assistant.apk ==="
