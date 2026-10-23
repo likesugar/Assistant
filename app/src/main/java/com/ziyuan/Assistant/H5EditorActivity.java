@@ -283,15 +283,15 @@ public class H5EditorActivity extends Activity {
         symBar.setVisibility(View.GONE);
         switchTab("预览");
         if (fsClose == null) {
-            fsClose = txt("✕", 16, 0xFFE8EAED, true);
-            fsClose.setBackgroundColor(0x99000000);
-            int pd = dp(12);
-            fsClose.setPadding(pd, dp(8), pd, dp(8));
+            fsClose = txt("‹ 返回", 12, 0xFFE8EAED, false);
+            fsClose.setBackgroundColor(0x66000000);
+            int pd = dp(8);
+            fsClose.setPadding(pd, dp(4), pd, dp(4));
             rootFrame.addView(fsClose, new FrameLayout.LayoutParams(-2, -2));
         }
         FrameLayout.LayoutParams fp = (FrameLayout.LayoutParams) fsClose.getLayoutParams();
         fp.gravity = android.view.Gravity.TOP | android.view.Gravity.END;
-        fp.topMargin = dp(16); fp.rightMargin = dp(16);
+        fp.topMargin = dp(8); fp.rightMargin = dp(8);
         fsClose.setLayoutParams(fp);
         fsClose.setVisibility(View.VISIBLE);
         fsClose.setOnClickListener(v -> exitFullPreview());
