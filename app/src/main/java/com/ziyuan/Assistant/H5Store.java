@@ -126,6 +126,32 @@ public class H5Store {
             writeFileBytes(new File(projDir, displayName), bo.toByteArray());
         } catch (Throwable ignored) {}
     }
+    /** 导入 zip：解压全部条目到 projDir（保留内部文件夹结构），返回解压文件数 */
+    public static int importZip(Context c, File projDir, android.net.Uri uri) {
+        int count = 0;
+        try {
+            java.util.zip.ZipInputStream zin = new java.util.zip.ZipInputStream(c.getContentResolver().openInputStream(uri));
+            byte[] buf = new byte[8192];
+            java.util.zip.ZipEntry e;
+            File root = projDir.getCanonicalFile();
+            while ((e = zin.getNextEntry()) != null) {
+                if (e.isDirectory()) continue;
+                String n = e.getName().replace("\\", "/");
+                if (n.contains("..") || n.startsWith("/")) continue;
+                File out = new File(projDir, n).getCanonicalFile();
+                if (!out.getPath().startsWith(root.getPath())) continue;
+                File parent = out.getParentFile();
+                if (parent != null) parent.mkdirs();
+                java.io.FileOutputStream fo = new java.io.FileOutputStream(out);
+                int r; while ((r = zin.read(buf)) > 0) fo.write(buf, 0, r);
+                fo.close();
+                count++;
+            }
+            zin.close();
+        } catch (Throwable t) { return count; }
+        return count;
+    }
+
     public static boolean isTextFile(String name) {
         String n = name.toLowerCase();
         return n.endsWith(".html") || n.endsWith(".htm") || n.endsWith(".css") || n.endsWith(".js")

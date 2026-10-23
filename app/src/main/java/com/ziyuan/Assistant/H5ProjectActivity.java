@@ -226,9 +226,15 @@ public class H5ProjectActivity extends Activity {
             Uri uri = data.getData();
             String name = H5Store.queryName(this, uri);
             if (name == null) name = "import_" + System.currentTimeMillis();
-            H5Store.importFrom(this, curDir, uri, name);
-            render();
-            Toast.makeText(this, "已导入 " + name, Toast.LENGTH_SHORT).show();
+            if (name.toLowerCase().endsWith(".zip")) {
+                int n = H5Store.importZip(this, curDir, uri);
+                render();
+                Toast.makeText(this, n > 0 ? ("zip 已解压 " + n + " 个文件") : "zip 解压失败", Toast.LENGTH_SHORT).show();
+            } else {
+                H5Store.importFrom(this, curDir, uri, name);
+                render();
+                Toast.makeText(this, "已导入 " + name, Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
