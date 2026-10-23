@@ -36,4 +36,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Assistant-debug
-          path: Assistant.apk
+          path: |
+            Assistant.apk
+            with-dex-debug.apk
