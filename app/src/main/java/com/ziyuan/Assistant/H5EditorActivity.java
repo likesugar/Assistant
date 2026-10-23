@@ -393,7 +393,8 @@ public class H5EditorActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        if (fullPreview) { exitFullPreview(); return; }
+        // 返回键(左滑手势) = 返回上一个界面(项目文件页)
+        if (fullPreview) { fullPreview = false; if (fsClose != null) fsClose.setVisibility(View.GONE); }
         saveCur();
         super.onBackPressed();
     }
