@@ -393,7 +393,8 @@ public class H5EditorActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        // 返回键(左滑手势) = 返回上一个界面(项目文件页)
+        // 全屏预览中：WebView 能后退(如 1.html→2.html)就先退网页历史，否则回项目文件页
+        if (fullPreview && web != null && web.canGoBack()) { web.goBack(); return; }
         if (fullPreview) { fullPreview = false; if (fsClose != null) fsClose.setVisibility(View.GONE); }
         saveCur();
         super.onBackPressed();
