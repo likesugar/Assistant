@@ -74,7 +74,7 @@ java -Xmx3g -cp "$BT/lib/d8.jar" com.android.tools.r8.R8 --release \
     --lib "$SDK" --min-api 24 --pg-conf ci/r8-rules.pro \
     --output build_out/dex @build_out/classlist.txt \
     $V/ydl/*.jar app/libs/apksig.jar app/libs/pinyin4j-2.5.0.jar \
-    app/libs/sora-editor-classes.jar app/libs/collection-jvm.jar app/libs/annotation-jvm.jar \
+    app/libs/sora-editor-classes.jar app/libs/collection-jvm.jar app/libs/annotation-jvm.jar app/libs/xz-1.9.jar \
     $V/mdc_all_classes.jar $V/ffk_classes.jar $V/ffk_sex/*.jar
 
 echo "[5/6] pack + zipalign..."
