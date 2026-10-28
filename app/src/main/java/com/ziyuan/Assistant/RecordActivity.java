@@ -497,8 +497,10 @@ public class RecordActivity extends Activity {
 
     private String buildInfo(RecManager.RecJob j, boolean live) {
         long secs = j.secs + (live && j.startTs > 0 ? (System.currentTimeMillis() - j.startTs) / 1000 : 0);
+        String size = fmtSize(j.bytes);
+        if (live && j.bps > 0) size += "  ↓" + fmtSize(j.bps) + "/s";   // 实时写入速率
         return "录制时长: " + fmtDur(secs)
-            + "\n录制大小: " + fmtSize(j.bytes)
+            + "\n录制大小: " + size
             + "\n录制状态: " + (live ? "录制中" : (j.state != null ? j.state : "暂停录制"));
     }
 
