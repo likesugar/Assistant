@@ -179,9 +179,31 @@ public class RecordActivity extends Activity {
         tick = new Runnable() {
             public void run() {
                 rebuild();
-                handler.postDelayed(this, 800);
+                handler.postDelayed(this, nextDelay());
             }
         };
+    }
+
+    /**
+     * 自适应轮询间隔:
+     *  - 有任务正在跑(下载中/录制中): 1s  —— 速度与进度(含 mm:ss 计时)既实时又不抖
+     *  - 只有暂停/等待中的任务:        3s  —— 状态不再变化, 慢速兜底
+     *  - 全部空闲(仅历史/已完成):      5s  —— 几乎只做一次无变化的 diff, 省电省 CPU
+     */
+    private long nextDelay() {
+        boolean live = false, waiting = false;
+        for (RecManager.RecJob j : RecManager.recJobs.values()) {
+            if (j.active) { live = true; break; }
+        }
+        if (!live) {
+            for (DlManager.DlJob j : DlManager.jobs()) {
+                if (j.active) { live = true; break; }
+                if (j.paused) waiting = true;
+            }
+        }
+        if (live) return 1000;
+        if (waiting) return 3000;
+        return 5000;
     }
 
     @Override
