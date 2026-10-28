@@ -1010,7 +1010,12 @@ public class HomeActivity extends Activity {
             w.setBackgroundDrawableResource(android.R.color.transparent);
             w.setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                     android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            w.setWindowAnimations(R.style.DialogPopAnim);
+            w.setDimAmount(0.4f);
         }
+        boolean dk = Theme.dark(HomeActivity.this);
+        View dlgRoot = d.findViewById(R.id.dialogRoot);
+        if (dlgRoot != null) dlgRoot.setBackgroundResource(dk ? R.drawable.bg_dialog_dark : R.drawable.bg_dialog_light);
         final EditText et = d.findViewById(R.id.et_dialog_url);
         // 抖音直播开关(记忆)
         final TextView dyT = d.findViewById(R.id.tv_douyin_live);
@@ -1116,7 +1121,12 @@ public class HomeActivity extends Activity {
             w.setBackgroundDrawableResource(android.R.color.transparent);
             w.setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                     android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            w.setWindowAnimations(R.style.DialogPopAnim);
+            w.setDimAmount(0.4f);
         }
+        boolean dk = Theme.dark(HomeActivity.this);
+        View dlgRoot = d.findViewById(R.id.dialogRoot);
+        if (dlgRoot != null) dlgRoot.setBackgroundResource(dk ? R.drawable.bg_dialog_dark : R.drawable.bg_dialog_light);
         final EditText et = d.findViewById(R.id.et_vdl_url);
         d.findViewById(R.id.btn_vdl_paste).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {

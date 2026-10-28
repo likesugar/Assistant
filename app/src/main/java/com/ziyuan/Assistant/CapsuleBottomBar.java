@@ -48,12 +48,15 @@ public class CapsuleBottomBar extends FrameLayout {
         int offText = dark ? 0xFF8A94A6 : 0xFF7C8694;
 
         FrameLayout capsule = new FrameLayout(c);
-        GradientDrawable bg = new GradientDrawable();
+        // 玻璃感: 顶亮底沉的竖向微渐变 + 描边 + 投影
+        GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{ dark ? 0xFF2A3142 : 0xFFF4F8FF, barBg });
         bg.setCornerRadius(dp(19));
-        bg.setColor(barBg);
         bg.setStroke(dp(1), barStroke);
         capsule.setBackground(bg);
-        capsule.setElevation(dp(10));
+        capsule.setElevation(dp(12));
+        capsule.setOutlineAmbientShadowColor(dark ? 0xFF000000 : 0xFF8FB0E8);
+        capsule.setOutlineSpotShadowColor(0x55000000);
         addView(capsule, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT,
                 Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
 
