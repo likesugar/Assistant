@@ -81,26 +81,26 @@
                 android:padding="20dp">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
                     <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="隐藏排盘胶囊" android:textColor="@color/textMain" android:textSize="15sp"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/capT1" android:text="隐藏排盘胶囊" android:textColor="@color/textMain" android:textSize="15sp"/>
                         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="隐藏后底部导航不显示排盘入口" android:textSize="13sp" android:textColor="#8A94A6"/>
                     </LinearLayout>
                     <Switch android:id="@+id/swHidePan" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
                 </LinearLayout>
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
                     <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="隐藏首页胶囊" android:textColor="@color/textMain" android:textSize="15sp"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/capT2" android:text="隐藏首页胶囊" android:textColor="@color/textMain" android:textSize="15sp"/>
                     </LinearLayout>
                     <Switch android:id="@+id/swHideHome" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
                 </LinearLayout>
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
                     <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="隐藏媒体胶囊" android:textColor="@color/textMain" android:textSize="15sp"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/capT3" android:text="隐藏媒体胶囊" android:textColor="@color/textMain" android:textSize="15sp"/>
                     </LinearLayout>
                     <Switch android:id="@+id/swHideMedia" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
                 </LinearLayout>
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
                     <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="隐藏播放器胶囊" android:textColor="@color/textMain" android:textSize="15sp"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/capT4" android:text="隐藏播放器胶囊" android:textColor="@color/textMain" android:textSize="15sp"/>
                     </LinearLayout>
                     <Switch android:id="@+id/swHidePlayer" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
                 </LinearLayout>

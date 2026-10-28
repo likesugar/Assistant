@@ -345,17 +345,27 @@ public class SettingsActivity extends Activity {
         int accent = color(0xFFB4C5FF, 0xFF315CDE);
         int div = color(0xFF2A3142, 0xFFEDEFF3);
         findViewById(R.id.settingsRoot).setBackgroundColor(bg);
-        int[] titles = {R.id.tvTitle, R.id.t4, R.id.t5, R.id.t6, R.id.tvAboutTitle2};
+        int[] titles = {R.id.tvTitle, R.id.t4, R.id.t5, R.id.t6, R.id.tvAboutTitle2,
+                R.id.capT1, R.id.capT2, R.id.capT3, R.id.capT4};
         for (int id : titles) ((TextView) findViewById(id)).setTextColor(title);
-        int[] subs = {R.id.label1, R.id.label2, R.id.desc1, R.id.desc2,
+        int[] subs = {R.id.label1, R.id.labelGh, R.id.labelCap, R.id.label2, R.id.desc1, R.id.desc2,
                 R.id.desc3, R.id.desc5, R.id.desc6, R.id.tvAboutText2};
         for (int id : subs) ((TextView) findViewById(id)).setTextColor(sub);
         int[] accents = {R.id.btnClearAll, R.id.arrow};
         for (int id : accents) ((TextView) findViewById(id)).setTextColor(accent);
-        int[] cards = {R.id.card1, R.id.card2, R.id.card3, R.id.cardNotify, R.id.cardAbout2};
+        int[] cards = {R.id.card1, R.id.cardGh, R.id.cardCapsule, R.id.card2, R.id.card3, R.id.cardDark,
+                R.id.cardLan, R.id.cardNotify, R.id.cardAbout2};
         for (int id : cards) findViewById(id).setBackgroundResource(dark ? R.drawable.bg_card_md3_dark : R.drawable.bg_card_md3);
         View dv = null;
         if (dv != null) dv.setBackgroundColor(div);
+        TextView capBtn = (TextView) findViewById(R.id.btnCapApply);
+        if (capBtn != null) {
+            GradientDrawable cbg = new GradientDrawable();
+            cbg.setCornerRadius(dp(14));
+            cbg.setColor(dark ? 0xFF3D6DFF : 0xFFE1ECFF);
+            capBtn.setBackground(cbg);
+            capBtn.setTextColor(dark ? 0xFFFFFFFF : 0xFF315CDE);
+        }
         if (Build.VERSION.SDK_INT >= 23) {
             getWindow().getDecorView().setSystemUiVisibility(
                     dark ? 0 : View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);

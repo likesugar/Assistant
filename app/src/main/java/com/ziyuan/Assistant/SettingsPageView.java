@@ -611,19 +611,29 @@ public class SettingsPageView extends android.widget.FrameLayout {
         int accent = color(0xFFB4C5FF, 0xFF315CDE);
         int div = color(0xFF2A3142, 0xFFEDEFF3);
         findViewById(R.id.settingsRoot).setBackgroundColor(bg);
-        int[] titles = {R.id.tvTitle, R.id.t4, R.id.t5, R.id.t6, R.id.tDark, R.id.tLan, R.id.tvAboutTitle2};
+        int[] titles = {R.id.tvTitle, R.id.t4, R.id.t5, R.id.t6, R.id.tDark, R.id.tLan, R.id.tvAboutTitle2,
+                R.id.capT1, R.id.capT2, R.id.capT3, R.id.capT4};
         for (int id : titles) ((TextView) findViewById(id)).setTextColor(title);
-        int[] subs = {R.id.label1, R.id.labelGh, R.id.label2, R.id.descDark, R.id.descLan, R.id.desc1, R.id.desc2,
+        int[] subs = {R.id.label1, R.id.labelGh, R.id.labelCap, R.id.label2, R.id.descDark, R.id.descLan, R.id.desc1, R.id.desc2,
                 R.id.desc3, R.id.desc5, R.id.desc6, R.id.tvAboutText2};
         for (int id : subs) ((TextView) findViewById(id)).setTextColor(sub);
         int[] accents = {R.id.btnClearAll, R.id.arrow};
         for (int id : accents) ((TextView) findViewById(id)).setTextColor(accent);
-        int[] cards = {R.id.card1, R.id.cardGh, R.id.card2, R.id.card3, R.id.cardDark, R.id.cardLan, R.id.cardNotify, R.id.cardAbout2};
+        int[] cards = {R.id.card1, R.id.cardGh, R.id.cardCapsule, R.id.card2, R.id.card3, R.id.cardDark, R.id.cardLan, R.id.cardNotify, R.id.cardAbout2};
         for (int id : cards) findViewById(id).setBackgroundResource(dark ? R.drawable.bg_card_md3_dark : R.drawable.bg_card_md3);
         View dv = null;
         if (dv != null) dv.setBackgroundColor(div);
         TextView tvD = (TextView) findViewById(R.id.tvDark);
         if (tvD != null) tvD.setText(dark ? "深" : "浅");
+        // 胶囊卡片"确认生效"按钮: 深色=实心蓝底白字, 浅色=浅蓝底蓝字(原半透明底导致白字看不见)
+        TextView capBtn = (TextView) findViewById(R.id.btnCapApply);
+        if (capBtn != null) {
+            android.graphics.drawable.GradientDrawable cbg = new android.graphics.drawable.GradientDrawable();
+            cbg.setCornerRadius(dp(14));
+            cbg.setColor(dark ? 0xFF3D6DFF : 0xFFE1ECFF);
+            capBtn.setBackground(cbg);
+            capBtn.setTextColor(dark ? 0xFFFFFFFF : 0xFF315CDE);
+        }
         buildPlatList();
     }
 
