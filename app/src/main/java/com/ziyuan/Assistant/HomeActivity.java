@@ -59,9 +59,11 @@ public class HomeActivity extends Activity {
     }
 
     private void setupCalendar() {
+        TapGuard.guard(findViewById(R.id.calendarCard));
         findViewById(R.id.calendarCard).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, CalendarActivity.class)); }
         });
+        TapGuard.guard(findViewById(R.id.cardMed));
         findViewById(R.id.cardMed).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, MedPlanActivity.class)); }
         });
@@ -245,6 +247,7 @@ public class HomeActivity extends Activity {
         heart.setTextSize(16);
         heart.setPadding((int) dp2(8), 0, 0, 0);
         registerHeart(key, heart);
+        TapGuard.guard(heart);
         heart.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { toggleFav(key); }
         });
@@ -252,18 +255,22 @@ public class HomeActivity extends Activity {
         card.addView(row);
         card.setClickable(true);
         if ("api".equals(key)) {
+            TapGuard.guard(card);
             card.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) { startActivity(new Intent(HomeActivity.this, PanApiActivity.class)); }
             });
         } else if ("netstream".equals(key)) {
+            TapGuard.guard(card);
             card.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) { showUrlInput(); }
             });
         } else if ("localfile".equals(key)) {
+            TapGuard.guard(card);
             card.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) { pickLocal(); }
             });
         } else if ("mystic-six-ren".equals(key) || "liu-yao".equals(key) || "meihua".equals(key)) {
+            TapGuard.guard(card);
             card.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     Intent it = new Intent(HomeActivity.this, PanViewerActivity.class);
@@ -272,6 +279,7 @@ public class HomeActivity extends Activity {
                 }
             });
         } else if ("bazi".equals(key)) {
+            TapGuard.guard(card);
             card.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     Intent it = new Intent(HomeActivity.this, PanViewerActivity.class);
@@ -280,6 +288,7 @@ public class HomeActivity extends Activity {
                 }
             });
         } else if ("qimen".equals(key)) {
+            TapGuard.guard(card);
             card.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     Intent it = new Intent(HomeActivity.this, PanViewerActivity.class);
@@ -407,6 +416,7 @@ public class HomeActivity extends Activity {
                 android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
                 android.view.Gravity.RIGHT | android.view.Gravity.CENTER_VERTICAL);
         registerHeart(key, heart);
+        TapGuard.guard(heart);
         heart.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { toggleFav(key); }
         });
@@ -553,10 +563,12 @@ public class HomeActivity extends Activity {
             hv.setText("💖"); // 在收藏列表内必然已收藏
             hv.setTextSize(16);
             hv.setPadding((int) dp2(8), 0, 0, 0);
+            TapGuard.guard(hv);
             hv.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) { toggleFav(key); }
             });
             card.addView(hv);
+            TapGuard.guard(card);
             card.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     View oc = CARD_VIEWS.get(key);
@@ -754,6 +766,7 @@ public class HomeActivity extends Activity {
 
 
         // 复刻壳：卡片 → 嗅探弹窗；剪贴板有链接则直接进嗅探
+        TapGuard.guard(findViewById(R.id.cardPlayer));
         findViewById(R.id.cardPlayer).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 String clip = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("clipboard", true) ? clipUrl() : null;
@@ -767,15 +780,19 @@ public class HomeActivity extends Activity {
                 }
             }
         });
+        TapGuard.guard(findViewById(R.id.cardDownload));
         findViewById(R.id.cardDownload).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, RecordActivity.class)); }
         });
+        TapGuard.guard(findViewById(R.id.cardVideoDl));
         findViewById(R.id.cardVideoDl).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { showVdlDialog(); }
         });
+        TapGuard.guard(findViewById(R.id.cardXhs));
         findViewById(R.id.cardXhs).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, XhsActivity.class)); }
         });
+        TapGuard.guard(findViewById(R.id.cardLive));
         findViewById(R.id.cardLive).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 Intent lv = new Intent(HomeActivity.this, DynaActivity.class);
@@ -785,31 +802,40 @@ public class HomeActivity extends Activity {
         });
         // ===== 跳过广告: 点卡片进入管理页(页内确认开启) =====
 
+        TapGuard.guard(findViewById(R.id.cardTapper));
         findViewById(R.id.cardTapper).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, TapperActivity.class)); }
         });
+        TapGuard.guard(findViewById(R.id.cardMetronome));
         findViewById(R.id.cardMetronome).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, MetronomeActivity.class)); }
         });
+        TapGuard.guard(findViewById(R.id.cardSpider));
         findViewById(R.id.cardSpider).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, SpiderActivity.class)); }
         });
+        TapGuard.guard(findViewById(R.id.cardChat));
         findViewById(R.id.cardChat).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, ChatActivity.class)); }
         });
+        TapGuard.guard(findViewById(R.id.cardWeb2Apk));
         findViewById(R.id.cardWeb2Apk).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, Web2ApkActivity.class)); }
         });
+        TapGuard.guard(findViewById(R.id.cardGkd));
         findViewById(R.id.cardGkd).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, GkdActivity.class)); }
         });
+        TapGuard.guard(findViewById(R.id.cardH5Ed));
         findViewById(R.id.cardH5Ed).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, H5ProjectListActivity.class)); }
         });
+        TapGuard.guard(findViewById(R.id.cardEnt));
         findViewById(R.id.cardEnt).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, EntertainmentActivity.class)); }
         });
 
+        TapGuard.guard(findViewById(R.id.cardShortcut));
         findViewById(R.id.cardShortcut).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 try { startActivity(new Intent(HomeActivity.this, ShortcutActivity.class)); }
