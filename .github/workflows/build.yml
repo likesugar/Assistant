@@ -1,0 +1,32 @@
+name: Build Assistant
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'build-tools;34.0.0 platforms;android-36'
+      - name: Gradle build
+        run: |
+          export ANDROID_HOME=/usr/local/lib/android/sdk
+          bash -c 'cd $GITHUB_WORKSPACE && gradle assembleRelease --no-daemon || (curl -sL https://services.gradle.org/distributions/gradle-8.7-bin.zip -o /tmp/g.zip && unzip -q /tmp/g.zip -d /opt && /opt/gradle-8.7/bin/gradle :app:assembleRelease --no-daemon)'
+        env:
+          GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx3g
+      - name: Sign
+        run: |
+          cd /tmp
+          $ANDROID_HOME/build-tools/34.0.0/zipalign -f 4 $GITHUB_WORKSPACE/app/build/outputs/apk/release/app-release-unsigned.apk aligned.apk
+          $ANDROID_HOME/build-tools/34.0.0/apksigner sign --ks $GITHUB_WORKSPACE/ci/vendor/keystore/debug.keystore --ks-pass pass:android --key-pass pass:android --out Assistant.apk aligned.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Assistant
+          path: /tmp/Assistant.apk
