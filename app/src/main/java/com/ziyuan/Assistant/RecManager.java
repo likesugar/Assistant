@@ -19,6 +19,7 @@ public class RecManager {
         android.net.Uri storeUri;
         volatile long bytes = 0;
         volatile long bps = 0;          // 实时写入速率(字节/秒), 看门狗每次采样更新
+        volatile long baseBytes = 0;    // 本次 ffmpeg 会话开始前已落盘量(用于 statistics 累加基准)
         volatile boolean finishNow = false;
         volatile String state = null;   // null=暂停录制 / 转换MP4中 / 转换失败
         volatile boolean savedToHistory = false;  // 已写入历史记录（下载页去重用）
@@ -591,9 +592,7 @@ public class RecManager {
             while (job.active) {
                 try { Thread.sleep(1000); } catch (Throwable e) { break; }
                 if (!job.active) break;
-                long t = dirTotal(job);
-                if (t >= 0) job.bytes = t;      // 目录读取异常(-1)时保留上次值, 避免显示 -0KB
-                long total = job.bytes;
+                long total = job.bytes;         // 大小由 ffmpeg statistics 实时上报, 看门狗只判有无增长
                 long now = System.currentTimeMillis();
                 if (lastTs > 0 && now > lastTs) {          // 实时速率
                     long d = total - lastBytes;
@@ -658,6 +657,8 @@ public class RecManager {
             java.io.File[] fs = job.file.listFiles();
             if (fs != null) for (java.io.File f : fs) if (f.getName().startsWith("seg")) segN++;
         } catch (Throwable ignored) {}
+        long already = dirTotal(job);
+        job.baseBytes = already > 0 ? already : job.bytes;   // 重连续录/重试: 已落盘部分作为基准, statistics 从0重新数
         String[] args = { "-y", "-user_agent", BG_UA,
             "-headers", "Referer: https://live.douyin.com/\r\n",
             "-i", job.url, "-c", "copy",
@@ -678,6 +679,17 @@ public class RecManager {
                         try { Thread.sleep(1000); } catch (Throwable e) { }
                         if (job.active && gen == job.bgGen) startBgSession(job);  // 断流自动重连续录
                     }
+                }
+            },
+            null,   // log 回调
+            new com.arthenica.ffmpegkit.StatisticsCallback() {   // ffmpeg 约每 0.5s 上报一次输出字节数
+                public void apply(com.arthenica.ffmpegkit.Statistics statistics) {
+                    if (gen != job.bgGen || job.bgCancel) return;
+                    long s = statistics.getSize();
+                    long v = job.baseBytes + (s > 0 ? s : 0);
+                    long d = dirTotal(job);      // 文件系统视角兜底: 上报滞后/单位偏差时不倒退
+                    if (d > v) v = d;
+                    job.bytes = v;
                 }
             });
     }
