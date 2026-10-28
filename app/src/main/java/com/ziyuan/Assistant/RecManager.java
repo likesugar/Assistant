@@ -18,6 +18,7 @@ public class RecManager {
         java.io.File file;
         android.net.Uri storeUri;
         volatile long bytes = 0;
+        volatile long bps = 0;          // 实时写入速率(字节/秒), 看门狗每次采样更新
         volatile boolean finishNow = false;
         volatile String state = null;   // null=暂停录制 / 转换MP4中 / 转换失败
         volatile boolean savedToHistory = false;  // 已写入历史记录（下载页去重用）
@@ -583,33 +584,45 @@ public class RecManager {
     }
 
     static void startWatchdog(final RecJob job) {
-        new Thread(new Runnable() { public void run() {  // 流量看门狗：2s刷大小、2s查流量
-            long last = -1;
-            int idle = 0;
-            long grace = System.currentTimeMillis() + 8000;  // 启动前8s宽限(ffmpeg缓冲/等原画), 不计无流量
+        new Thread(new Runnable() { public void run() {  // 流量看门狗：1s刷大小(与列表刷新同频)，无增长自动重试
+            long last = -1, lastBytes = 0, lastTs = 0;
+            int idle = 0, retry = 0;
+            long grace = System.currentTimeMillis() + 10000;  // 启动前10s宽限(ffmpeg缓冲/等原画), 不计无流量
             while (job.active) {
-                try { Thread.sleep(2000); } catch (Throwable e) { break; }
+                try { Thread.sleep(1000); } catch (Throwable e) { break; }
                 if (!job.active) break;
-                job.bytes = dirTotal(job);
+                long t = dirTotal(job);
+                if (t >= 0) job.bytes = t;      // 目录读取异常(-1)时保留上次值, 避免显示 -0KB
                 long total = job.bytes;
+                long now = System.currentTimeMillis();
+                if (lastTs > 0 && now > lastTs) {          // 实时速率
+                    long d = total - lastBytes;
+                    job.bps = d > 0 ? d * 1000 / (now - lastTs) : 0;
+                }
+                lastBytes = total;
+                lastTs = now;
                 if (total == last) {
-                    if (System.currentTimeMillis() < grace) { last = total; continue; }
+                    if (now < grace) { last = total; continue; }
                     idle++;
-                    if (idle <= 2) {   // 无流量 → 自动重试抓流
-                        job.state = "无流量，重试抓流 " + idle + "/2…";
+                    if (idle >= 5) {            // 连续5s无增长 → 自动重试抓流
+                        idle = 0;
+                        retry++;
+                        if (retry > 2) {        // 两轮重试都拉不到 → 自动结束并合并MP4
+                            job.state = "拉取不到，自动合并";
+                            recFinish(job.id);
+                            break;
+                        }
+                        job.state = "无流量，重试抓流 " + retry + "/2…";
                         stopBgSession(job);
                         stopBgPlayer(job);
                         try { Thread.sleep(3000); } catch (Throwable e) { break; }
                         if (!job.active) break;
+                        grace = System.currentTimeMillis() + 10000;   // 重启后重新宽限
                         job.state = null;
                         startBgPlayer(job);
                         startBgSession(job);
-                    } else {           // 连续重试都拉不到 → 自动结束并合并MP4
-                        job.state = "拉取不到，自动合并";
-                        recFinish(job.id);
-                        break;
                     }
-                } else { idle = 0; }
+                } else { idle = 0; retry = 0; }
                 last = total;
             }
         } }).start();
@@ -648,6 +661,7 @@ public class RecManager {
         String[] args = { "-y", "-user_agent", BG_UA,
             "-headers", "Referer: https://live.douyin.com/\r\n",
             "-i", job.url, "-c", "copy",
+            "-flush_packets", "1",   // 每包立即写盘: 文件大小实时增长, 而不是攒够缓冲才落
             "-f", "segment", "-segment_time", "30", "-reset_timestamps", "1",
             "-segment_start_number", String.valueOf(segN),
             new java.io.File(job.file, "seg%03d.ts").getAbsolutePath() };
