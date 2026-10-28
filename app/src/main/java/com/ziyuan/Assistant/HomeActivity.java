@@ -16,10 +16,10 @@ import android.view.View;
 import android.widget.TextView;
 
 
-/** 首页：工具箱（纯黑/冰蓝主题切换 · 全屏）——小工具首页复刻版 */
+/** 首页：工具箱（深蓝/冰蓝主题切换 · 全屏）——小工具首页复刻版 */
 public class HomeActivity extends Activity {
 
-    // ---------- 主题（纯黑 / 冰蓝） ----------
+    // ---------- 主题（深蓝 / 冰蓝） ----------
     private void updateMedStatus() {
         try {
             TextView st = findViewById(R.id.medStatus);
@@ -87,7 +87,6 @@ public class HomeActivity extends Activity {
     private boolean pagesBuilt = false;
     private CapsuleBottomBar bottomBar;
     private String lastCapsule = null;
-    private Boolean mOledCache = null;
     private static final int[] MEDIA_CARDS = {R.id.cardPlayer, R.id.cardDownload, R.id.cardVideoDl, R.id.cardSpider, R.id.cardXhs, R.id.cardLive};
 
     /** 三态导航: 0=首页 1=媒体 2=设置(内嵌页) */
@@ -447,7 +446,7 @@ public class HomeActivity extends Activity {
                 {"🔮 排盘页", "我的api设置(AI配置+GitHub配置备份) / 小六壬(时间·时刻·数字·随机四种起课，道家/江氏双流派，六宫含空亡，地支/x星/六神/六亲与原版逐宫对齐，AI解析调用你的AI配置) / 六爻 / 梅花易数 / 奇门遁甲 / 八字命理——全部离线可收藏。"},
                 {"💖 收藏页", "所有页面卡片右侧 🤍 一键收藏/取消；点收藏卡直接触发原功能。"},
                 {"⚙️ 设置页", "平台账号登录(哔哩哔哩/抖音/YouTube/自定义，超4行卡内滚动) / 明暗模式切换 / 配置文件上传与下载(AI配置+收藏+下载历史+胶囊显示开关，独立卡片) / 剪贴板开关 / 下载通知 / 清除全部记录 / 关于。"},
-                {"🌍 主题", "右上角 🌙/☀️ 切换纯黑(OLED)/冰蓝两套主题，全页面跟随。"},
+                {"🌍 主题", "右上角 🌙/☀️ 切换深蓝/冰蓝两套主题，全页面跟随。"},
                 {"⬇️ 底部胶囊", "首页/媒体/排盘/💖收藏/设置/播放器，可在设置页隐藏任意项(设置与💖常驻)；左右滑动切换页面。"}
             };
             for (String[] x : sec) {
@@ -507,7 +506,7 @@ public class HomeActivity extends Activity {
         favBox.removeAllViews();
         boolean dark = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", false);
         int txt = dark ? 0xFFFFFFFF : 0xFF1F2329;
-        int cardBg = dark ? (getSharedPreferences("settings", MODE_PRIVATE).getBoolean("oled", true) ? 0xFF000000 : 0xFF1C2430) : 0xFFFFFFFF;
+        int cardBg = dark ? 0xFF1C2430 : 0xFFFFFFFF;
         String favs = getSharedPreferences("settings", MODE_PRIVATE).getString("favCards", "");
         if (favs.isEmpty()) {
             TextView empty = new TextView(this);
@@ -601,7 +600,7 @@ public class HomeActivity extends Activity {
 
     private void applyTheme() {
         boolean dark = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", false);
-        findViewById(R.id.toolRoot).setBackgroundColor(dark ? 0xFF000000 : 0xFFEEF4FF);
+        findViewById(R.id.toolRoot).setBackgroundColor(dark ? 0xFF11151D : 0xFFEEF4FF);
         // 底部胶囊导航（SmoothBottomBar 风格）
         android.view.ViewGroup root = (android.view.ViewGroup) findViewById(R.id.toolRoot);
         for (int i = root.getChildCount() - 1; i >= 0; i--) {
@@ -629,7 +628,7 @@ public class HomeActivity extends Activity {
         bottomBar.setTag("bottombar");
         root.addView(bottomBar);
         lastCapsule = hideHome + "|" + hideMedia + "|" + hidePan + "|" + hidePlayer;
-        findViewById(R.id.toolColumn).setBackgroundColor(dark ? 0xFF000000 : 0xFFEEF4FF);
+        findViewById(R.id.toolColumn).setBackgroundColor(dark ? 0xFF11151D : 0xFFEEF4FF);
         applyTraversal((android.view.ViewGroup) findViewById(R.id.toolColumn), dark);
     }
 
@@ -647,8 +646,7 @@ public class HomeActivity extends Activity {
                 }
             }
             if (t.equals("card")) {
-                if (mOledCache == null) mOledCache = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("oled", true);
-                c.setBackgroundResource(dark ? (mOledCache ? R.drawable.bg_card_oled : R.drawable.bg_card_md3_dark) : R.drawable.bg_card_md3);
+                c.setBackgroundResource(dark ? R.drawable.bg_card_md3_dark : R.drawable.bg_card_md3);
             }
             if (c instanceof android.view.ViewGroup) applyTraversal((android.view.ViewGroup) c, dark);
         }
