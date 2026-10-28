@@ -1,4 +1,4 @@
-package com.ziyuan.Assistant;
+﻿package com.ziyuan.Assistant;
 
 import android.app.Activity;
 import android.content.ClipboardManager;
@@ -731,6 +731,18 @@ public class HomeActivity extends Activity {
             }
         });
         setContentView(R.layout.activity_toolbox);
+        try {
+            java.util.Calendar cal = java.util.Calendar.getInstance();
+            int hour = cal.get(java.util.Calendar.HOUR_OF_DAY);
+            String greeting = hour < 6 ? "夜深了" : hour < 12 ? "早上好" : hour < 18 ? "下午好" : "晚上好";
+            android.widget.TextView tvG = findViewById(R.id.homeGreeting);
+            if (tvG != null) tvG.setText(greeting);
+            android.widget.TextView tvD = findViewById(R.id.homeDate);
+            if (tvD != null) {
+                String[] week = {"周日","周一","周二","周三","周四","周五","周六"};
+                tvD.setText((cal.get(java.util.Calendar.MONTH)+1)+"月"+cal.get(java.util.Calendar.DAY_OF_MONTH)+"日 "+week[cal.get(java.util.Calendar.DAY_OF_WEEK)-1]);
+            }
+        } catch (Throwable ignored) {}
         Immersive.hide(this);
 
         // 启动即创建通知渠道 + 申请通知权限(Android 13+)
