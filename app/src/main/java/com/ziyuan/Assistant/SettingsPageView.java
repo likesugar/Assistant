@@ -104,14 +104,6 @@ public class SettingsPageView extends android.widget.FrameLayout {
                 Toast.makeText(host, on ? "已开启自动检测剪贴板" : "已关闭自动检测剪贴板", Toast.LENGTH_SHORT).show();
             }
         });
-        findViewById(R.id.cardOled).setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                boolean oled = host.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE).getBoolean("oled", false);
-                host.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE).edit().putBoolean("oled", !oled).apply();
-                dark = host.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE).getBoolean("dark", false);
-                applyTheme();
-            }
-        });
         findViewById(R.id.cardNotify).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 try {
@@ -323,7 +315,6 @@ public class SettingsPageView extends android.widget.FrameLayout {
                     }
                     json.append(",\"favCards\":").append(org.json.JSONObject.quote(sp.getString("favCards", "")));
                     json.append(",\"dark\":").append(sp.getBoolean("dark", false));
-                    json.append(",\"oled\":").append(sp.getBoolean("oled", true));
                     json.append(",\"hideHome\":").append(sp.getBoolean("hideHome", false));
                     json.append(",\"hideMedia\":").append(sp.getBoolean("hideMedia", false));
                     json.append(",\"hidePan\":").append(sp.getBoolean("hidePan", false));
@@ -419,7 +410,6 @@ public class SettingsPageView extends android.widget.FrameLayout {
                     }
                     if (cfg.has("favCards")) ed.putString("favCards", cfg.getString("favCards"));
                     if (cfg.has("dark")) ed.putBoolean("dark", cfg.getBoolean("dark"));
-                    if (cfg.has("oled")) ed.putBoolean("oled", cfg.getBoolean("oled"));
                     for (String hk : new String[]{"hideHome","hideMedia","hidePan","hidePlayer"}) {
                         if (cfg.has(hk)) ed.putBoolean(hk, cfg.getBoolean(hk));
                     }
@@ -614,27 +604,24 @@ public class SettingsPageView extends android.widget.FrameLayout {
 
     private void applyTheme() {
         dark = host.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE).getBoolean("dark", false); // 每次重读, 防外部切换后用旧值
-        boolean oled = host.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE).getBoolean("oled", true);
-        int bg = color(oled ? 0xFF000000 : 0xFF11151D, 0xFFEEF4FF);
-        int card = color(oled ? 0xFF000000 : 0xFF191F2E, 0xFFFFFFFF);
+        int bg = color(0xFF000000, 0xFFEEF4FF);
+        int card = color(0xFF191F2E, 0xFFFFFFFF);
         int title = color(0xFFE8ECF4, 0xFF1F2329);
         int sub = color(0xFF8A94A6, 0xFF8A94A6);
         int accent = color(0xFFB4C5FF, 0xFF315CDE);
         int div = color(0xFF2A3142, 0xFFEDEFF3);
         findViewById(R.id.settingsRoot).setBackgroundColor(bg);
-        int[] titles = {R.id.tvTitle, R.id.t4, R.id.t5, R.id.t6, R.id.tOled, R.id.tDark, R.id.tLan, R.id.tvAboutTitle2};
+        int[] titles = {R.id.tvTitle, R.id.t4, R.id.t5, R.id.t6, R.id.tDark, R.id.tLan, R.id.tvAboutTitle2};
         for (int id : titles) ((TextView) findViewById(id)).setTextColor(title);
-        int[] subs = {R.id.label1, R.id.labelGh, R.id.label2, R.id.descOled, R.id.descDark, R.id.descLan, R.id.desc1, R.id.desc2,
+        int[] subs = {R.id.label1, R.id.labelGh, R.id.label2, R.id.descDark, R.id.descLan, R.id.desc1, R.id.desc2,
                 R.id.desc3, R.id.desc5, R.id.desc6, R.id.tvAboutText2};
         for (int id : subs) ((TextView) findViewById(id)).setTextColor(sub);
         int[] accents = {R.id.btnClearAll, R.id.arrow};
         for (int id : accents) ((TextView) findViewById(id)).setTextColor(accent);
-        int[] cards = {R.id.card1, R.id.cardGh, R.id.card2, R.id.card3, R.id.cardOled, R.id.cardDark, R.id.cardLan, R.id.cardNotify, R.id.cardAbout2};
-        for (int id : cards) findViewById(id).setBackgroundResource(dark ? (oled ? R.drawable.bg_card_oled : R.drawable.bg_card_md3_dark) : R.drawable.bg_card_md3);
+        int[] cards = {R.id.card1, R.id.cardGh, R.id.card2, R.id.card3, R.id.cardDark, R.id.cardLan, R.id.cardNotify, R.id.cardAbout2};
+        for (int id : cards) findViewById(id).setBackgroundResource(dark ? R.drawable.bg_card_md3_dark : R.drawable.bg_card_md3);
         View dv = null;
         if (dv != null) dv.setBackgroundColor(div);
-        TextView tvO = (TextView) findViewById(R.id.tvOled);
-        if (tvO != null) tvO.setText(oled ? "开" : "关");
         TextView tvD = (TextView) findViewById(R.id.tvDark);
         if (tvD != null) tvD.setText(dark ? "深" : "浅");
         buildPlatList();

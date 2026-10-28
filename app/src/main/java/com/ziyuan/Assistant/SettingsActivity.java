@@ -96,14 +96,6 @@ public class SettingsActivity extends Activity {
                 Toast.makeText(SettingsActivity.this, on ? "已开启自动检测剪贴板" : "已关闭自动检测剪贴板", Toast.LENGTH_SHORT).show();
             }
         });
-        findViewById(R.id.cardOled).setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                boolean oled = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("oled", false);
-                getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("oled", !oled).apply();
-                dark = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", false);
-                applyTheme();
-            }
-        });
         findViewById(R.id.cardNotify).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 try {
@@ -119,7 +111,7 @@ public class SettingsActivity extends Activity {
             public void onClick(View v) {
                 new AlertDialog.Builder(SettingsActivity.this)
                         .setTitle("关于")
-                        .setMessage("🏠 资源嗅探：打开网页嗅探视频/直播流，支持剪贴板链接直进（抖音/B站/YouTube），底部胶囊“播放”可播网络流和本地文件。\n\n⬇️ 下载/记录：管理下载与后台录制任务，结束后合并进记录，可播放/删除。\n\n📡 局域网共享：开启后电脑浏览器可访问手机上的记录与文件。\n\n🔗 快捷方式：为任意应用的活动创建桌面快捷方式，支持从已装应用选择。\n\n⚙️ 本页（设置）：平台账号登录（哔哩哔哩/抖音/YouTube）、自动检测剪贴板开关、下载通知、主题切换。\n\n🌍 主题：右上角 🌙/☀️ 切换纯黑/冰蓝两套主题。")
+                        .setMessage("🏠 资源嗅探：打开网页嗅探视频/直播流，支持剪贴板链接直进（抖音/B站/YouTube），底部胶囊“播放”可播网络流和本地文件。\n\n⬇️ 下载/记录：管理下载与后台录制任务，结束后合并进记录，可播放/删除。\n\n📡 局域网共享：开启后电脑浏览器可访问手机上的记录与文件。\n\n🔗 快捷方式：为任意应用的活动创建桌面快捷方式，支持从已装应用选择。\n\n⚙️ 本页（设置）：平台账号登录（哔哩哔哩/抖音/YouTube）、自动检测剪贴板开关、下载通知、主题切换。\n\n🌍 主题：右上角 🌙/☀️ 切换纯黑/浅蓝两套主题。")
                         .setPositiveButton("知道了", null)
                         .show();
             }
@@ -346,27 +338,24 @@ public class SettingsActivity extends Activity {
     private int color(int darkC, int lightC) { return dark ? darkC : lightC; }
 
     private void applyTheme() {
-        boolean oled = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("oled", true);
-        int bg = color(oled ? 0xFF000000 : 0xFF11151D, 0xFFEEF4FF);
-        int card = color(oled ? 0xFF000000 : 0xFF191F2E, 0xFFFFFFFF);
+        int bg = color(0xFF000000, 0xFFEEF4FF);
+        int card = color(0xFF191F2E, 0xFFFFFFFF);
         int title = color(0xFFE8ECF4, 0xFF1F2329);
         int sub = color(0xFF8A94A6, 0xFF8A94A6);
         int accent = color(0xFFB4C5FF, 0xFF315CDE);
         int div = color(0xFF2A3142, 0xFFEDEFF3);
         findViewById(R.id.settingsRoot).setBackgroundColor(bg);
-        int[] titles = {R.id.tvTitle, R.id.t4, R.id.t5, R.id.t6, R.id.tOled, R.id.tvAboutTitle2};
+        int[] titles = {R.id.tvTitle, R.id.t4, R.id.t5, R.id.t6, R.id.tvAboutTitle2};
         for (int id : titles) ((TextView) findViewById(id)).setTextColor(title);
-        int[] subs = {R.id.label1, R.id.label2, R.id.descOled, R.id.desc1, R.id.desc2,
+        int[] subs = {R.id.label1, R.id.label2, R.id.desc1, R.id.desc2,
                 R.id.desc3, R.id.desc5, R.id.desc6, R.id.tvAboutText2};
         for (int id : subs) ((TextView) findViewById(id)).setTextColor(sub);
         int[] accents = {R.id.btnClearAll, R.id.arrow};
         for (int id : accents) ((TextView) findViewById(id)).setTextColor(accent);
-        int[] cards = {R.id.card1, R.id.card2, R.id.card3, R.id.cardOled, R.id.cardNotify, R.id.cardAbout2};
-        for (int id : cards) findViewById(id).setBackgroundResource(dark ? (oled ? R.drawable.bg_card_oled : R.drawable.bg_card_md3_dark) : R.drawable.bg_card_md3);
+        int[] cards = {R.id.card1, R.id.card2, R.id.card3, R.id.cardNotify, R.id.cardAbout2};
+        for (int id : cards) findViewById(id).setBackgroundResource(dark ? R.drawable.bg_card_md3_dark : R.drawable.bg_card_md3);
         View dv = null;
         if (dv != null) dv.setBackgroundColor(div);
-        TextView tvO = (TextView) findViewById(R.id.tvOled);
-        if (tvO != null) tvO.setText(oled ? "开" : "关");
         if (Build.VERSION.SDK_INT >= 23) {
             getWindow().getDecorView().setSystemUiVisibility(
                     dark ? 0 : View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);

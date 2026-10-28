@@ -41,7 +41,9 @@ public class CapsuleBottomBar extends FrameLayout {
         itemW = Math.min(dp(72), (screenW - dp(24)) / Math.max(1, visible));
 
         int barBg = dark ? 0xF51A1E28 : 0xFFE6EFFF;
+        int barStroke = dark ? 0xFF3A4254 : 0xFFC5D2EC;
         int pillBg = dark ? 0xFF3D6DFF : 0xFF1677FF;
+        int pillStroke = dark ? 0xFF5A7BD8 : 0xFF0B5BD6;
         int onPill = 0xFFFFFFFF;
         int offText = dark ? 0xFF8A94A6 : 0xFF7C8694;
 
@@ -49,6 +51,7 @@ public class CapsuleBottomBar extends FrameLayout {
         GradientDrawable bg = new GradientDrawable();
         bg.setCornerRadius(dp(19));
         bg.setColor(barBg);
+        bg.setStroke(dp(1), barStroke);
         capsule.setBackground(bg);
         capsule.setElevation(dp(10));
         addView(capsule, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT,
@@ -58,6 +61,7 @@ public class CapsuleBottomBar extends FrameLayout {
         GradientDrawable pg = new GradientDrawable();
         pg.setCornerRadius(dp(13));
         pg.setColor(pillBg);
+        pg.setStroke(dp(1), pillStroke);
         pill.setBackground(pg);
         LayoutParams plp = new LayoutParams(itemW - dp(8), dp(30), Gravity.CENTER_VERTICAL | Gravity.START);
         plp.leftMargin = dp(4);
