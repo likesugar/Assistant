@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>2048</title>
+<style>
+  body{background:#14161c;font-family:-apple-system,'PingFang SC',sans-serif;color:#eee;margin:0;text-align:center;user-select:none;-webkit-user-select:none}
+  #top{display:flex;justify-content:space-between;align-items:center;margin:8px 10px 0}
+  #sc{font-size:16px;font-weight:bold;color:#f5c26b}
+  #grid{display:grid;grid-template-columns:repeat(4,76px);gap:8px;justify-content:center;margin-top:12px;background:#2a2f38;padding:10px;border-radius:14px;width:340px;box-sizing:border-box;margin-left:auto;margin-right:auto;touch-action:none}
+  .c{width:76px;height:76px;border-radius:10px;background:#3a3f4a;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:bold;color:#fff}
+  #msg{font-size:15px;font-weight:bold;color:#f5c26b;margin-top:10px;min-height:22px}
+</style>
+</head>
+<body>
+<div id="top">
+  <button onclick="location.href='ent.html'" style="padding:7px 18px;background:#241636;color:#ffd75e;border:2px solid #d8a520;border-radius:16px;font-size:13px;font-weight:bold">← 返回</button>
+  <div id="sc">得分: 0</div>
+  <button onclick="reset()" style="padding:7px 14px;background:#315CDE;color:#fff;border:none;border-radius:14px;font-size:13px;font-weight:bold">重开</button>
+</div>
+<div id="grid"></div>
+<div id="msg"></div>
+<script>
+var G,score,over;
+var COLORS={2:'#7f8c9b',4:'#95a5a6',8:'#e67e22',16:'#e74c3c',32:'#c0392b',64:'#8e44ad',128:'#2980b9',256:'#27ae60',512:'#16a085',1024:'#d8a520',2048:'#f39c12'};
+function reset(){
+  G=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+  score=0;over=false;
+  document.getElementById('sc').textContent='得分: 0';
+  document.getElementById('msg').textContent='';
+  add();add();draw();
+}
+function add(){
+  var empty=[];
+  for(var y=0;y<4;y++)for(var x=0;x<4;x++)if(!G[y][x])empty.push([x,y]);
+  if(!empty.length)return;
+  var p=empty[Math.floor(Math.random()*empty.length)];
+  G[p[1]][p[0]]=Math.random()<0.9?2:4;
+}
+function draw(){
+  var h='';
+  for(var y=0;y<4;y++)for(var x=0;x<4;x++){
+    var v=G[y][x];
+    h+='<div class="c" style="'+(v?'background:'+COLORS[v]+';':'')+(v>=1024?'font-size:19px;':v>=128?'font-size:22px;':'')+'">'+(v||'')+'</div>';
+  }
+  document.getElementById('grid').innerHTML=h;
+}
+function row(arr){
+  var a=arr.filter(function(v){return v;});
+  for(var i=0;i<a.length-1;i++){
+    if(a[i]===a[i+1]){a[i]*=2;score+=a[i];a.splice(i+1,1);}
+  }
+  while(a.length<4)a.push(0);
+  return a;
+}
+function move(dir){
+  if(over)return;
+  var moved=false,before=JSON.stringify(G);
+  for(var i=0;i<4;i++){
+    var line=[];
+    for(var j=0;j<4;j++){
+      line.push(dir==='l'?G[i][j]:dir==='r'?G[i][3-j]:dir==='u'?G[j][i]:G[3-j][i]);
+    }
+    line=row(line);
+    for(var j=0;j<4;j++){
+      var v=line[j];
+      if(dir==='l')G[i][j]=v;
+      else if(dir==='r')G[i][3-j]=v;
+      else if(dir==='u')G[j][i]=v;
+      else G[3-j][i]=v;
+    }
+  }
+  if(JSON.stringify(G)!==before){moved=true;add();}
+  document.getElementById('sc').textContent='得分: '+score;
+  draw();
+  if(moved)checkEnd();
+}
+function checkEnd(){
+  for(var y=0;y<4;y++)for(var x=0;x<4;x++){
+    if(!G[y][x])return;
+    if(x<3&&G[y][x]===G[y][x+1])return;
+    if(y<3&&G[y][x]===G[y+1][x])return;
+  }
+  over=true;
+  document.getElementById('msg').textContent='💀 没路了 · 得分 '+score+' · 点「重开」再来';
+}
+var g=document.getElementById('grid');
+g.addEventListener('touchstart',function(e){ts=[e.touches[0].clientX,e.touches[0].clientY];},{passive:true});
+g.addEventListener('touchend',function(e){
+  if(!ts)return;
+  var t=e.changedTouches[0],dx=t.clientX-ts[0],dy=t.clientY-ts[1];
+  if(Math.abs(dx)<20&&Math.abs(dy)<20)return;
+  if(Math.abs(dx)>Math.abs(dy))move(dx>0?'r':'l');
+  else move(dy>0?'d':'u');
+},{passive:true});
+var ts=null;
+document.addEventListener('keydown',function(e){
+  var k={ArrowLeft:'l',ArrowRight:'r',ArrowUp:'u',ArrowDown:'d'}[e.key];
+  if(k){e.preventDefault();move(k);}
+});
+reset();
+</script>
+</body>
+</html>

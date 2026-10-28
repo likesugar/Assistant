@@ -1,0 +1,588 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.ziyuan.Assistant"
+4    android:versionCode="487"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="24"
+9        android:targetSdkVersion="36" />
+10
+11    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+11-->/tmp/Assistant/app/src/main/AndroidManifest.xml:5:5-77
+11-->/tmp/Assistant/app/src/main/AndroidManifest.xml:5:22-75
+12    <uses-permission android:name="android.permission.INTERNET" />
+12-->/tmp/Assistant/app/src/main/AndroidManifest.xml:6:5-66
+12-->/tmp/Assistant/app/src/main/AndroidManifest.xml:6:22-64
+13    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+13-->/tmp/Assistant/app/src/main/AndroidManifest.xml:7:5-76
+13-->/tmp/Assistant/app/src/main/AndroidManifest.xml:7:22-74
+14    <uses-permission android:name="android.permission.WAKE_LOCK" />
+14-->/tmp/Assistant/app/src/main/AndroidManifest.xml:8:5-67
+14-->/tmp/Assistant/app/src/main/AndroidManifest.xml:8:22-65
+15    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+15-->/tmp/Assistant/app/src/main/AndroidManifest.xml:9:5-86
+15-->/tmp/Assistant/app/src/main/AndroidManifest.xml:9:22-84
+16    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+16-->/tmp/Assistant/app/src/main/AndroidManifest.xml:10:5-91
+16-->/tmp/Assistant/app/src/main/AndroidManifest.xml:10:22-89
+17    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+17-->/tmp/Assistant/app/src/main/AndroidManifest.xml:11:5-78
+17-->/tmp/Assistant/app/src/main/AndroidManifest.xml:11:22-76
+18    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+18-->/tmp/Assistant/app/src/main/AndroidManifest.xml:13:9-80
+18-->/tmp/Assistant/app/src/main/AndroidManifest.xml:13:26-78
+19    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+19-->/tmp/Assistant/app/src/main/AndroidManifest.xml:14:5-76
+19-->/tmp/Assistant/app/src/main/AndroidManifest.xml:14:22-74
+20    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+20-->/tmp/Assistant/app/src/main/AndroidManifest.xml:15:5-78
+20-->/tmp/Assistant/app/src/main/AndroidManifest.xml:15:22-76
+21    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+21-->/tmp/Assistant/app/src/main/AndroidManifest.xml:16:5-73
+21-->/tmp/Assistant/app/src/main/AndroidManifest.xml:16:22-71
+22    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+22-->/tmp/Assistant/app/src/main/AndroidManifest.xml:17:5-80
+22-->/tmp/Assistant/app/src/main/AndroidManifest.xml:17:22-78
+23    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+23-->/tmp/Assistant/app/src/main/AndroidManifest.xml:7:5-76
+23-->/tmp/Assistant/app/src/main/AndroidManifest.xml:7:22-74
+24    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+24-->/tmp/Assistant/app/src/main/AndroidManifest.xml:19:5-78
+24-->/tmp/Assistant/app/src/main/AndroidManifest.xml:19:22-76
+25    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+25-->/tmp/Assistant/app/src/main/AndroidManifest.xml:20:5-78
+25-->/tmp/Assistant/app/src/main/AndroidManifest.xml:20:22-76
+26    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+26-->/tmp/Assistant/app/src/main/AndroidManifest.xml:21:5-80
+26-->/tmp/Assistant/app/src/main/AndroidManifest.xml:21:22-78
+27
+28    <permission
+28-->[androidx.core:core:1.13.1] /home/z/.gradle/caches/transforms-4/f1c2b1a9709ba5e2c42571d74b79faf6/transformed/core-1.13.1/AndroidManifest.xml:22:5-24:47
+29        android:name="com.ziyuan.Assistant.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+29-->[androidx.core:core:1.13.1] /home/z/.gradle/caches/transforms-4/f1c2b1a9709ba5e2c42571d74b79faf6/transformed/core-1.13.1/AndroidManifest.xml:23:9-81
+30        android:protectionLevel="signature" />
+30-->[androidx.core:core:1.13.1] /home/z/.gradle/caches/transforms-4/f1c2b1a9709ba5e2c42571d74b79faf6/transformed/core-1.13.1/AndroidManifest.xml:24:9-44
+31
+32    <uses-permission android:name="com.ziyuan.Assistant.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+32-->[androidx.core:core:1.13.1] /home/z/.gradle/caches/transforms-4/f1c2b1a9709ba5e2c42571d74b79faf6/transformed/core-1.13.1/AndroidManifest.xml:26:5-97
+32-->[androidx.core:core:1.13.1] /home/z/.gradle/caches/transforms-4/f1c2b1a9709ba5e2c42571d74b79faf6/transformed/core-1.13.1/AndroidManifest.xml:26:22-94
+33
+34    <application
+34-->/tmp/Assistant/app/src/main/AndroidManifest.xml:22:5-120:23
+35        android:allowBackup="true"
+35-->/tmp/Assistant/app/src/main/AndroidManifest.xml:27:9-35
+36        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+36-->[androidx.core:core:1.13.1] /home/z/.gradle/caches/transforms-4/f1c2b1a9709ba5e2c42571d74b79faf6/transformed/core-1.13.1/AndroidManifest.xml:28:18-86
+37        android:extractNativeLibs="false"
+38        android:icon="@mipmap/ic_launcher"
+38-->/tmp/Assistant/app/src/main/AndroidManifest.xml:25:9-43
+39        android:label="@string/app_name"
+39-->/tmp/Assistant/app/src/main/AndroidManifest.xml:24:9-41
+40        android:theme="@style/AppTheme"
+40-->/tmp/Assistant/app/src/main/AndroidManifest.xml:26:9-40
+41        android:usesCleartextTraffic="true" >
+41-->/tmp/Assistant/app/src/main/AndroidManifest.xml:23:9-44
+42        <receiver
+42-->/tmp/Assistant/app/src/main/AndroidManifest.xml:29:9-33:20
+43            android:name="com.ziyuan.Assistant.ScheduleReceiver"
+43-->/tmp/Assistant/app/src/main/AndroidManifest.xml:29:19-51
+44            android:exported="true" >
+44-->/tmp/Assistant/app/src/main/AndroidManifest.xml:29:52-75
+45            <intent-filter>
+45-->/tmp/Assistant/app/src/main/AndroidManifest.xml:30:13-32:29
+46                <action android:name="android.intent.action.BOOT_COMPLETED" />
+46-->/tmp/Assistant/app/src/main/AndroidManifest.xml:31:17-78
+46-->/tmp/Assistant/app/src/main/AndroidManifest.xml:31:25-76
+47            </intent-filter>
+48        </receiver>
+49
+50        <service
+50-->/tmp/Assistant/app/src/main/AndroidManifest.xml:34:9-41:19
+51            android:name="com.ziyuan.Assistant.TapperService"
+51-->/tmp/Assistant/app/src/main/AndroidManifest.xml:34:18-47
+52            android:exported="false"
+52-->/tmp/Assistant/app/src/main/AndroidManifest.xml:35:13-37
+53            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" >
+53-->/tmp/Assistant/app/src/main/AndroidManifest.xml:36:13-79
+54            <intent-filter>
+54-->/tmp/Assistant/app/src/main/AndroidManifest.xml:37:13-39:29
+55                <action android:name="android.accessibilityservice.AccessibilityService" />
+55-->/tmp/Assistant/app/src/main/AndroidManifest.xml:38:17-91
+55-->/tmp/Assistant/app/src/main/AndroidManifest.xml:38:25-89
+56            </intent-filter>
+57
+58            <meta-data
+58-->/tmp/Assistant/app/src/main/AndroidManifest.xml:40:13-107
+59                android:name="android.accessibilityservice"
+59-->/tmp/Assistant/app/src/main/AndroidManifest.xml:40:24-67
+60                android:resource="@xml/tapper_config" />
+60-->/tmp/Assistant/app/src/main/AndroidManifest.xml:40:68-105
+61        </service>
+62        <service
+62-->/tmp/Assistant/app/src/main/AndroidManifest.xml:42:9-117
+63            android:name="com.ziyuan.Assistant.DownloadService"
+63-->/tmp/Assistant/app/src/main/AndroidManifest.xml:42:18-49
+64            android:exported="false"
+64-->/tmp/Assistant/app/src/main/AndroidManifest.xml:42:50-74
+65            android:foregroundServiceType="dataSync" />
+65-->/tmp/Assistant/app/src/main/AndroidManifest.xml:42:75-115
+66        <service
+66-->/tmp/Assistant/app/src/main/AndroidManifest.xml:43:9-113
+67            android:name="com.ziyuan.Assistant.DynaService"
+67-->/tmp/Assistant/app/src/main/AndroidManifest.xml:43:18-45
+68            android:exported="false"
+68-->/tmp/Assistant/app/src/main/AndroidManifest.xml:43:46-70
+69            android:foregroundServiceType="dataSync" />
+69-->/tmp/Assistant/app/src/main/AndroidManifest.xml:43:71-111
+70
+71        <activity
+71-->/tmp/Assistant/app/src/main/AndroidManifest.xml:44:9-78
+72            android:name="com.ziyuan.Assistant.CalendarActivity"
+72-->/tmp/Assistant/app/src/main/AndroidManifest.xml:44:19-51
+73            android:exported="false" />
+73-->/tmp/Assistant/app/src/main/AndroidManifest.xml:44:52-76
+74        <activity
+74-->/tmp/Assistant/app/src/main/AndroidManifest.xml:45:9-76
+75            android:name="com.ziyuan.Assistant.RecordActivity"
+75-->/tmp/Assistant/app/src/main/AndroidManifest.xml:45:19-49
+76            android:exported="false" />
+76-->/tmp/Assistant/app/src/main/AndroidManifest.xml:45:50-74
+77        <activity
+77-->/tmp/Assistant/app/src/main/AndroidManifest.xml:46:9-124
+78            android:name="com.ziyuan.Assistant.VideoDlActivity"
+78-->/tmp/Assistant/app/src/main/AndroidManifest.xml:46:19-50
+79            android:configChanges="orientation|screenSize"
+79-->/tmp/Assistant/app/src/main/AndroidManifest.xml:46:76-122
+80            android:exported="false" />
+80-->/tmp/Assistant/app/src/main/AndroidManifest.xml:46:51-75
+81        <activity
+81-->/tmp/Assistant/app/src/main/AndroidManifest.xml:47:9-120
+82            android:name="com.ziyuan.Assistant.XhsActivity"
+82-->/tmp/Assistant/app/src/main/AndroidManifest.xml:47:19-46
+83            android:configChanges="orientation|screenSize"
+83-->/tmp/Assistant/app/src/main/AndroidManifest.xml:47:72-118
+84            android:exported="false" />
+84-->/tmp/Assistant/app/src/main/AndroidManifest.xml:47:47-71
+85        <activity
+85-->/tmp/Assistant/app/src/main/AndroidManifest.xml:48:9-124
+86            android:name="com.ziyuan.Assistant.XhsSettingsActivity"
+86-->/tmp/Assistant/app/src/main/AndroidManifest.xml:48:19-54
+87            android:exported="false"
+87-->/tmp/Assistant/app/src/main/AndroidManifest.xml:48:55-79
+88            android:windowSoftInputMode="adjustResize" />
+88-->/tmp/Assistant/app/src/main/AndroidManifest.xml:48:80-122
+89        <activity
+89-->/tmp/Assistant/app/src/main/AndroidManifest.xml:49:9-78
+90            android:name="com.ziyuan.Assistant.ShortcutActivity"
+90-->/tmp/Assistant/app/src/main/AndroidManifest.xml:49:19-51
+91            android:exported="false" />
+91-->/tmp/Assistant/app/src/main/AndroidManifest.xml:49:52-76
+92        <activity
+92-->/tmp/Assistant/app/src/main/AndroidManifest.xml:50:9-77
+93            android:name="com.ziyuan.Assistant.MedPlanActivity"
+93-->/tmp/Assistant/app/src/main/AndroidManifest.xml:50:19-50
+94            android:exported="false" />
+94-->/tmp/Assistant/app/src/main/AndroidManifest.xml:50:51-75
+95        <activity
+95-->/tmp/Assistant/app/src/main/AndroidManifest.xml:51:9-138
+96            android:name="com.ziyuan.Assistant.SpiderActivity"
+96-->/tmp/Assistant/app/src/main/AndroidManifest.xml:51:19-49
+97            android:configChanges="orientation|screenSize|keyboardHidden"
+97-->/tmp/Assistant/app/src/main/AndroidManifest.xml:51:75-136
+98            android:exported="false" />
+98-->/tmp/Assistant/app/src/main/AndroidManifest.xml:51:50-74
+99        <activity
+99-->/tmp/Assistant/app/src/main/AndroidManifest.xml:52:9-117
+100            android:name="com.ziyuan.Assistant.ChatActivity"
+100-->/tmp/Assistant/app/src/main/AndroidManifest.xml:52:19-47
+101            android:exported="false"
+101-->/tmp/Assistant/app/src/main/AndroidManifest.xml:52:48-72
+102            android:windowSoftInputMode="adjustResize" />
+102-->/tmp/Assistant/app/src/main/AndroidManifest.xml:52:73-115
+103        <activity
+103-->/tmp/Assistant/app/src/main/AndroidManifest.xml:53:9-76
+104            android:name="com.ziyuan.Assistant.TapperActivity"
+104-->/tmp/Assistant/app/src/main/AndroidManifest.xml:53:19-49
+105            android:exported="false" />
+105-->/tmp/Assistant/app/src/main/AndroidManifest.xml:53:50-74
+106        <activity
+106-->/tmp/Assistant/app/src/main/AndroidManifest.xml:54:9-79
+107            android:name="com.ziyuan.Assistant.MetronomeActivity"
+107-->/tmp/Assistant/app/src/main/AndroidManifest.xml:54:19-52
+108            android:exported="false" />
+108-->/tmp/Assistant/app/src/main/AndroidManifest.xml:54:53-77
+109        <activity
+109-->/tmp/Assistant/app/src/main/AndroidManifest.xml:55:9-73
+110            android:name="com.ziyuan.Assistant.GkdActivity"
+110-->/tmp/Assistant/app/src/main/AndroidManifest.xml:55:19-46
+111            android:exported="false" />
+111-->/tmp/Assistant/app/src/main/AndroidManifest.xml:55:47-71
+112        <activity
+112-->/tmp/Assistant/app/src/main/AndroidManifest.xml:56:9-81
+113            android:name="com.ziyuan.Assistant.GkdAppRulesActivity"
+113-->/tmp/Assistant/app/src/main/AndroidManifest.xml:56:19-54
+114            android:exported="false" />
+114-->/tmp/Assistant/app/src/main/AndroidManifest.xml:56:55-79
+115        <activity
+115-->/tmp/Assistant/app/src/main/AndroidManifest.xml:57:9-76
+116            android:name="com.ziyuan.Assistant.GkdLogActivity"
+116-->/tmp/Assistant/app/src/main/AndroidManifest.xml:57:19-49
+117            android:exported="false" />
+117-->/tmp/Assistant/app/src/main/AndroidManifest.xml:57:50-74
+118        <activity
+118-->/tmp/Assistant/app/src/main/AndroidManifest.xml:58:9-126
+119            android:name="com.ziyuan.Assistant.H5ProjectListActivity"
+119-->/tmp/Assistant/app/src/main/AndroidManifest.xml:58:19-56
+120            android:exported="false"
+120-->/tmp/Assistant/app/src/main/AndroidManifest.xml:58:57-81
+121            android:windowSoftInputMode="adjustResize" />
+121-->/tmp/Assistant/app/src/main/AndroidManifest.xml:58:82-124
+122        <activity
+122-->/tmp/Assistant/app/src/main/AndroidManifest.xml:59:9-122
+123            android:name="com.ziyuan.Assistant.H5ProjectActivity"
+123-->/tmp/Assistant/app/src/main/AndroidManifest.xml:59:19-52
+124            android:exported="false"
+124-->/tmp/Assistant/app/src/main/AndroidManifest.xml:59:53-77
+125            android:windowSoftInputMode="adjustResize" />
+125-->/tmp/Assistant/app/src/main/AndroidManifest.xml:59:78-120
+126        <activity
+126-->/tmp/Assistant/app/src/main/AndroidManifest.xml:60:9-183
+127            android:name="com.ziyuan.Assistant.H5EditorActivity"
+127-->/tmp/Assistant/app/src/main/AndroidManifest.xml:60:19-51
+128            android:configChanges="orientation|screenSize|keyboardHidden"
+128-->/tmp/Assistant/app/src/main/AndroidManifest.xml:60:120-181
+129            android:exported="false"
+129-->/tmp/Assistant/app/src/main/AndroidManifest.xml:60:52-76
+130            android:windowSoftInputMode="adjustResize" />
+130-->/tmp/Assistant/app/src/main/AndroidManifest.xml:60:77-119
+131
+132        <receiver
+132-->/tmp/Assistant/app/src/main/AndroidManifest.xml:61:9-77
+133            android:name="com.ziyuan.Assistant.GkdSnapReceiver"
+133-->/tmp/Assistant/app/src/main/AndroidManifest.xml:61:19-50
+134            android:exported="false" />
+134-->/tmp/Assistant/app/src/main/AndroidManifest.xml:61:51-75
+135
+136        <service
+136-->/tmp/Assistant/app/src/main/AndroidManifest.xml:62:9-118
+137            android:name="com.ziyuan.Assistant.GkdStatusService"
+137-->/tmp/Assistant/app/src/main/AndroidManifest.xml:62:18-50
+138            android:exported="false"
+138-->/tmp/Assistant/app/src/main/AndroidManifest.xml:62:51-75
+139            android:foregroundServiceType="dataSync" />
+139-->/tmp/Assistant/app/src/main/AndroidManifest.xml:62:76-116
+140        <service
+140-->/tmp/Assistant/app/src/main/AndroidManifest.xml:63:9-71:19
+141            android:name="com.ziyuan.Assistant.GkdAccessibilityService"
+141-->/tmp/Assistant/app/src/main/AndroidManifest.xml:63:18-57
+142            android:exported="false"
+142-->/tmp/Assistant/app/src/main/AndroidManifest.xml:64:13-37
+143            android:label="GKD 去广告"
+143-->/tmp/Assistant/app/src/main/AndroidManifest.xml:65:13-36
+144            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" >
+144-->/tmp/Assistant/app/src/main/AndroidManifest.xml:66:13-79
+145            <intent-filter>
+145-->/tmp/Assistant/app/src/main/AndroidManifest.xml:37:13-39:29
+146                <action android:name="android.accessibilityservice.AccessibilityService" />
+146-->/tmp/Assistant/app/src/main/AndroidManifest.xml:38:17-91
+146-->/tmp/Assistant/app/src/main/AndroidManifest.xml:38:25-89
+147            </intent-filter>
+148
+149            <meta-data
+149-->/tmp/Assistant/app/src/main/AndroidManifest.xml:40:13-107
+150                android:name="android.accessibilityservice"
+150-->/tmp/Assistant/app/src/main/AndroidManifest.xml:40:24-67
+151                android:resource="@xml/gkd_a11y_config" />
+151-->/tmp/Assistant/app/src/main/AndroidManifest.xml:40:68-105
+152        </service>
+153
+154        <activity
+154-->/tmp/Assistant/app/src/main/AndroidManifest.xml:72:9-83
+155            android:name="com.ziyuan.Assistant.MetroSettingsActivity"
+155-->/tmp/Assistant/app/src/main/AndroidManifest.xml:72:19-56
+156            android:exported="false" />
+156-->/tmp/Assistant/app/src/main/AndroidManifest.xml:72:57-81
+157
+158        <service
+158-->/tmp/Assistant/app/src/main/AndroidManifest.xml:73:9-123
+159            android:name="com.ziyuan.Assistant.MetronomeService"
+159-->/tmp/Assistant/app/src/main/AndroidManifest.xml:73:18-50
+160            android:exported="false"
+160-->/tmp/Assistant/app/src/main/AndroidManifest.xml:73:51-75
+161            android:foregroundServiceType="mediaPlayback" />
+161-->/tmp/Assistant/app/src/main/AndroidManifest.xml:73:76-121
+162
+163        <activity
+163-->/tmp/Assistant/app/src/main/AndroidManifest.xml:74:9-141
+164            android:name="com.ziyuan.Assistant.PanViewerActivity"
+164-->/tmp/Assistant/app/src/main/AndroidManifest.xml:74:19-52
+165            android:configChanges="orientation|screenSize|keyboardHidden"
+165-->/tmp/Assistant/app/src/main/AndroidManifest.xml:74:78-139
+166            android:exported="false" />
+166-->/tmp/Assistant/app/src/main/AndroidManifest.xml:74:53-77
+167        <activity
+167-->/tmp/Assistant/app/src/main/AndroidManifest.xml:75:9-119
+168            android:name="com.ziyuan.Assistant.PanApiActivity"
+168-->/tmp/Assistant/app/src/main/AndroidManifest.xml:75:19-49
+169            android:exported="false"
+169-->/tmp/Assistant/app/src/main/AndroidManifest.xml:75:50-74
+170            android:windowSoftInputMode="adjustResize" />
+170-->/tmp/Assistant/app/src/main/AndroidManifest.xml:75:75-117
+171        <activity
+171-->/tmp/Assistant/app/src/main/AndroidManifest.xml:76:9-117
+172            android:name="com.ziyuan.Assistant.DynaActivity"
+172-->/tmp/Assistant/app/src/main/AndroidManifest.xml:76:19-47
+173            android:exported="false"
+173-->/tmp/Assistant/app/src/main/AndroidManifest.xml:76:48-72
+174            android:windowSoftInputMode="adjustResize" />
+174-->/tmp/Assistant/app/src/main/AndroidManifest.xml:76:73-115
+175        <activity
+175-->/tmp/Assistant/app/src/main/AndroidManifest.xml:77:9-83
+176            android:name="com.ziyuan.Assistant.EntertainmentActivity"
+176-->/tmp/Assistant/app/src/main/AndroidManifest.xml:77:19-56
+177            android:exported="false" />
+177-->/tmp/Assistant/app/src/main/AndroidManifest.xml:77:57-81
+178        <activity
+178-->/tmp/Assistant/app/src/main/AndroidManifest.xml:78:9-119
+179            android:name="com.ziyuan.Assistant.AiChatActivity"
+179-->/tmp/Assistant/app/src/main/AndroidManifest.xml:78:19-49
+180            android:exported="false"
+180-->/tmp/Assistant/app/src/main/AndroidManifest.xml:78:50-74
+181            android:windowSoftInputMode="adjustResize" />
+181-->/tmp/Assistant/app/src/main/AndroidManifest.xml:78:75-117
+182
+183        <receiver
+183-->/tmp/Assistant/app/src/main/AndroidManifest.xml:79:9-93
+184            android:name="com.ziyuan.Assistant.MedPlanActivity$MedPlanReceiver"
+184-->/tmp/Assistant/app/src/main/AndroidManifest.xml:79:19-66
+185            android:exported="false" />
+185-->/tmp/Assistant/app/src/main/AndroidManifest.xml:79:67-91
+186        <receiver
+186-->/tmp/Assistant/app/src/main/AndroidManifest.xml:80:9-96
+187            android:name="com.ziyuan.Assistant.MedPlanActivity$MedConfirmReceiver"
+187-->/tmp/Assistant/app/src/main/AndroidManifest.xml:80:19-69
+188            android:exported="false" />
+188-->/tmp/Assistant/app/src/main/AndroidManifest.xml:80:70-94
+189
+190        <activity
+190-->/tmp/Assistant/app/src/main/AndroidManifest.xml:81:9-139
+191            android:name="com.ziyuan.Assistant.Web2ApkActivity"
+191-->/tmp/Assistant/app/src/main/AndroidManifest.xml:81:19-50
+192            android:configChanges="orientation|screenSize|keyboardHidden"
+192-->/tmp/Assistant/app/src/main/AndroidManifest.xml:81:76-137
+193            android:exported="false" />
+193-->/tmp/Assistant/app/src/main/AndroidManifest.xml:81:51-75
+194        <activity
+194-->/tmp/Assistant/app/src/main/AndroidManifest.xml:82:9-121
+195            android:name="com.ziyuan.Assistant.SettingsActivity"
+195-->/tmp/Assistant/app/src/main/AndroidManifest.xml:82:19-51
+196            android:exported="false"
+196-->/tmp/Assistant/app/src/main/AndroidManifest.xml:82:52-76
+197            android:windowSoftInputMode="adjustResize" />
+197-->/tmp/Assistant/app/src/main/AndroidManifest.xml:82:77-119
+198        <activity
+198-->/tmp/Assistant/app/src/main/AndroidManifest.xml:83:9-183
+199            android:name="com.ziyuan.Assistant.LoginWebActivity"
+199-->/tmp/Assistant/app/src/main/AndroidManifest.xml:83:19-51
+200            android:configChanges="orientation|screenSize|keyboardHidden"
+200-->/tmp/Assistant/app/src/main/AndroidManifest.xml:83:77-138
+201            android:exported="false"
+201-->/tmp/Assistant/app/src/main/AndroidManifest.xml:83:52-76
+202            android:windowSoftInputMode="adjustResize" />
+202-->/tmp/Assistant/app/src/main/AndroidManifest.xml:83:139-181
+203        <activity
+203-->/tmp/Assistant/app/src/main/AndroidManifest.xml:84:9-82
+204            android:name="com.ziyuan.Assistant.ShortcutEditActivity"
+204-->/tmp/Assistant/app/src/main/AndroidManifest.xml:84:19-55
+205            android:exported="false" />
+205-->/tmp/Assistant/app/src/main/AndroidManifest.xml:84:56-80
+206        <activity
+206-->/tmp/Assistant/app/src/main/AndroidManifest.xml:85:9-79
+207            android:name="com.ziyuan.Assistant.AppPickerActivity"
+207-->/tmp/Assistant/app/src/main/AndroidManifest.xml:85:19-52
+208            android:exported="false" />
+208-->/tmp/Assistant/app/src/main/AndroidManifest.xml:85:53-77
+209        <activity
+209-->/tmp/Assistant/app/src/main/AndroidManifest.xml:86:9-82
+210            android:name="com.ziyuan.Assistant.ActivityListActivity"
+210-->/tmp/Assistant/app/src/main/AndroidManifest.xml:86:19-55
+211            android:exported="false" />
+211-->/tmp/Assistant/app/src/main/AndroidManifest.xml:86:56-80
+212        <activity
+212-->/tmp/Assistant/app/src/main/AndroidManifest.xml:87:9-89:89
+213            android:name="com.ziyuan.Assistant.NativePlayerActivity"
+213-->/tmp/Assistant/app/src/main/AndroidManifest.xml:87:19-55
+214            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+214-->/tmp/Assistant/app/src/main/AndroidManifest.xml:89:13-87
+215            android:exported="false" />
+215-->/tmp/Assistant/app/src/main/AndroidManifest.xml:88:13-37
+216        <activity
+216-->/tmp/Assistant/app/src/main/AndroidManifest.xml:91:9-79
+217            android:name="com.ziyuan.Assistant.BiliLoginActivity"
+217-->/tmp/Assistant/app/src/main/AndroidManifest.xml:91:19-52
+218            android:exported="false" />
+218-->/tmp/Assistant/app/src/main/AndroidManifest.xml:91:53-77
+219        <activity
+219-->/tmp/Assistant/app/src/main/AndroidManifest.xml:92:9-101:20
+220            android:name="com.ziyuan.Assistant.SniffActivity"
+220-->/tmp/Assistant/app/src/main/AndroidManifest.xml:92:19-48
+221            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+221-->/tmp/Assistant/app/src/main/AndroidManifest.xml:94:13-87
+222            android:exported="true" >
+222-->/tmp/Assistant/app/src/main/AndroidManifest.xml:93:13-36
+223            <intent-filter android:label="@string/app_name" >
+223-->/tmp/Assistant/app/src/main/AndroidManifest.xml:95:13-100:29
+223-->/tmp/Assistant/app/src/main/AndroidManifest.xml:95:28-60
+224                <action android:name="android.intent.action.SEND" />
+224-->/tmp/Assistant/app/src/main/AndroidManifest.xml:96:17-68
+224-->/tmp/Assistant/app/src/main/AndroidManifest.xml:96:25-66
+225                <action android:name="android.intent.action.SEND_MULTIPLE" />
+225-->/tmp/Assistant/app/src/main/AndroidManifest.xml:97:17-77
+225-->/tmp/Assistant/app/src/main/AndroidManifest.xml:97:25-75
+226
+227                <category android:name="android.intent.category.DEFAULT" />
+227-->/tmp/Assistant/app/src/main/AndroidManifest.xml:98:17-75
+227-->/tmp/Assistant/app/src/main/AndroidManifest.xml:98:27-73
+228
+229                <data android:mimeType="text/plain" />
+229-->/tmp/Assistant/app/src/main/AndroidManifest.xml:99:17-54
+229-->/tmp/Assistant/app/src/main/AndroidManifest.xml:99:23-52
+230            </intent-filter>
+231        </activity>
+232        <activity
+232-->/tmp/Assistant/app/src/main/AndroidManifest.xml:103:9-110:20
+233            android:name="com.ziyuan.Assistant.ui.ComposeHome"
+233-->/tmp/Assistant/app/src/main/AndroidManifest.xml:103:19-49
+234            android:exported="true"
+234-->/tmp/Assistant/app/src/main/AndroidManifest.xml:104:13-36
+235            android:theme="@android:style/Theme.Material.Light.NoActionBar" >
+235-->/tmp/Assistant/app/src/main/AndroidManifest.xml:105:13-76
+236            <intent-filter>
+236-->/tmp/Assistant/app/src/main/AndroidManifest.xml:106:13-109:29
+237                <action android:name="android.intent.action.MAIN" />
+237-->/tmp/Assistant/app/src/main/AndroidManifest.xml:107:17-68
+237-->/tmp/Assistant/app/src/main/AndroidManifest.xml:107:25-66
+238
+239                <category android:name="android.intent.category.LAUNCHER" />
+239-->/tmp/Assistant/app/src/main/AndroidManifest.xml:108:17-76
+239-->/tmp/Assistant/app/src/main/AndroidManifest.xml:108:27-74
+240            </intent-filter>
+241        </activity>
+242        <activity
+242-->/tmp/Assistant/app/src/main/AndroidManifest.xml:111:9-113:57
+243            android:name="com.ziyuan.Assistant.HomeActivity"
+243-->/tmp/Assistant/app/src/main/AndroidManifest.xml:111:19-47
+244            android:exported="true"
+244-->/tmp/Assistant/app/src/main/AndroidManifest.xml:112:13-36
+245            android:windowSoftInputMode="adjustResize" />
+245-->/tmp/Assistant/app/src/main/AndroidManifest.xml:113:13-55
+246
+247        <service
+247-->/tmp/Assistant/app/src/main/AndroidManifest.xml:114:9-79
+248            android:name="com.ziyuan.Assistant.LanShareService"
+248-->/tmp/Assistant/app/src/main/AndroidManifest.xml:114:18-49
+249            android:stopWithTask="true" />
+249-->/tmp/Assistant/app/src/main/AndroidManifest.xml:114:50-77
+250        <service
+250-->/tmp/Assistant/app/src/main/AndroidManifest.xml:115:9-117
+251            android:name="com.ziyuan.Assistant.MedWatchService"
+251-->/tmp/Assistant/app/src/main/AndroidManifest.xml:115:18-49
+252            android:exported="false"
+252-->/tmp/Assistant/app/src/main/AndroidManifest.xml:115:50-74
+253            android:foregroundServiceType="dataSync" />
+253-->/tmp/Assistant/app/src/main/AndroidManifest.xml:115:75-115
+254        <service
+254-->/tmp/Assistant/app/src/main/AndroidManifest.xml:116:9-103
+255            android:name="com.ziyuan.Assistant.DlKeepService"
+255-->/tmp/Assistant/app/src/main/AndroidManifest.xml:116:18-47
+256            android:exported="false"
+256-->/tmp/Assistant/app/src/main/AndroidManifest.xml:116:48-72
+257            android:stopWithTask="false" />
+257-->/tmp/Assistant/app/src/main/AndroidManifest.xml:116:73-101
+258
+259        <provider
+259-->/tmp/Assistant/app/src/main/AndroidManifest.xml:117:9-119:20
+260            android:name="androidx.core.content.FileProvider"
+260-->/tmp/Assistant/app/src/main/AndroidManifest.xml:117:19-68
+261            android:authorities="com.ziyuan.Assistant.fp"
+261-->/tmp/Assistant/app/src/main/AndroidManifest.xml:117:69-114
+262            android:exported="false"
+262-->/tmp/Assistant/app/src/main/AndroidManifest.xml:117:115-139
+263            android:grantUriPermissions="true" >
+263-->/tmp/Assistant/app/src/main/AndroidManifest.xml:117:140-174
+264            <meta-data
+264-->/tmp/Assistant/app/src/main/AndroidManifest.xml:118:13-116
+265                android:name="android.support.FILE_PROVIDER_PATHS"
+265-->/tmp/Assistant/app/src/main/AndroidManifest.xml:118:24-74
+266                android:resource="@xml/provider_paths" />
+266-->/tmp/Assistant/app/src/main/AndroidManifest.xml:118:75-113
+267        </provider>
+268        <provider
+268-->[androidx.emoji2:emoji2:1.3.0] /home/z/.gradle/caches/transforms-4/042a2d894933a5e3500cf8a587870a6e/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
+269            android:name="androidx.startup.InitializationProvider"
+269-->[androidx.emoji2:emoji2:1.3.0] /home/z/.gradle/caches/transforms-4/042a2d894933a5e3500cf8a587870a6e/transformed/emoji2-1.3.0/AndroidManifest.xml:25:13-67
+270            android:authorities="com.ziyuan.Assistant.androidx-startup"
+270-->[androidx.emoji2:emoji2:1.3.0] /home/z/.gradle/caches/transforms-4/042a2d894933a5e3500cf8a587870a6e/transformed/emoji2-1.3.0/AndroidManifest.xml:26:13-68
+271            android:exported="false" >
+271-->[androidx.emoji2:emoji2:1.3.0] /home/z/.gradle/caches/transforms-4/042a2d894933a5e3500cf8a587870a6e/transformed/emoji2-1.3.0/AndroidManifest.xml:27:13-37
+272            <meta-data
+272-->[androidx.emoji2:emoji2:1.3.0] /home/z/.gradle/caches/transforms-4/042a2d894933a5e3500cf8a587870a6e/transformed/emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
+273                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+273-->[androidx.emoji2:emoji2:1.3.0] /home/z/.gradle/caches/transforms-4/042a2d894933a5e3500cf8a587870a6e/transformed/emoji2-1.3.0/AndroidManifest.xml:30:17-75
+274                android:value="androidx.startup" />
+274-->[androidx.emoji2:emoji2:1.3.0] /home/z/.gradle/caches/transforms-4/042a2d894933a5e3500cf8a587870a6e/transformed/emoji2-1.3.0/AndroidManifest.xml:31:17-49
+275            <meta-data
+275-->[androidx.lifecycle:lifecycle-process:2.8.3] /home/z/.gradle/caches/transforms-4/edd37246e983d7c5ed5a5d69b88b008f/transformed/lifecycle-process-2.8.3/AndroidManifest.xml:29:13-31:52
+276                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+276-->[androidx.lifecycle:lifecycle-process:2.8.3] /home/z/.gradle/caches/transforms-4/edd37246e983d7c5ed5a5d69b88b008f/transformed/lifecycle-process-2.8.3/AndroidManifest.xml:30:17-78
+277                android:value="androidx.startup" />
+277-->[androidx.lifecycle:lifecycle-process:2.8.3] /home/z/.gradle/caches/transforms-4/edd37246e983d7c5ed5a5d69b88b008f/transformed/lifecycle-process-2.8.3/AndroidManifest.xml:31:17-49
+278            <meta-data
+278-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/z/.gradle/caches/transforms-4/41d5cfde50dc551188a20567edfe693d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:29:13-31:52
+279                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+279-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/z/.gradle/caches/transforms-4/41d5cfde50dc551188a20567edfe693d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:30:17-85
+280                android:value="androidx.startup" />
+280-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/z/.gradle/caches/transforms-4/41d5cfde50dc551188a20567edfe693d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:31:17-49
+281        </provider>
+282
+283        <receiver
+283-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/z/.gradle/caches/transforms-4/41d5cfde50dc551188a20567edfe693d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:34:9-52:20
+284            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+284-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/z/.gradle/caches/transforms-4/41d5cfde50dc551188a20567edfe693d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:35:13-76
+285            android:directBootAware="false"
+285-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/z/.gradle/caches/transforms-4/41d5cfde50dc551188a20567edfe693d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:36:13-44
+286            android:enabled="true"
+286-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/z/.gradle/caches/transforms-4/41d5cfde50dc551188a20567edfe693d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:37:13-35
+287            android:exported="true"
+287-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/z/.gradle/caches/transforms-4/41d5cfde50dc551188a20567edfe693d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:38:13-36
+288            android:permission="android.permission.DUMP" >
+288-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/z/.gradle/caches/transforms-4/41d5cfde50dc551188a20567edfe693d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:39:13-57
+289            <intent-filter>
+289-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/z/.gradle/caches/transforms-4/41d5cfde50dc551188a20567edfe693d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:40:13-42:29
+290                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+290-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/z/.gradle/caches/transforms-4/41d5cfde50dc551188a20567edfe693d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:17-91
+290-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/z/.gradle/caches/transforms-4/41d5cfde50dc551188a20567edfe693d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:25-88
+291            </intent-filter>
+292            <intent-filter>
+292-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/z/.gradle/caches/transforms-4/41d5cfde50dc551188a20567edfe693d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:43:13-45:29
+293                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+293-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/z/.gradle/caches/transforms-4/41d5cfde50dc551188a20567edfe693d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:17-85
+293-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/z/.gradle/caches/transforms-4/41d5cfde50dc551188a20567edfe693d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:25-82
+294            </intent-filter>
+295            <intent-filter>
+295-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/z/.gradle/caches/transforms-4/41d5cfde50dc551188a20567edfe693d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:46:13-48:29
+296                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+296-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/z/.gradle/caches/transforms-4/41d5cfde50dc551188a20567edfe693d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:17-88
+296-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/z/.gradle/caches/transforms-4/41d5cfde50dc551188a20567edfe693d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:25-85
+297            </intent-filter>
+298            <intent-filter>
+298-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/z/.gradle/caches/transforms-4/41d5cfde50dc551188a20567edfe693d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:49:13-51:29
+299                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+299-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/z/.gradle/caches/transforms-4/41d5cfde50dc551188a20567edfe693d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:17-95
+299-->[androidx.profileinstaller:profileinstaller:1.3.1] /home/z/.gradle/caches/transforms-4/41d5cfde50dc551188a20567edfe693d/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:25-92
+300            </intent-filter>
+301        </receiver>
+302    </application>
+303
+304</manifest>

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/metroRoot"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:scrollbars="none">
+    <LinearLayout
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:paddingLeft="20dp" android:paddingRight="20dp" android:paddingBottom="40dp">
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="56dp" android:gravity="center_vertical" android:orientation="horizontal">
+            <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1"/>
+            <ImageView android:id="@+id/metroMenu" android:layout_width="40dp" android:layout_height="40dp"
+                android:padding="8dp" android:src="@drawable/ic_metro_gear"/>
+        </LinearLayout>
+
+        <LinearLayout android:tag="card" android:id="@+id/sportCard" android:visibility="gone"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:background="@drawable/bg_card_md3"
+            android:padding="16dp" android:layout_marginTop="10dp" android:gravity="center">
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <TextView android:id="@+id/tvPace" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--'--&quot;" android:textSize="20sp" android:textStyle="bold" android:tag="title"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="配速" android:textSize="12sp" android:tag="sub"/>
+            </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <EditText android:id="@+id/tvCad" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--" android:textSize="18sp" android:textStyle="bold" android:tag="title"
+                    android:inputType="number" android:imeOptions="actionDone" android:background="@android:color/transparent" android:minWidth="64dp" android:gravity="center"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="步频" android:textSize="12sp" android:tag="sub"/>
+            </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="center">
+                <TextView android:id="@+id/tvDist" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0.00km" android:textSize="20sp" android:textStyle="bold" android:tag="title"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="距离" android:textSize="12sp" android:tag="sub"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView android:id="@+id/tvTianyi" android:visibility="gone"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:gravity="center" android:textSize="14sp" android:textStyle="bold" android:tag="title"
+            android:background="@drawable/bg_card_md3" android:padding="14dp" android:layout_marginTop="10dp"/>
+
+        <LinearLayout android:tag="card" android:id="@+id/metroCardDots" android:visibility="gone"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:background="@drawable/bg_card_md3"
+            android:padding="20dp" android:layout_marginTop="10dp">
+            <LinearLayout android:id="@+id/dotsRow" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:gravity="center"/>
+        </LinearLayout>
+
+        <LinearLayout android:tag="card" android:id="@+id/metroCardBeats"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:background="@drawable/bg_card_md3"
+            android:padding="20dp" android:layout_marginTop="10dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:orientation="vertical" android:gravity="center">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="拍子" android:textSize="15sp" android:textStyle="bold" android:tag="title"/>
+                    <EditText android:id="@+id/tvBeats" android:layout_width="52dp" android:layout_height="40dp"
+                        android:gravity="center" android:layout_marginTop="10dp" android:text="4" android:textSize="18sp" android:textStyle="bold" android:tag="title"
+                        android:background="@drawable/bg_btn_md3"/>
+                </LinearLayout>
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:orientation="vertical" android:gravity="center">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="节奏" android:textSize="15sp" android:textStyle="bold" android:tag="title"/>
+                    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:gravity="center" android:layout_marginTop="10dp">
+                        <ImageView android:id="@+id/bpmDown" android:layout_width="34dp" android:layout_height="40dp"
+                            android:scaleType="fitCenter" android:layout_marginRight="6dp" android:src="@drawable/ic_tri_left"/>
+                        <EditText android:id="@+id/tvBpm" android:layout_width="52dp" android:layout_height="40dp"
+                            android:gravity="center" android:text="80" android:textSize="18sp" android:textStyle="bold" android:tag="title"
+                            android:inputType="number" android:imeOptions="actionDone"
+                            android:background="@drawable/bg_btn_md3"/>
+                        <ImageView android:id="@+id/bpmUp" android:layout_width="34dp" android:layout_height="40dp"
+                            android:scaleType="fitCenter" android:layout_marginLeft="6dp" android:src="@drawable/ic_tri_right"/>
+                    </LinearLayout>
+                </LinearLayout>
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                    android:orientation="vertical" android:gravity="center">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="小节" android:textSize="15sp" android:textStyle="bold" android:tag="title"/>
+                    <EditText android:id="@+id/tvSub" android:layout_width="52dp" android:layout_height="40dp"
+                        android:gravity="center" android:layout_marginTop="10dp" android:text="1" android:textSize="18sp" android:textStyle="bold" android:tag="title"
+                        android:background="@drawable/bg_btn_md3"/>
+                </LinearLayout>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/bpmPresets" android:visibility="gone" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:layout_marginTop="16dp"/>
+        </LinearLayout>
+
+        <TextView android:id="@+id/btnPlay"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:gravity="center" android:text="▶ 开始打拍" android:textSize="17sp" android:textStyle="bold"
+            android:background="@drawable/bg_btn_md3" android:layout_marginTop="20dp" android:tag="accent"/>
+
+        <LinearLayout android:id="@+id/lifeCard" android:visibility="gone"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:background="@drawable/bg_card_md3"
+            android:padding="16dp" android:layout_marginTop="14dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <TextView android:id="@+id/lifeTitle" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+                    android:text="生活服务" android:textSize="19sp" android:textStyle="bold" android:tag="title"/>
+                <TextView android:id="@+id/lifeTemp" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:textSize="14sp" android:tag="sub"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/lifeGrid" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:layout_marginTop="12dp"/>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/h24Card" android:visibility="gone"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:background="@drawable/bg_card_md3"
+            android:padding="16dp" android:layout_marginTop="14dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <TextView android:id="@+id/h24Title" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+                    android:text="24h 天气" android:textSize="19sp" android:textStyle="bold" android:tag="title"/>
+                <TextView android:id="@+id/h24Sub" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:textSize="14sp" android:tag="sub"/>
+            </LinearLayout>
+            <LinearLayout android:id="@+id/h24Grid" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:layout_marginTop="12dp"/>
+        </LinearLayout>
+
+        <LinearLayout android:tag="card" android:id="@+id/metroCardBg"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:background="@drawable/bg_card_md3"
+            android:padding="20dp" android:layout_marginTop="14dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="背景音" android:textSize="15sp" android:textStyle="bold" android:tag="title"/>
+            <ScrollView android:id="@+id/bgScroll" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:scrollbars="none" android:layout_marginTop="12dp">
+                <LinearLayout android:id="@+id/bgList" android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical"/>
+            </ScrollView>
+            <TextView android:id="@+id/bgEmpty" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="暂无背景音, 点右上角菜单下载" android:textSize="13sp" android:tag="sub" android:layout_marginTop="4dp"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="4dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="音量" android:textSize="13sp" android:tag="sub" android:paddingRight="8dp"/>
+                <SeekBar android:id="@+id/sbBgVol" android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:max="130" android:progress="40"/>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

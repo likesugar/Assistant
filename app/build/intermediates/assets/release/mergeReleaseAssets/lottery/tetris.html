@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>俄罗斯方块</title>
+<style>
+  body{background:#14161c;font-family:-apple-system,'PingFang SC',sans-serif;color:#eee;margin:0;text-align:center;user-select:none;-webkit-user-select:none}
+  #menu{margin-top:60px}
+  #menu button{display:block;width:70%;margin:14px auto;padding:16px 0;background:#315CDE;color:#fff;border:none;border-radius:18px;font-size:17px;font-weight:bold}
+  #menu .back{width:40%;background:#241636;color:#ffd75e;border:2px solid #d8a520;padding:10px 0;font-size:14px}
+  #game{display:none}
+  #top{display:flex;justify-content:space-between;align-items:center;margin:8px 10px 0}
+  #sc{font-size:15px;font-weight:bold;color:#f5c26b}
+  canvas{display:block;margin:8px auto 0;background:#1a1f26;border:2px solid #5b3a8c;border-radius:12px;touch-action:none}
+  .dpad{display:grid;grid-template-columns:repeat(3,76px);grid-template-rows:repeat(2,58px);gap:5px;justify-content:center;margin-top:12px}
+  .dpad button{background:linear-gradient(#3a3d42,#1c1e22);color:#e8e8e8;border:1px solid #000;border-radius:9px;font-size:20px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.12),0 2px 3px rgba(0,0,0,0.6);padding:0}
+  .dpad button:active{background:#111;box-shadow:inset 0 2px 4px #000}
+  .dpad .gold{background:linear-gradient(#f0c542,#c8930f);color:#241636}
+  .side{display:flex;justify-content:center;gap:10px;margin-top:8px}
+  .side button{background:linear-gradient(#3a3d42,#1c1e22);color:#e8e8e8;border:1px solid #000;border-radius:9px;font-size:15px;font-weight:bold;padding:10px 22px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.12),0 2px 3px rgba(0,0,0,0.6)}
+  #msg{font-size:15px;font-weight:bold;color:#f5c26b;margin-top:8px;min-height:22px}
+  #modeTag{font-size:12px;color:#888}
+</style>
+</head>
+<body>
+<div id="menu">
+  <div style="font-size:22px;font-weight:bold;color:#ffd75e;margin-bottom:20px">🧱 俄罗斯方块</div>
+  <button onclick="startGame('classic')">经典版</button>
+  <button onclick="startGame('weird')">变形版 · 不规则方块</button>
+    <button onclick="startGame('sand')">流沙版 · 沙块下落</button>
+  <button class="back" onclick="location.href='ent.html'">← 返回娱乐页</button>
+</div>
+<div id="game">
+  <div id="top">
+    <button onclick="backMenu()" style="padding:7px 18px;background:#241636;color:#ffd75e;border:2px solid #d8a520;border-radius:16px;font-size:13px;font-weight:bold">← 返回</button>
+    <div><span id="modeTag"></span> · <span id="sc">得分: 0</span></div>
+  </div>
+  <canvas id="cv" width="240" height="360"></canvas>
+    <div class="dpad">
+    <button style="grid-column:2" onclick="rot()">▲</button>
+    <button style="grid-column:1" onclick="move(-1)">◄</button>
+    <button class="gold" style="grid-column:2" onclick="drop()">▼</button>
+    <button style="grid-column:3" onclick="move(1)">►</button>
+  </div>
+  <div class="side">
+    <button onclick="softDown()">慢降</button>
+    <button onclick="drop()" style="background:linear-gradient(#f0c542,#c8930f);color:#241636">⤓ 速降</button>
+  </div>
+  <div id="msg"></div>
+</div>
+<script>
+var CW=10,CH=15,CS=24,cv,ctx;
+var board,cur,nxt,score,dead,timer,MODE;
+var SHAPES={
+  classic:[[[1,1,1,1]],[[1,1],[1,1]],[[0,1,0],[1,1,1]],[[0,1,1],[1,1,0]],[[1,1,0],[0,1,1]],[[1,0,0],[1,1,1]],[[0,0,1],[1,1,1]]],
+  weird:[[[1,1,1],[1,0,1],[1,1,1]],[[1,1,1,1],[1,0,0,0]],[[0,1,0],[1,1,1],[0,1,0]],[[1,1],[1,1],[1,0],[1,0]],[[1,0,1],[1,1,1]],[[1,1,1],[0,1,0],[0,1,0]],[[1,1],[0,1],[1,1]]]
+};
+function startGame(m){
+  MODE=m;
+  document.getElementById('menu').style.display='none';
+  document.getElementById('game').style.display='block';
+  document.getElementById('modeTag').textContent=({classic:'经典版',weird:'变形版',sand:'流沙版'})[MODE]||'';
+  cv=document.getElementById('cv');
+  cv.width=CW*24;cv.height=CH*24;
+  cv.style.width=Math.min(240,(window.innerWidth-30))+'px';
+  ctx=cv.getContext('2d');
+  reset();
+}
+function backMenu(){
+  clearInterval(timer);
+  document.getElementById('game').style.display='none';
+  document.getElementById('menu').style.display='block';
+}
+function reset(){
+  board=[];for(var y=0;y<CH;y++)board.push(new Array(CW).fill(0));
+  score=0;dead=false;
+  document.getElementById('sc').textContent='得分: 0';
+  document.getElementById('msg').textContent='';
+  nxt=mkPiece();spawn();
+  clearInterval(timer);timer=setInterval(tick,500);
+}
+function mkPiece(){
+  var set=SHAPES[MODE==='sand'?'classic':MODE]||SHAPES.classic;
+  var t=set[Math.floor(Math.random()*set.length)];
+  var m=[];
+  for(var y=0;y<t.length;y++){m.push(t[y].slice());}
+  return {m:m,x:Math.floor((CW-m[0].length)/2),y:0,c:1+Math.floor(Math.random()*6)};
+}
+function spawn(){cur=nxt;nxt=mkPiece();if(hit(cur.x,cur.y,cur.m)){gameOver();}}
+function hit(x,y,m){
+  for(var r=0;r<m.length;r++)for(var c=0;c<m[r].length;c++){
+    if(!m[r][c])continue;
+    var nx=x+c,ny=y+r;
+    if(nx<0||nx>=CW||ny>=CH)return true;
+    if(ny>=0&&board[ny][nx])return true;
+  }
+  return false;
+}
+function tick(){
+  if(dead)return;
+  if(!hit(cur.x,cur.y+1,cur.m))cur.y++;
+  else lock();
+  draw();
+}
+function lock(){
+  for(var r=0;r<cur.m.length;r++)for(var c=0;c<cur.m[r].length;c++){
+    if(cur.m[r][c]&&cur.y+r>=0)board[cur.y+r][cur.x+c]=cur.c;
+  }
+  if(MODE==='sand')sandSettle();
+  clearLines();
+  spawn();
+}
+function sandSettle(){
+  // 每列独立下落: 像沙子一样补齐空隙
+  for(var x=0;x<CW;x++){
+    var col=[],y=CH-1;
+    for(var yy=CH-1;yy>=0;yy--)if(board[yy][x])col.push(board[yy][x]);
+    for(var yy=0;yy<CH;yy++)board[yy][x]=0;
+    y=CH-1;
+    for(var i=0;i<col.length;i++)board[y--][x]=col[i];
+  }
+}
+function clearLines(){
+  var n=0;
+  for(var y=CH-1;y>=0;y--){
+    if(board[y].every(function(v){return v;})){
+      board.splice(y,1);board.unshift(new Array(CW).fill(0));
+      n++;y++;
+    }
+  }
+  if(n){score+=[0,100,300,600,1000][n]||1000;document.getElementById('sc').textContent='得分: '+score;}
+}
+function move(d){if(!dead&&!hit(cur.x+d,cur.y,cur.m))cur.x+=d;draw();}
+function rot(){
+  if(dead)return;
+  var m=cur.m,nm=[];
+  for(var c=0;c<m[0].length;c++){nm.push([]);for(var r=m.length-1;r>=0;r--)nm[c].push(m[r][c]);}
+  if(!hit(cur.x,cur.y,nm))cur.m=nm;
+  draw();
+}
+function softDown(){if(!dead){if(!hit(cur.x,cur.y+1,cur.m))cur.y++;else lock();draw();}}
+function drop(){
+  if(dead)return;
+  while(!hit(cur.x,cur.y+1,cur.m))cur.y++;
+  lock();draw();
+}
+function gameOver(){
+  dead=true;clearInterval(timer);
+  document.getElementById('msg').textContent='💀 游戏结束 · 得分 '+score+' · 按 ⟳ 重开';
+}
+document.addEventListener('keydown',function(e){
+  if(!cv||document.getElementById('game').style.display!=='block')return;
+  if(e.key==='ArrowLeft')move(-1);
+  else if(e.key==='ArrowRight')move(1);
+  else if(e.key==='ArrowDown')softDown();
+  else if(e.key==='ArrowUp')rot();
+  else if(e.key===' ')drop();
+});
+cv&&cv.addEventListener('touchstart',function(e){
+  if(dead){reset();return}
+  var t=e.touches[0],r=cv.getBoundingClientRect();
+  var x=t.clientX-r.left;
+  if(x<r.width/3)move(-1);
+  else if(x<r.width*2/3)rot();
+  else move(1);
+});
+function draw(){
+  ctx.fillStyle='#1a1f26';ctx.fillRect(0,0,cv.width,cv.height);
+  var hex=MODE==='hex';
+  var COLORS=['','#e74c3c','#2ecc71','#3498db','#f1c40f','#9b59b6','#e67e22'];
+  function cell(x,y,c){
+    var px=x*CS,py=y*CS;
+    if(!hex){ctx.fillStyle=COLORS[c];ctx.fillRect(px+1,py+1,CS-2,CS-2);return}
+    // 六边形格
+    ctx.fillStyle=COLORS[c];
+    ctx.beginPath();
+    for(var i=0;i<6;i++){
+      var a=Math.PI/6+i*Math.PI/3;
+      var vx=px+CS/2+Math.cos(a)*CS/2-1,vy=py+CS/2+Math.sin(a)*CS/2-1;
+      i?ctx.lineTo(vx,vy):ctx.moveTo(vx,vy);
+    }
+    ctx.closePath();ctx.fill();
+  }
+  for(var y=0;y<CH;y++)for(var x=0;x<CW;x++)if(board[y][x])cell(x,y,board[y][x]);
+  for(var r=0;r<cur.m.length;r++)for(var c=0;c<cur.m[r].length;c++){
+    if(cur.m[r][c]&&cur.y+r>=0)cell(cur.x+c,cur.y+r,cur.c);
+  }
+  if(dead){
+    ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.fillStyle='#ffd75e';ctx.font='bold 20px sans-serif';ctx.textAlign='center';
+    ctx.fillText('游戏结束',cv.width/2,cv.height/2-10);
+    ctx.font='13px sans-serif';
+    ctx.fillText('点屏幕重开',cv.width/2,cv.height/2+16);
+  }
+}
+</script>
+</body>
+</html>

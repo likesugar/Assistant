@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>贪吃蛇</title>
+<style>
+  body{background:#14161c;font-family:-apple-system,'PingFang SC',sans-serif;color:#eee;margin:0;text-align:center;user-select:none;-webkit-user-select:none}
+  #top{display:flex;justify-content:space-between;align-items:center;margin:8px 10px 0}
+  #sc{font-size:16px;font-weight:bold;color:#f5c26b}
+  canvas{display:block;margin:10px auto 0;background:#1a1f26;border:2px solid #5b3a8c;border-radius:12px;touch-action:none}
+  .pad{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(2,54px);gap:8px;justify-content:center;margin-top:14px}
+  .pad button{background:#315CDE;color:#fff;border:none;border-radius:12px;font-size:20px;font-weight:bold}
+  .pad button:active{background:#1FA855}
+  #msg{font-size:15px;font-weight:bold;color:#f5c26b;margin-top:10px;min-height:22px}
+</style>
+</head>
+<body>
+<div id="top">
+  <button onclick="location.href='ent.html'" style="padding:7px 16px;background:#241636;color:#ffd75e;border:2px solid #d8a520;border-radius:16px;font-size:13px;font-weight:bold">← 返回</button>
+  <div id="sc">得分: 0</div>
+  <button onclick="reset()" style="padding:7px 16px;background:#315CDE;color:#fff;border:none;border-radius:16px;font-size:13px;font-weight:bold">重开</button>
+</div>
+<canvas id="cv" width="315" height="315"></canvas>
+<div class="pad">
+  <div></div><button onclick="turn(0,-1)">↑</button><div></div>
+  <button onclick="turn(-1,0)">←</button><button onclick="turn(0,1)">↓</button><button onclick="turn(1,0)">→</button>
+</div>
+<div id="msg"></div>
+<script>
+var CS=21, N=15;
+var cv=document.getElementById('cv'), cx=cv.getContext('2d');
+var snake,dir,food,score,dead,timer,speed,queue;
+function reset(){
+  snake=[[7,7],[7,8],[7,9]];dir=[0,-1];score=0;dead=false;speed=210;queue=[];
+  document.getElementById('sc').textContent='得分: 0';
+  document.getElementById('msg').textContent='';
+  placeFood();
+  draw();
+  clearInterval(timer);timer=setInterval(step,speed);
+}
+function placeFood(){
+  do{food=[Math.floor(Math.random()*N),Math.floor(Math.random()*N)];}
+  while(snake.some(function(s){return s[0]===food[0]&&s[1]===food[1];}));
+}
+function turn(x,y){
+  var last=queue.length?queue[queue.length-1]:dir;
+  if(x===-last[0]&&y===-last[1])return;
+  if(x===last[0]&&y===last[1])return;
+  if(queue.length<2)queue.push([x,y]);
+}
+function step(){
+  if(dead)return;
+  if(queue.length)dir=queue.shift();
+  var h=[snake[0][0]+dir[0],snake[0][1]+dir[1]];
+  if(h[0]<0||h[0]>=N||h[1]<0||h[1]>=N||snake.some(function(s){return s[0]===h[0]&&s[1]===h[1];})){
+    dead=true;
+    document.getElementById('msg').textContent='💀 游戏结束 · 得分 '+score+' · 点屏幕或「重开」再来';
+    return;
+  }
+  snake.unshift(h);
+  if(h[0]===food[0]&&h[1]===food[1]){
+    score++;document.getElementById('sc').textContent='得分: '+score;
+    placeFood();
+    if(score%4===0&&speed>80){speed-=10;clearInterval(timer);timer=setInterval(step,speed);}
+  }else snake.pop();
+  draw();
+}
+function draw(){
+  cx.fillStyle='#1a1f26';cx.fillRect(0,0,315,315);
+  cx.fillStyle='#e74c3c';
+  cx.beginPath();cx.arc(food[0]*CS+CS/2,food[1]*CS+CS/2,CS/2-3,0,7);cx.fill();
+  for(var i=0;i<snake.length;i++){
+    cx.fillStyle=i===0?'#2ecc71':'#27ae60';
+    cx.fillRect(snake[i][0]*CS+1,snake[i][1]*CS+1,CS-2,CS-2);
+  }
+}
+cv.addEventListener('touchstart',function(e){
+  if(dead){reset();return}
+  var t=e.touches[0];
+  if(touchS&&Math.abs(t.clientX-touchS[0])+Math.abs(t.clientY-touchS[1])>20){
+    var dx=t.clientX-touchS[0],dy=t.clientY-touchS[1];
+    if(Math.abs(dx)>Math.abs(dy))turn(dx>0?1:-1,0);else turn(0,dy>0?1:-1);
+  }
+  touchS=[t.clientX,t.clientY];
+},{passive:true});
+var touchS=null;
+cv.addEventListener('touchend',function(){if(dead)reset();});
+document.addEventListener('keydown',function(e){
+  var m={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key];
+  if(m){e.preventDefault();turn(m[0],m[1]);}
+});
+reset();
+</script>
+</body>
+</html>

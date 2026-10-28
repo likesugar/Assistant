@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>奇门遁甲排盘</title>
+<link rel="stylesheet" href="css/bootstrap.min.css">
+<link rel="stylesheet" href="css/style-new.css">
+<script src="jquery.min.js"></script>
+<script src="bootstrap.min.js"></script>
+<script src="app.js"></script>
+<script src="bundle.js"></script>
+<script>
+// 原生剪贴板: 覆盖 app.js 的 copyText, 解决 WebView Clipboard API 不可用
+window.copyText = function(text, cb) {
+  try { __acl.set(String(text)); cb(true); }
+  catch (e) { cb(false); }
+};
+</script>
+<style>
+body{padding-top:60px;padding-bottom:70px;overflow-x:hidden;overflow-y:auto;min-height:100vh}
+#pan-bar{flex-wrap:wrap;position:fixed;top:56px;left:0;right:0;z-index:900;background:#fff;border-bottom:1px solid #ddd;padding:6px 10px;display:flex;gap:8px;align-items:center}
+#pan-bar input{flex:1;min-width:0;padding:4px 8px;border:1px solid #ccc;border-radius:6px}
+#pan-bar button{padding:6px 14px;border:0;border-radius:6px;background:#c6a87c;color:#222;font-weight:bold}
+.gong-explain{font-size:12px;color:#666}
+</style>
+</head>
+<body>
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+  <div class="navbar-header"><a class="navbar-brand" href="#">奇门遁甲排盘(转盘)</a></div>
+</nav>
+<div id="pan-bar">
+  <input type="date" id="pan-date">
+  <input type="time" id="pan-time">
+  <button id="pan-go">排盘</button>
+  <button id="pan-now">现在</button>
+</div>
+<div id="pan-root"><p style="text-align:center;padding-top:80px">排盘中...</p></div>
+<script>
+window.addEventListener('error',function(ev){
+  var d=document.createElement('div');d.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#900;color:#fff;font:12px monospace;padding:8px;white-space:pre-wrap;max-height:40%;overflow:auto';
+  d.textContent='JSERR: '+(ev.message||'')+' @'+(ev.filename||'').split('/').pop()+':'+(ev.lineno||0);
+  document.body.appendChild(d);
+});
+</script>
+
+<script>
+// 动态元素绑定: 每次重排后由 bundle 调用 (复制弹窗/AI解析/表单提交)
+window.__setupDynamic = function(){
+  var copyBtn = document.getElementById('copyPanBtn');
+  if (copyBtn && !copyBtn.dataset.popBound) {
+    copyBtn.dataset.popBound='1';
+    copyBtn.addEventListener('click', function(e){
+      e.stopImmediatePropagation(); e.preventDefault();
+      var grab = function(id){ var el=document.getElementById(id); return el?el.innerText:''; };
+      var lines = [];
+      lines.push('【奇门遁甲排盘】');
+      lines.push('公历: '+grab('solarDate')+'  农历: '+grab('lunarDate'));
+      var sz=[]; document.querySelectorAll('span.label.label-primary').forEach(function(x){sz.push(x.innerText);});
+      lines.push('四柱: '+sz.join(' '));
+      lines.push('旬首: '+grab('xunShou')+'  局数: '+grab('juShu'));
+      lines.push('值符: '+grab('zhiFu')+'  值使: '+grab('zhiShi')+'  运势: '+grab('overallLuck'));
+      var grid = document.querySelector('.pan-grid');
+      if (grid) lines.push('\n'+grid.innerText.replace(/\n{3,}/g,'\n\n'));
+      var text = lines.join('\n');
+      var ov = document.createElement('div');
+      ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;';
+      var box = document.createElement('div');
+      box.style.cssText='background:#222;color:#eee;border-radius:10px;width:88%;max-height:75%;padding:14px;display:flex;flex-direction:column;';
+      var ta = document.createElement('textarea');
+      ta.value=text;
+      ta.style.cssText='flex:1;width:100%;background:#111;color:#0f0;font:12px monospace;border:1px solid #444;border-radius:6px;padding:8px;white-space:pre-wrap;';
+      var row = document.createElement('div'); row.style.cssText='display:flex;gap:10px;margin-top:10px;justify-content:flex-end;';
+      var b1=document.createElement('button'); b1.textContent='复制全部'; b1.style.cssText='padding:8px 20px;border:0;border-radius:8px;background:#c6a87c;color:#222;font-weight:bold;';
+      var b2=document.createElement('button'); b2.textContent='关闭'; b2.style.cssText='padding:8px 20px;border:0;border-radius:8px;background:#444;color:#fff;';
+      b1.onclick=function(){ ta.focus(); ta.select();
+        try { __acl.set(ta.value); b1.textContent='已复制'; setTimeout(function(){b1.textContent='复制全部';},1500); }
+        catch(err){ try{ document.execCommand('copy'); b1.textContent='已复制'; }catch(e2){} }
+      };
+      b2.onclick=function(){ document.body.removeChild(ov); };
+      row.appendChild(b1); row.appendChild(b2);
+      box.appendChild(ta); box.appendChild(row); ov.appendChild(box);
+      document.body.appendChild(ov);
+    }, true);
+  }
+  var copyBtn2 = document.getElementById('copyPanBtn');
+  if (copyBtn2 && !document.getElementById('aiPanBtn')) {
+    var ai = document.createElement('button');
+    ai.type='button'; ai.id='aiPanBtn';
+    ai.textContent='AI解析';
+    ai.style.cssText='margin-left:10px;padding:10px 22px;border:0;border-radius:4px;background:#4a7dbe;color:#fff;font-size:15px;';
+    copyBtn2.parentNode.appendChild(ai);
+    ai.addEventListener('click', function(){
+      var env=(window.process&&window.process.env)||{};
+      var key=env.API_KEY||'', base=(env.BASE_URL||'https://generativelanguage.googleapis.com/v1beta/openai').replace(/\/+$/,'');
+      var model=env.MODEL||'gemini-2.5-flash';
+      var grab = function(id){ var el=document.getElementById(id); return el?el.innerText:''; };
+      if(!key){ alert('请先到 排盘页 → 我的api设置 配置 API Key'); return; }
+      ai.disabled=true; ai.textContent='解析中...';
+      var sz=[]; document.querySelectorAll('span.label.label-primary').forEach(function(x){sz.push(x.innerText);});
+      var grid=document.querySelector('.pan-grid');
+      var prompt='请以奇门遁甲专业视角解读此盘，分析格局、用神与吉凶趋势，给出简明建议。\n'+
+        '排盘类型:'+grab('panType')+' 方法:'+grab('panMethod')+'\n'+
+        '公历:'+grab('solarDate')+' 农历:'+grab('lunarDate')+'\n'+
+        '四柱:'+sz.join(' ')+'\n旬首:'+grab('xunShou')+' 局数:'+grab('juShu')+'\n'+
+        '值符:'+grab('zhiFu')+' 值使:'+grab('zhiShi')+' 运势:'+grab('overallLuck')+'\n'+
+        (grid?'九宫:\n'+grid.innerText:'');
+      var sys=(env.SYSTEM||'')+' 你是一位精通奇门遁甲的国学大师，用通俗语言解读。';
+      var body={ model:model, messages:[{role:'system',content:sys},{role:'user',content:prompt}], temperature: parseFloat(env.TEMP||'0.7'), max_tokens: parseInt(env.MAX_TOKENS||'2048') };
+      fetch(base+'/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify(body)})
+        .then(function(r){return r.json();})
+        .then(function(d){
+          ai.disabled=false; ai.textContent='AI解析';
+          var txt=(d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||'解析失败，请稍后再试。';
+          var ov=document.createElement('div');
+          ov.style.cssText='position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;';
+          var box=document.createElement('div');
+          box.style.cssText='background:#222;color:#eee;border-radius:10px;width:90%;max-height:78%;padding:14px;display:flex;flex-direction:column;';
+          var t=document.createElement('div'); t.textContent='AI 解析'; t.style.cssText='font-weight:bold;margin-bottom:8px;color:#c6a87c;';
+          var ta=document.createElement('div');
+          ta.style.cssText='flex:1;overflow:auto;background:#111;border:1px solid #444;border-radius:6px;padding:10px;font:13px/1.6 monospace;white-space:pre-wrap;color:#eee;';
+          ta.textContent=txt;
+          var row=document.createElement('div'); row.style.cssText='display:flex;gap:10px;margin-top:10px;justify-content:flex-end;';
+          var b1=document.createElement('button'); b1.textContent='复制'; b1.style.cssText='padding:8px 20px;border:0;border-radius:8px;background:#c6a87c;color:#222;font-weight:bold;';
+          var b2=document.createElement('button'); b2.textContent='关闭'; b2.style.cssText='padding:8px 20px;border:0;border-radius:8px;background:#444;color:#fff;';
+          b1.onclick=function(){ try{ __acl.set(ta.textContent); b1.textContent='已复制'; setTimeout(function(){b1.textContent='复制';},1500);}catch(e){} };
+          b2.onclick=function(){ document.body.removeChild(ov); };
+          row.appendChild(b1); row.appendChild(b2);
+          box.appendChild(t); box.appendChild(ta); box.appendChild(row); ov.appendChild(box);
+          document.body.appendChild(ov);
+        })
+        .catch(function(e){ ai.disabled=false; ai.textContent='AI解析'; alert('解析失败：'+e.message); });
+    });
+  }
+  var form = document.getElementById('customPanForm');
+  if (form && !form.dataset.subBound) {
+    form.dataset.subBound='1';
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      var g=function(id){var el=document.getElementById(id);return el?el.value:'';};
+      var d=g('date'), t=g('time');
+      if(!d||!t) return;
+      if (window.__renderAt) window.__renderAt(new Date(d+'T'+t), { type:g('type')||'四柱', method:g('method')||'时家', purpose:g('purpose')||'综合', location:g('location')||'默认位置' });
+    });
+  }
+  var ob=document.getElementById('submitCustomPan');
+  if (ob && !ob.dataset.clickBound) {
+    ob.dataset.clickBound='1';
+    ob.addEventListener('click', function(e){ e.preventDefault(); var f=document.getElementById('customPanForm'); if(f) f.requestSubmit?f.requestSubmit():f.submit(); });
+  }
+  var loc=document.getElementById('location');
+  if (loc && !loc.dataset.listSet) { loc.dataset.listSet='1'; loc.setAttribute('list','cityList'); loc.placeholder='温州市'; }
+};
+</script>
+
+
+<datalist id="cityList"><option value="温州市"><option value="北京市"><option value="上海市"><option value="杭州市"><option value="广州市"></datalist>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>六爻神课</title>
+    <script src="tailwind.js"></script>
+    
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              serif: ['"Noto Serif SC"', 'serif'],
+              calligraphy: ['"Ma Shan Zheng"', 'cursive'],
+              ink: ['"Zhi Mang Xing"', 'cursive'],
+            },
+            colors: {
+              // Dark Theme Palette
+              ink: {
+                950: '#050505', // Deep Black
+                900: '#121212', // Main Background (Dark Charcoal)
+                850: '#1a1a1a', // Component Background (Obsidian)
+                800: '#262626', // Lighter Surface
+                700: '#404040', // Borders/Separators
+                500: '#737373', // Muted Text
+              },
+              paper: {
+                50: '#ffffff',
+                100: '#e5e5e5', // Primary Text (Off-white)
+                200: '#d4d4d4', // Secondary Text
+                300: '#a3a3a3',
+              },
+              gold: {
+                100: '#fbf5e6',
+                200: '#f1e2c1',
+                300: '#e6c88a', // Primary Gold Text
+                400: '#dba857',
+                500: '#cca352', // Muted Gold Icon
+                600: '#aa8233',
+                900: '#4a3610',
+              },
+              tea: {
+                // Remapped to muted bronzes/browns for dark theme
+                100: '#3d342b',
+                300: '#5c4e40',
+                500: '#8c7662', 
+                800: '#1f1a16',
+              },
+              jade: {
+                300: '#8bd6bb',
+                500: '#34d399', // Bright Jade Glow
+                700: '#059669',
+                900: '#064e3b',
+              },
+              cinnabar: '#ef4444', // Brighter red for dark background contrast
+            },
+            animation: {
+              'spin-slow': 'spin 8s linear infinite',
+              'float': 'float 6s ease-in-out infinite',
+              'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            },
+            boxShadow: {
+              'glow': '0 0 15px rgba(230, 200, 138, 0.1)',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      /* Hide scrollbar for Chrome, Safari and Opera */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      /* Hide scrollbar for IE, Edge and Firefox */
+      .no-scrollbar {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+      }
+      body {
+        background-color: #121212;
+        color: #e5e5e5;
+        overscroll-behavior: none;
+      }
+    </style>
+  <link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+  <script type="module" src="bundle.js"></script>
+</body>
+</html>

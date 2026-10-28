@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>大转盘</title>
+<style>
+  body{background:#14161c;font-family:-apple-system,'PingFang SC',sans-serif;color:#eee;margin:0}
+  #pts{font-size:17px;font-weight:bold;color:#f5c26b;text-align:center;padding:16px 0 4px}
+  #dialWrap{position:relative;width:320px;height:320px;margin:14px auto 0}
+  #wheel{width:100%;height:100%;transition:transform 4.2s cubic-bezier(.15,.85,.25,1)}
+  #go{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:96px;height:96px;border-radius:48px;
+      background:radial-gradient(circle at 35% 30%,#ff9d5c,#f0512a);color:#fff;font-size:26px;font-weight:bold;
+      display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 5px #fff3;z-index:2}
+  #res{min-height:30px;text-align:center;font-size:17px;font-weight:bold;color:#f5c26b;padding:10px 0}
+  .btn{display:block;margin:6px auto 0;padding:12px 0;width:220px;text-align:center;background:#f94804;color:#fff;font-size:15px;font-weight:bold;border:none;border-radius:24px}
+  #cfgBtn{position:fixed;right:14px;bottom:24px;background:#e67e22;color:#fff;border:none;border-radius:24px;padding:10px 18px;font-size:14px;font-weight:bold;z-index:9}
+  .cfg{display:none;background:#1c1f26;border-radius:14px;padding:14px;margin:12px 16px;text-align:left}
+  .cfg textarea{width:100%;height:100px;background:#0c0e12;color:#eee;border:none;border-radius:10px;padding:10px;font-size:13px;box-sizing:border-box;resize:vertical;font-family:monospace}
+  .cfg input{width:100%;background:#0c0e12;color:#eee;border:none;border-radius:10px;padding:10px;font-size:14px;box-sizing:border-box}
+  .cfg .lbl{font-size:12px;color:#888;margin:8px 0 4px}
+  .cfg button{margin-top:10px;width:100%;padding:10px;background:#315CDE;color:#fff;border:none;border-radius:18px;font-size:14px;font-weight:bold}
+  .addbar{display:flex;gap:10px;justify-content:center;margin:16px 16px 0;padding:14px;background:#1c1f26;border-radius:14px}
+  .addbar input{flex:1;background:#0c0e12;color:#eee;border:none;border-radius:18px;padding:10px 14px;font-size:14px;outline:none}
+  .addbar button{background:#1FA855;color:#fff;border:none;border-radius:18px;padding:10px 18px;font-size:14px;font-weight:bold}
+  .tabscroll{overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tabscroll::-webkit-scrollbar{display:none}
+  .tabs{display:inline-flex;padding:14px 16px 0;gap:10px}
+  .tab{flex:0 0 auto;min-width:76px;text-align:center;padding:10px 0;border-radius:20px;background:#1c1f26;font-size:15px;cursor:pointer}
+  .tab{flex:1;text-align:center;padding:10px 0;border-radius:20px;background:#1c1f26;font-size:15px;cursor:pointer}
+  .tab.on{background:#315CDE;font-weight:bold}
+  .page{display:none}.page.on{display:block}
+  #slotGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:360px;margin:16px auto}
+  .cell{background:#1c1f26;border-radius:10px;font-size:34px;line-height:70px;height:70px;text-align:center}
+  .cell.win{background:#f5c26b33;box-shadow:0 0 0 2px #f5c26b}
+  .cell.spin{opacity:.6}
+  .stopbtn{flex:1;background:#e8501f;color:#fff;border:none;border-radius:10px;padding:8px 0;font-size:13px;font-weight:bold}
+</style>
+</head>
+<body>
+<div id="pts">💰 积分: 100</div>
+<div class="tabscroll"><div class="tabs">
+  <div class="tab on" id="tab3" onclick="tab(3)">🎫 刮刮乐</div>
+  <div class="tab" id="tab7" onclick="location.href='mine.html'">💣 扫雷</div>
+  <div class="tab" id="tab8" onclick="location.href='tetris.html'">🧱 方块</div>
+  <div class="tab" id="tab9" onclick="location.href='g2048.html'">🔢 2048</div>
+  <div class="tab" id="tab10" onclick="location.href='snake.html'">🐍 贪吃蛇</div>
+  <div class="tab" id="tab0" onclick="tab(0)">🎡 转盘</div>
+  <div class="tab" id="tab1" onclick="tab(1)">🎰 老虎机</div>
+  <div class="tab" id="tab2" onclick="location.href='fruit.html'">🍒 水果机</div>
+  <div class="tab" id="tab4" onclick="tab(4)">🃏 翻卡</div>
+  <div class="tab" id="tab5" onclick="tab(5)">🂡 21点</div>
+  <div class="tab" id="tab6" onclick="tab(6)">🐇 兔子赛跑</div>
+</div></div>
+<div class="page" id="pg0">
+<button class="btn" style="width:auto;display:inline-block;margin:8px 0 0 12px;padding:7px 20px" onclick="app.close()">← 返回</button>
+<div style="display:flex;align-items:flex-start;flex-wrap:wrap">
+  <div id="dialWrap" style="margin:6px 0 0 10px"><canvas id="wheel" width="640" height="640"></canvas><div id="go" onclick="spin()">GO</div></div>
+  <div id="helpBox" style="flex:1;min-width:220px;margin:14px 12px 0;background:#221733;border:1px solid #5b3a8c;border-radius:14px;padding:12px">
+    <button style="padding:6px 14px;background:#315CDE;color:#fff;border:none;border-radius:14px;font-size:12px;font-weight:bold" onclick="toggleCfg()">⚙ 自定义</button>
+    <div style="color:#fff;font-size:13px;line-height:1.8;margin-top:10px">
+      <b style="color:#f5c26b">🎡 玩法说明</b><br>
+      1. 按 GO 转动大转盘，指针停在奖项格即得奖励<br>
+      2. 每次转动消耗积分（可在自定义里改）<br>
+      3. 中奖自动加积分，余额见顶部<br>
+      4. 奖池内容、消耗、中奖难度都可在「自定义」里调整
+    </div>
+  </div>
+</div>
+<div id="res"></div>
+<button class="btn" onclick="spin()">转起来</button>
+</div>
+<div class="page" id="pg1">
+  <div id="slotGrid"></div>
+  <div style="display:flex;gap:8px;max-width:360px;margin:0 auto">
+    <button class="stopbtn" onclick="_stopCol(0)">⏹</button>
+    <button class="stopbtn" onclick="_stopCol(1)">⏹</button>
+    <button class="stopbtn" onclick="_stopCol(2)">⏹</button>
+    <button class="stopbtn" onclick="_stopCol(3)">⏹</button>
+  </div>
+  <div id="slotRes" style="min-height:30px;text-align:center;font-size:16px;font-weight:bold;color:#f5c26b;padding:8px 0"></div>
+  <div style="display:flex;gap:10px;justify-content:center;align-items:center">
+    <button id="autoBtn" class="btn" style="margin:6px 0;width:150px;background:#1FA855" onclick="toggleAuto()">自动停止:开</button>
+    <button class="btn" style="margin:6px 0;width:150px" onclick="slotSpin()">🎰 拉杆</button>
+  </div>
+</div>
+<div class="addbar">
+  <input id="addN" type="number" inputmode="numeric" placeholder="输入积分">
+  <button onclick="manualAdd()">➕ 增加积分</button>
+</div>
+<div class="cfg" id="cfg">
+  <div class="lbl">奖池(每行一个, +数字=积分奖)</div>
+  <textarea id="cfgList"></textarea>
+  <div class="lbl">转盘单次消耗积分(1-30000)</div>
+  <input id="cfgCost" type="number" inputmode="numeric">
+  <div class="lbl">老虎机单次消耗积分(1-30000)</div>
+  <input id="cfgSlotCost" type="number" inputmode="numeric">
+  <button onclick="saveCfg()">保存</button>
+  <div class="lbl">老虎机各符号权重(1-99, 越大越易停)</div>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+    <button style="flex:1;padding:8px 4px;background:#1FA855;color:#fff;border:none;border-radius:10px;font-size:12px" onclick="presetW('easy')">😊 容易中(推荐)</button>
+    <button style="flex:1;padding:8px 4px;background:#315CDE;color:#fff;border:none;border-radius:10px;font-size:12px" onclick="presetW('normal')">🎲 普通</button>
+    <button style="flex:1;padding:8px 4px;background:#e67e22;color:#fff;border:none;border-radius:10px;font-size:12px" onclick="presetW('hard')">😈 困难</button>
+    <button style="flex:1;padding:8px 4px;background:#555;color:#fff;border:none;border-radius:10px;font-size:12px" onclick="presetW('custom')">✏️ 手动</button>
+  </div>
+  <div id="wRow" style="display:flex;gap:4px;flex-wrap:wrap"></div>
+  <button onclick="saveWeights()">保存权重</button>
+</div>
+<div class="page on" id="pg3">
+<button class="btn" style="width:auto;display:inline-block;margin:8px 0 0 12px;padding:7px 20px" onclick="app.close()">← 返回</button>
+<div style="color:#fff;font-size:13px;line-height:1.8;margin:10px 12px 0">
+  难度:
+  <button style="padding:6px 14px;background:#1FA855;color:#fff;border:none;border-radius:14px;font-size:12px;font-weight:bold;margin-left:4px" onclick="setScratchDiff('easy')">😊 简单</button>
+  <button style="padding:6px 14px;background:#315CDE;color:#fff;border:none;border-radius:14px;font-size:12px;font-weight:bold;margin-left:4px" onclick="setScratchDiff('normal')">😐 普通</button>
+  <button style="padding:6px 14px;background:#D33;color:#fff;border:none;border-radius:14px;font-size:12px;font-weight:bold;margin-left:4px" onclick="setScratchDiff('hard')">😈 困难</button>
+  <span id="sDiffInfo" style="margin-left:8px;color:#f5c26b"></span>
+</div>
+<div style="text-align:center;margin:10px 0 4px">
+  <button style="padding:10px 30px;background:#D8A520;color:#241636;border:none;border-radius:22px;font-size:15px;font-weight:bold" onclick="buyScratch()">🎫 买一张 (<span id="sCost">50</span> 积分)</button>
+</div>
+<div id="cardWrap" style="display:none;position:relative;width:300px;height:300px;margin:8px auto;border-radius:16px;overflow:hidden;border:3px solid #d8a520;background:#fff">
+  <img src="scratch_base.png" style="position:absolute;left:0;top:0;width:100%;height:100%">
+  <div id="sPrize" style="position:absolute;left:0;right:0;top:36%;text-align:center;font-size:26px;font-weight:bold;color:#7a2ea2;text-shadow:0 0 8px #fff,0 0 14px #fff"></div>
+  <canvas id="sCover" width="300" height="300" style="position:absolute;left:0;top:0;touch-action:none"></canvas>
+</div>
+<div id="sMsg" style="text-align:center;color:#f5c26b;font-size:13px;margin-top:6px"></div>
+</div>
+<div class="page" id="pg4">
+<button class="btn" style="width:auto;display:inline-block;margin:8px 0 0 12px;padding:7px 20px" onclick="app.close()">← 返回</button>
+<div style="text-align:center;color:#fff;font-size:13px;margin-top:10px">
+  难度:
+  <button style="padding:6px 14px;background:#1FA855;color:#fff;border:none;border-radius:14px;font-size:12px;font-weight:bold;margin-left:4px" onclick="setFlipDiff('easy')">😊 简单</button>
+  <button style="padding:6px 14px;background:#315CDE;color:#fff;border:none;border-radius:14px;font-size:12px;font-weight:bold;margin-left:4px" onclick="setFlipDiff('normal')">😐 普通</button>
+  <button style="padding:6px 14px;background:#e67e22;color:#fff;border:none;border-radius:14px;font-size:12px;font-weight:bold;margin-left:4px" onclick="setFlipDiff('hard')">😈 困难</button>
+  <button style="padding:6px 14px;background:#D33;color:#fff;border:none;border-radius:14px;font-size:12px;font-weight:bold;margin-left:4px" onclick="setFlipDiff('hell')">💀 地狱</button>
+  <span id="flipInfo" style="margin-left:8px;color:#f5c26b"></span>
+</div>
+<div id="fcards" style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:14px auto 0;max-width:330px"></div>
+<div style="text-align:center;margin-top:12px">
+  <button style="padding:10px 30px;background:#D8A520;color:#241636;border:none;border-radius:22px;font-size:15px;font-weight:bold" onclick="dealFlip()">🃏 发牌 (<span id="flipCost">50</span>积分)</button>
+</div>
+<div id="fMsg" style="text-align:center;color:#f5c26b;font-size:13px;margin-top:8px"></div>
+</div>
+<div class="page" id="pg5">
+<button class="btn" style="width:auto;display:inline-block;margin:8px 0 0 12px;padding:7px 20px" onclick="app.close()">← 返回</button>
+<div style="color:#fff;font-size:13px;margin:10px 12px 0;text-align:center">下注后开局, 比庄家大赢0.5倍 · Blackjack 赔1.5倍</div>
+<div style="text-align:center;margin-top:8px">
+  下注: <input id="bjBet" type="number" inputmode="numeric" value="50" style="width:90px;padding:6px;border-radius:8px;border:1px solid #5b3a8c;background:#221733;color:#f5c26b;font-size:14px">
+  <button style="padding:8px 18px;background:#D8A520;color:#241636;border:none;border-radius:16px;font-size:13px;font-weight:bold" onclick="bjDeal()">发牌</button>
+</div>
+<div style="text-align:center;color:#eee;font-size:13px;margin-top:10px" id="bjDealer"></div>
+<div id="bjDealerCards" style="display:flex;justify-content:center;gap:5px;margin:4px 8px 0;min-height:60px"></div>
+<div style="text-align:center;color:#eee;font-size:13px;margin-top:8px" id="bjPlayer"></div>
+<div id="bjPlayerCards" style="display:flex;justify-content:center;gap:5px;margin:4px 8px 0;min-height:60px"></div>
+<div style="text-align:center;margin-top:10px">
+  <button id="bjHit" style="padding:9px 26px;background:#1FA855;color:#fff;border:none;border-radius:18px;font-size:14px;font-weight:bold;margin-right:10px" onclick="bjHit()" disabled>要牌</button>
+  <button id="bjStand" style="padding:9px 26px;background:#D33;color:#fff;border:none;border-radius:18px;font-size:14px;font-weight:bold" onclick="bjStand()" disabled>停牌</button>
+</div>
+<div id="bjMsg" style="text-align:center;color:#f5c26b;font-size:14px;font-weight:bold;margin-top:8px"></div>
+</div>
+<div class="page" id="pg6">
+<button class="btn" style="width:auto;display:inline-block;margin:8px 0 0 12px;padding:7px 20px" onclick="app.close()">← 返回</button>
+<div style="text-align:center;color:#fff;font-size:13px;margin-top:10px">
+  难度:
+  <button style="padding:6px 14px;background:#1FA855;color:#fff;border:none;border-radius:14px;font-size:12px;font-weight:bold;margin-left:4px" onclick="setRaceDiff(3)">简单·3只(赔3倍)</button>
+  <button style="padding:6px 14px;background:#315CDE;color:#fff;border:none;border-radius:14px;font-size:12px;font-weight:bold;margin-left:4px" onclick="setRaceDiff(5)">中等·5只(赔5倍)</button>
+  <button style="padding:6px 14px;background:#D33;color:#fff;border:none;border-radius:14px;font-size:12px;font-weight:bold;margin-left:4px" onclick="setRaceDiff(7)">困难·7只(赔7倍)</button>
+</div>
+<div style="text-align:center;margin-top:8px">
+  下注: <input id="raceBet" type="number" inputmode="numeric" value="50" style="width:90px;padding:6px;border-radius:8px;border:1px solid #5b3a8c;background:#221733;color:#f5c26b;font-size:14px">
+  <button id="raceGo" style="padding:8px 22px;background:#D8A520;color:#241636;border:none;border-radius:16px;font-size:13px;font-weight:bold" onclick="raceStart()">开跑</button>
+  <button id="raceTurbo" style="padding:8px 18px;background:#e67e22;color:#fff;border:none;border-radius:16px;font-size:13px;font-weight:bold;margin-left:6px;touch-action:none">⚡加速×3</button>
+  <span id="racePickInfo" style="margin-left:8px;color:#f5c26b;font-size:13px"></span>
+</div>
+<div id="raceTrack" style="margin:12px 10px 0;background:#1a3320;border:2px solid #5b3a8c;border-radius:14px;padding:10px 8px"></div>
+<div id="raceMsg" style="text-align:center;color:#f5c26b;font-size:14px;font-weight:bold;margin-top:8px"></div>
+</div>
+<script>
+// ---- 兔子赛跑 ----
+var raceN=3,racePick=-1,raceTimer=null,raceLive=false;
+var RCOLORS=['#ff6b81','#ffd75e','#6bcB77','#4aa8e8','#c85ae0','#e67e22','#7ed6df'];
+function setRaceDiff(n){if(raceLive)return;raceN=n;renderTrack();document.getElementById('raceMsg').textContent='已选'+n+'只模式, 点兔子选它赢';}
+function laneH(n){return Math.round((window.innerWidth-40)/n)-8;}
+function renderTrack(){
+  var h='';
+  for(var i=0;i<raceN;i++){
+    h+='<div onclick="pickRabbit('+i+')" style="position:relative;height:46px;margin:4px 0;border-bottom:1px dashed #3a5c44;cursor:pointer">'+
+       '<div id="lane'+i+'" style="position:absolute;left:0;top:0;font-size:30px;transition:transform 0.25s linear">🐇</div>'+
+       '<div style="position:absolute;right:2px;top:8px;font-size:16px">'+(i+1)+'号</div>'+
+       '</div>';
+  }
+  h+='<div style="position:absolute;top:0;bottom:0;right:14px;width:3px;background:#d8a520;border-radius:2px"></div>';
+  var t=document.getElementById('raceTrack');
+  t.style.position='relative';
+  t.innerHTML=h;
+  document.getElementById('racePickInfo').textContent='';
+}
+function resizeTrack(){renderTrack();}
+function pickRabbit(i){
+  if(raceLive)return;
+  racePick=i;
+  var info='你押了 '+(i+1)+' 号兔';
+  document.getElementById('racePickInfo').textContent=info;
+  for(var k=0;k<raceN;k++){
+    var el=document.getElementById('lane'+k);
+    el.style.textShadow=(k===i)?'0 0 10px #ffd75e,0 0 20px #ffd75e':'none';
+  }
+}
+function raceStart(){
+  if(raceLive)return;
+  if(racePick<0){alert('先点赛道上的兔子选择押注');return}
+  var b=parseInt(document.getElementById('raceBet').value)||0,pts=getPts();
+  if(!(b>0)){alert('请输入正数下注');return}
+  if(pts<b){alert('积分不足(需要'+b+'，当前'+pts+')\n用下方「增加积分」');return}
+  setPts(pts-b);
+  raceLive=true;
+  document.getElementById('raceGo').disabled=true;document.getElementById('raceGo').style.opacity=0.5;
+  document.getElementById('raceMsg').textContent='比赛进行中...';
+  var pos=[],spd=[],w=window.innerWidth-70,turbo=false;
+  var tbtn=document.getElementById('raceTurbo');
+  tbtn.onmousedown=function(){turbo=true;};tbtn.onmouseup=function(){turbo=false;};tbtn.onmouseleave=function(){turbo=false;};
+  tbtn.ontouchstart=function(ev){ev.preventDefault();turbo=true;};
+  tbtn.ontouchend=function(ev){ev.preventDefault();turbo=false;};
+  tbtn.ontouchcancel=function(){turbo=false;};
+  for(var i=0;i<raceN;i++){pos.push(0);spd.push(1.2+Math.random()*2.2);}
+  var tick=0;
+  raceTimer=setInterval(function(){
+    tick++;
+    var fin=-1;
+    for(var i=0;i<raceN;i++){
+      // 领先者微降速, 落后者小爆冷提速, 比赛更刺激
+      var maxp=Math.max.apply(null,pos);
+      var boost=(pos[i]<maxp-30)?0.5:0;
+      var slow=(pos[i]>=maxp&&tick>10)?0.15:0;
+      pos[i]+=(spd[i]+Math.random()*1.4+boost-slow)*(turbo?3:1);
+      var el=document.getElementById('lane'+i);
+      var hop=(tick%2===0)?' translateY(-6px)':' translateY(0)';
+      el.style.transform='translateX('+Math.min(pos[i],w)+'px)'+hop;
+      if(pos[i]>=w&&fin<0)fin=i;
+    }
+    if(fin>=0){
+      clearInterval(raceTimer);raceLive=false;
+      var wel=document.getElementById('lane'+fin);
+      wel.textContent='🏆';
+      wel.style.transform='translateX('+w+'px) translateY(-4px)';
+      document.getElementById('raceGo').disabled=false;document.getElementById('raceGo').style.opacity=1;
+      if(fin===racePick){
+        var win=b*raceN;
+        setPts(getPts()+win);
+        document.getElementById('raceMsg').textContent='🎉 '+(fin+1)+' 号兔夺冠! 你赢了 '+win+' 积分!';
+      }else{
+        document.getElementById('raceMsg').textContent=' :( '+(fin+1)+' 号兔夺冠, 再来一局?';
+      }
+      setTimeout(function(){renderTrack();document.getElementById('racePickInfo').textContent='';racePick=-1;},1600);
+    }
+  },250);
+}
+
+// ---- 翻卡 ----
+var fDeck=[],fOpen=false;
+var FDIFFS={
+  easy:  {cost:20,  cards:[[0,4],[5,2],[20,2],[80,1]]},
+  normal:{cost:50,  cards:[[0,5],[20,2],[50,1],[300,1]]},
+  hard:  {cost:100, cards:[[0,6],[50,1],[100,1],[500,1]]},
+  hell:  {cost:200, cards:[[0,7],[100,1],[1000,1]]}
+};
+var FDIFF=localStorage.flip_diff||'normal';
+if(!FDIFFS[FDIFF])FDIFF='normal';
+function setFlipDiff(d){FDIFF=d;localStorage.flip_diff=d;renderFDiff();document.getElementById('fMsg').textContent='难度已切换: '+({easy:'简单',normal:'普通',hard:'困难',hell:'地狱'})[d];}
+function renderFDiff(){
+  var c=FDIFFS[FDIFF],maxp=c.cards[c.cards.length-1][0];
+  document.getElementById('flipCost').textContent=c.cost;
+  document.getElementById('flipInfo').textContent='最高'+maxp+'分';
+}
+function dealFlip(){
+  var FPRIZES=FDIFFS[FDIFF].cards,cost=FDIFFS[FDIFF].cost;
+  var pts=getPts();
+  if(pts<cost){alert('积分不足(需要'+cost+'，当前'+pts+')\n用下方「增加积分」');return}
+  setPts(pts-50);
+  fDeck=[];for(var i=0;i<FPRIZES.length;i++)for(var j=0;j<FPRIZES[i][1];j++)fDeck.push(FPRIZES[i][0]);
+  while(fDeck.length<9)fDeck.push(0);
+  for(var i=fDeck.length-1;i>0;i--){var k=Math.floor(Math.random()*(i+1)),t=fDeck[i];fDeck[i]=fDeck[k];fDeck[k]=t;}
+  fOpen=false;
+  document.getElementById('fMsg').textContent='点一张卡翻开';
+  renderFCards(null);
+}
+renderFDiff();
+function renderFCards(pick){
+  var h='';
+  for(var i=0;i<9;i++){
+    var show=pick!==null&&i===pick;
+    h+='<div onclick="pickF('+i+')" style="width:96px;height:110px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:bold;'+
+      (show
+        ?'background:'+(fDeck[i]>0?'linear-gradient(#ffe082,#e6a817);color:#7a2ea2':'linear-gradient(#3a3f4a,#20242c);color:#888')+';border:3px solid #d8a520'
+        :'background:linear-gradient(#5b3a8c,#2a1a50);color:#ffd75e;border:3px solid #d8a520')+'">'+
+      (show?(fDeck[i]>0?'+ '+fDeck[i]:'空'):'🂠')+'</div>';
+  }
+  document.getElementById('fcards').innerHTML=h;
+}
+function pickF(i){
+  if(fOpen||!fDeck.length)return;
+  fOpen=true;
+  var w=fDeck[i];
+  renderFCards(i);
+  if(w>0){var p=getPts();setPts(p+w);document.getElementById('fMsg').textContent='🎉 '+w+' 积分已入账!';}
+  else document.getElementById('fMsg').textContent='空卡, 再来一张?';
+}
+
+// ---- 21点 ----
+var bjP=[],bjD=[],bjLive=false,bjBetV=0;
+function cardVal(h){
+  var s=0,aces=0;
+  for(var i=0;i<h.length;i++){var r=h[i][0];
+    if(r==1){aces++;s+=11;}
+    else if(r>10)s+=10;
+    else s+=r;}
+  while(s>21&&aces>0){s-=10;aces--;}
+  return s;
+}
+function cardTxt(c){var S=['♠','♥','♦','♣'];var r=c[0]==1?'A':c[0]==11?'J':c[0]==12?'Q':c[0]==13?'K':c[0];return r+S[c[1]];}
+function drawCards(el,h,hideFirst){
+  var h2='';
+  for(var i=0;i<h.length;i++){
+    var red=(h[i][1]==1||h[i][1]==2);
+    h2+='<div style="width:44px;height:62px;background:#fff;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:bold;color:'+(red?'#d22':'#222')+'">'+(hideFirst&&i===0?'🂠':cardTxt(h[i]))+'</div>';
+  }
+  el.innerHTML=h2;
+}
+function bjDeal(){
+  var b=parseInt(document.getElementById('bjBet').value)||0,pts=getPts();
+  if(!(b>0)){alert('请输入正数下注');return}
+  if(pts<b){alert('积分不足(需要'+b+'，当前'+pts+')\n用下方「增加积分」');return}
+  setPts(pts-b);bjBetV=b;
+  bjP=[bjCard(),bjCard()];bjD=[bjCard(),bjCard()];bjLive=true;
+  document.getElementById('bjMsg').textContent='';
+  document.getElementById('bjHit').disabled=false;document.getElementById('bjStand').disabled=false;
+  bjRender(true);
+  if(cardVal(bjP)===21){bjEnd('bj');}
+}
+function bjCard(){return [1+Math.floor(Math.random()*13),Math.floor(Math.random()*4)];}
+function bjRender(hide){
+  drawCards(document.getElementById('bjDealerCards'),bjD,hide);
+  drawCards(document.getElementById('bjPlayerCards'),bjP,false);
+  document.getElementById('bjDealer').textContent='庄家 '+(hide?'?':cardVal(bjD))+' 点';
+  document.getElementById('bjPlayer').textContent='你 '+cardVal(bjP)+' 点';
+}
+function bjHit(){
+  if(!bjLive)return;
+  bjP.push(bjCard());bjRender(true);
+  if(cardVal(bjP)>21)bjEnd('bust');
+}
+function bjStand(){if(bjLive)bjEnd(null);}
+function bjEnd(res){
+  bjLive=false;
+  document.getElementById('bjHit').disabled=true;document.getElementById('bjStand').disabled=true;
+  while(cardVal(bjD)<17)bjD.push(bjCard());
+  bjRender(false);
+  var pv=cardVal(bjP),dv=cardVal(bjD),msg,pay=0;
+  if(res==='bust'){msg='💥 爆了 ('+pv+'点), 输 '+bjBetV;}
+  else if(res==='bj'){
+    if(cardVal(bjD)===21&&bjD.length===2){pay=bjBetV;msg='双方 Blackjack, 平局退还';}
+    else{pay=bjBetV+Math.floor(bjBetV*1.5);msg='🂡 Blackjack! 赢 '+Math.floor(bjBetV*1.5);}
+  }else if(dv>21){pay=bjBetV+Math.floor(bjBetV*0.5);msg='🎉 庄家爆了('+dv+'点), 赢 '+Math.floor(bjBetV*0.5);}
+  else if(pv>dv){pay=bjBetV+Math.floor(bjBetV*0.5);msg='✅ '+pv+' vs '+dv+', 赢 '+Math.floor(bjBetV*0.5);}
+  else if(pv===dv){pay=bjBetV;msg='🤝 平局, 退还';}
+  else{msg='❌ '+pv+' vs '+dv+', 输 '+bjBetV;}
+  if(pay>0)setPts(getPts()+pay);
+  document.getElementById('bjMsg').textContent=msg;
+}
+
+// ---- 刮刮乐 ----
+var SDIFFS={
+  easy:  {cost:50,  win:0.60, prizes:[[0,0.40],[20,0.30],[50,0.18],[100,0.09],[500,0.03]]},
+  normal:{cost:100, win:0.45, prizes:[[0,0.58],[50,0.25],[100,0.10],[300,0.05],[1000,0.02]]},
+  hard:  {cost:200, win:0.30, prizes:[[0,0.73],[100,0.17],[500,0.07],[1000,0.025],[5000,0.005]]}
+};
+var SDIFF=localStorage.scratch_diff||'normal';
+if(!SDIFFS[SDIFF])SDIFF='normal';
+var sDone=false,sPicked=0,sErased=0;
+function setScratchDiff(d){SDIFF=d;localStorage.scratch_diff=d;renderSDiff();toast3('难度已切换: '+(d=='easy'?'简单':d=='hard'?'困难':'普通'));}
+function toast3(t){document.getElementById('sMsg').textContent=t;}
+function renderSDiff(){
+  var c=SDIFFS[SDIFF];
+  document.getElementById('sCost').textContent=c.cost;
+  var maxp=c.prizes[c.prizes.length-1][0];
+  document.getElementById('sDiffInfo').textContent=(SDIFF=='easy'?'简单':SDIFF=='hard'?'困难':'普通')+' · 中奖率'+Math.round(c.win*100)+'% · 最高'+maxp+'分';
+}
+function pickScratchPrize(){
+  var c=SDIFFS[SDIFF];
+  if(Math.random()>=c.win)return 0;
+  var r=Math.random(),acc=0;
+  for(var i=0;i<c.prizes.length;i++){acc+=c.prizes[i][1];if(r<acc)return c.prizes[i][0];}
+  return 0;
+}
+function buyScratch(){
+  var c=SDIFFS[SDIFF],pts=getPts();
+  if(pts<c.cost){alert('积分不足(需要'+c.cost+'，当前'+pts+')\n用下方「增加积分」');return}
+  setPts(pts-c.cost);
+  sPicked=pickScratchPrize();sDone=false;sErased=0;
+  document.getElementById('sMsg').textContent='';
+  var wrap=document.getElementById('cardWrap');
+  wrap.style.display='block';
+  var p=document.getElementById('sPrize');
+  p.textContent=sPicked>0?('恭喜 '+sPicked+' 积分!'):'谢谢参与';
+  paintCover();
+}
+function paintCover(){
+  var cv=document.getElementById('sCover'),cx=cv.getContext('2d');
+  cx.globalCompositeOperation='source-over';
+  cx.clearRect(0,0,300,300);
+  var g=cx.createLinearGradient(0,0,300,300);
+  g.addColorStop(0,'#c9cdd4');g.addColorStop(0.5,'#e8eaee');g.addColorStop(1,'#b7bcc4');
+  cx.fillStyle=g;cx.fillRect(0,0,300,300);
+  cx.fillStyle='rgba(120,125,135,0.9)';cx.font='bold 22px sans-serif';cx.textAlign='center';
+  cx.fillText('刮 我 刮 我',150,150);
+  cx.globalCompositeOperation='destination-out';
+}
+(function(){
+  var cv=document.getElementById('sCover');
+  if(!cv)return;
+  var dn=false;
+  function pos(e){var r=cv.getBoundingClientRect();var t=e.touches?e.touches[0]:e;return [t.clientX-r.left,t.clientY-r.top];}
+  function erase(e){
+    if(!dn||sDone)return;
+    e.preventDefault();
+    var p=pos(e),cx=cv.getContext('2d');
+    cx.beginPath();cx.arc(p[0],p[1],18,0,Math.PI*2);cx.fill();
+    sErased++;
+    if(sErased>110){settleScratch();}
+  }
+  cv.addEventListener('touchstart',function(e){dn=true;erase(e);},{passive:false});
+  cv.addEventListener('touchmove',erase,{passive:false});
+  cv.addEventListener('touchend',function(){dn=false;});
+  cv.addEventListener('mousedown',function(e){dn=true;erase(e);});
+  cv.addEventListener('mousemove',erase);
+  cv.addEventListener('mouseup',function(){dn=false;});
+})();
+function settleScratch(){
+  if(sDone)return;sDone=true;
+  var cv=document.getElementById('sCover');
+  cv.getContext('2d').clearRect(0,0,300,300);
+  if(sPicked>0){var p=getPts();setPts(p+sPicked);document.getElementById('sMsg').textContent='🎉 中了 '+sPicked+' 积分,已入账!';}
+  else document.getElementById('sMsg').textContent='谢谢参与,再来一张?';
+}
+renderSDiff();
+
+function getList(){
+  try{var l=JSON.parse(localStorage.ent_list);if(l&&l.length>=2)return l}catch(e){}
+  return ['+10','+50','+100','谢谢参与','+20','再来一次','+5','+888']
+}
+function getCost(){var c=parseInt(localStorage.ent_cost);return (c>=1&&c<=30000)?c:50}
+function getSlotCost(){var c=parseInt(localStorage.ent_slot_cost);return (c>=1&&c<=30000)?c:50}
+function getPts(){return parseInt(localStorage.ent_pts)||100}
+function setPts(p){localStorage.ent_pts=p;document.getElementById('pts').textContent='💰 积分: '+p}
+function settle(txt){var m=txt.match(/([+-]?\d+)/);if(m)addPts(parseInt(m[1]));return txt}
+function addPts(d){setPts(getPts()+d)}
+function manualAdd(){
+  var n=parseInt(document.getElementById('addN').value);
+  if(!(n>0)){alert('请输入正数积分');return}
+  addPts(n);document.getElementById('addN').value='';
+  alert('已增加 '+n+' 积分\n当前: '+getPts());
+}
+function toggleCfg(){
+  var c=document.getElementById('cfg');
+  if(c.style.display=='block'){c.style.display='none';return}
+  document.getElementById('cfgList').value=getList().join('\n');
+  document.getElementById('cfgCost').value=getCost();
+  document.getElementById('cfgSlotCost').value=getSlotCost();
+  refreshWeightsUI();
+  c.style.display='block';
+}
+function saveCfg(){
+  var lines=document.getElementById('cfgList').value.split('\n').map(function(s){return s.trim()}).filter(Boolean);
+  if(lines.length<2){alert('至少2个奖项');return}
+  localStorage.ent_list=JSON.stringify(lines);
+  var c=parseInt(document.getElementById('cfgCost').value);
+  if(c>=1&&c<=30000)localStorage.ent_cost=c;
+  var sc=parseInt(document.getElementById('cfgSlotCost').value);
+  if(sc>=1&&sc<=30000)localStorage.ent_slot_cost=sc;
+  c.style.display='none';drawWheel();
+  refreshCostLabel();
+  alert('已保存: '+lines.length+' 个奖项, 消耗'+getCost()+'分');
+}
+function payFor(){
+  var cost=getCost(),pts=getPts();
+  if(pts<cost){alert('积分不足(需要'+cost+'，当前'+pts+')\n用下方「增加积分」');return false}
+  setPts(pts-cost);return true;
+}
+// ---- 转盘 ----
+var angle=0,spinning=false;
+function dialList(){return getList()}
+function drawWheel(){
+  var cv=document.getElementById('wheel'),x=cv.getContext('2d');
+  var l=dialList().length;if(l<2)l=2;
+  var cx=320,r=300,step=2*Math.PI/l;
+  var colors=['#e8501f','#f5c26b','#315CDE','#7B4FD8','#1FA855','#e67e22','#d65db1','#29b6f6','#ef5350','#66bb6a','#8d6e63','#26c6da'];
+  x.clearRect(0,0,640,640);
+  for(var i=0;i<l;i++){
+    x.beginPath();x.moveTo(cx,cx);
+    x.arc(cx,cx,r,i*step,(i+1)*step);x.closePath();
+    x.fillStyle=colors[i%colors.length];x.fill();
+    x.strokeStyle='#14161c';x.lineWidth=3;x.stroke();
+  }
+  for(var i=0;i<l;i++){
+    x.save();x.translate(cx,cx);x.rotate(i*step+step/2);
+    x.fillStyle='#fff';x.font='bold 32px sans-serif';x.textAlign='right';x.textBaseline='middle';
+    var txt=dialList()[i];if(txt.length>7)txt=txt.substring(0,7);
+    x.fillText(txt,r-26,0);x.restore();
+  }
+  x.beginPath();x.arc(cx,cx,64,0,2*Math.PI);x.fillStyle='#14161c';x.fill();
+  x.beginPath();x.arc(cx,cx,60,0,2*Math.PI);x.fillStyle='#e8501f';x.fill();
+  x.fillStyle='#fff';x.font='bold 34px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('GO',cx,cx);
+}
+function spin(){
+  if(spinning)return;
+  if(!payFor())return;
+  spinning=true;
+  var l=dialList().length;if(l<2)l=2;
+  var idx=Math.floor(Math.random()*l),step=360/l;
+  // 累计角度: 每次都在当前角度上+5圈+对准差值, 保证transform一定变化(有动画)
+  var desired=270-(idx*step+step/2);
+  var delta=(desired-angle%360+360)%360;
+  angle+=360*5+delta;
+  document.getElementById('wheel').style.transform='rotate('+angle+'deg)';
+  document.getElementById('res').textContent='';
+  setTimeout(function(){
+    spinning=false;
+    document.getElementById('res').textContent='🎉 '+settle(dialList()[idx]||'谢谢参与');
+    drawWheel();
+  },4400);
+}
+function tab(i){
+  document.getElementById('tab0').className='tab'+(i==0?' on':'');
+  document.getElementById('tab1').className='tab'+(i==1?' on':'');
+  document.getElementById('tab3').className='tab'+(i==3?' on':'');
+  document.getElementById('tab4').className='tab'+(i==4?' on':'');
+  document.getElementById('tab5').className='tab'+(i==5?' on':'');
+  document.getElementById('tab6').className='tab'+(i==6?' on':'');
+  document.getElementById('pg0').className='page'+(i==0?' on':'');
+  document.getElementById('pg1').className='page'+(i==1?' on':'');
+  document.getElementById('pg3').className='page'+(i==3?' on':'');
+  document.getElementById('pg4').className='page'+(i==4?' on':'');
+  document.getElementById('pg5').className='page'+(i==5?' on':'');
+  document.getElementById('pg6').className='page'+(i==6?' on':'');
+  if(i==6)setTimeout(resizeTrack,50);
+}
+
+// ---- 水果老虎机 4x4 ----
+// ---- 水果老虎机 4x4 (权重可调+手动停列) ----
+var SYM=['🍒','🍋','🍊','🍇','🍉','⭐','7️⃣','💎'];
+var slotSpinning=false,slotFinal=[],slotStopped=[false,false,false,false];
+var autoStopOn=true;
+function toggleAuto(){
+  autoStopOn=!autoStopOn;
+  var b=document.getElementById('autoBtn');
+  b.textContent='自动停止:'+(autoStopOn?'开':'关');
+  b.style.background=autoStopOn?'#1FA855':'#555';
+}
+function getWeights(){
+  var def={};SYM.forEach(function(s){def[s]=1});
+  try{var w=JSON.parse(localStorage.ent_weights);for(var k in def)if(typeof w[k]=='number'&&w[k]>=1)def[k]=w[k]}catch(e){}
+  return def;
+}
+function randSym(w){
+  var pool=[];for(var s in w)for(var i=0;i<w[s];i++)pool.push(s);
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+function buildGrid(){
+  var g=document.getElementById('slotGrid');
+  if(g.childElementCount==16)return;
+  g.innerHTML='';
+  for(var i=0;i<16;i++){var d=document.createElement('div');d.className='cell';d.textContent=SYM[Math.floor(Math.random()*SYM.length)];g.appendChild(d)}
+}
+function refreshWeightsUI(){
+  var w=getWeights(),box=document.getElementById('wRow');if(!box)return;
+  box.innerHTML='';
+  SYM.forEach(function(s){
+    var d=document.createElement('div');d.style.textAlign='center';
+    d.innerHTML='<div style="font-size:22px">'+s+'</div><input type="number" inputmode="numeric" value="'+w[s]+'" min="1" style="width:52px;background:#0c0e12;color:#eee;border:none;border-radius:8px;padding:6px;text-align:center;font-size:13px">';
+    box.appendChild(d);
+  });
+}
+// 推荐预设: easy=水果权重高大奖符号低(常中小奖); normal=全1均等; hard=大奖符号高(很难中)
+var PRESETS={
+  easy:{'🍒':12,'🍋':12,'🍊':12,'🍇':8,'🍉':6,'⭐':2,'7️⃣':1,'💎':1},
+  normal:{'🍒':1,'🍋':1,'🍊':1,'🍇':1,'🍉':1,'⭐':1,'7️⃣':1,'💎':1},
+  hard:{'🍒':1,'🍋':1,'🍊':1,'🍇':1,'🍉':1,'⭐':6,'7️⃣':9,'💎':12}
+};
+function presetW(name){
+  var w=PRESETS[name];if(!w)return;
+  localStorage.ent_weights=JSON.stringify(w);
+  refreshWeightsUI();
+  alert(name=='easy'?'容易中: 小奖为主, 3连常见':
+        name=='normal'?'普通: 8符号均等, 靠运气':
+        '困难: 大奖符号高频出现但难凑线');
+}
+function saveWeights(){
+  var inputs=document.getElementById('wRow').querySelectorAll('input');
+  var w={};
+  SYM.forEach(function(s,i){var v=parseInt(inputs[i].value);w[s]=(v>=1&&v<=99)?v:1});
+  localStorage.ent_weights=JSON.stringify(w);
+  refreshWeightsUI();
+  alert('权重已保存\n权重越大越容易停在该符号');
+}
+function slotSpin(){
+  if(slotSpinning)return;
+  var cost=getSlotCost(),pts=getPts();
+  if(pts<cost){alert('积分不足(需要'+cost+'，当前'+pts+')\n用下方「增加积分」');return}
+  slotSpinning=true;
+  setPts(pts-cost);
+  document.getElementById('slotRes').textContent='转动中…(可点各列STOP提前停)';
+  buildGrid();
+  var cells=document.querySelectorAll('#slotGrid .cell');
+  slotStopped=[false,false,false,false];
+  var w=getWeights();
+  // 预定每列最终符号(加权随机)
+  slotFinal=[[0,1,2,3],[0,1,2,3],[0,1,2,3],[0,1,2,3]].map(function(col){return col.map(function(){return randSym(w)})});
+  for(var i=0;i<16;i++){cells[i].className='cell spin';cells[i].textContent=SYM[Math.floor(Math.random()*SYM.length)]}
+  var iv=setInterval(function(){
+    for(var c=0;c<4;c++){
+      if(slotStopped[c])continue;
+      for(var r=0;r<4;r++)cells[r*4+c].textContent=randSym(w);
+    }
+  },90);
+  // 手动停止函数
+  window._stopCol=function(c){
+    if(slotStopped[c])return;
+    slotStopped[c]=true;
+    for(var r=0;r<4;r++){cells[r*4+c].className='cell';cells[r*4+c].textContent=slotFinal[c][r]}
+    if(slotStopped.every(function(x){return x}))finishSlot(cells,iv);
+  };
+  // 自动依次停(仅开关为开时挂; 可提前手动)
+  if(autoStopOn){
+    for(var c=0;c<4;c++)(function(c){
+      setTimeout(function(){window._stopCol(c)},900+700*c);
+    })(c);
+  }
+}
+function finishSlot(cells,iv){
+  clearInterval(iv);
+  evalSlots(cells);
+  slotSpinning=false;
+}
+function evalSlots(cells){
+  var grid=[];
+  for(var r=0;r<4;r++){grid.push([0,1,2,3].map(function(c){return cells[r*4+c].textContent}))}
+  var sym=function(i){return grid[Math.floor(i/4)][i%4]};
+  var cost=getSlotCost(),win=0,lines=[];
+  var linesIdx=[[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15],[0,5,10,15],[3,6,9,12]];
+  for(var li=0;li<linesIdx.length;li++){
+    var L=linesIdx[li];
+    if(sym(L[0])==sym(L[1])&&sym(L[1])==sym(L[2])&&sym(L[2])==sym(L[3])){
+      lines.push('第'+(li+1)+'线 4连 '+sym(L[0])+' ×20');
+      win+=cost*20;
+      for(var k=0;k<4;k++)cells[L[k]].className='cell win';
+    } else if(sym(L[0])==sym(L[1])&&sym(L[1])==sym(L[2])){
+      lines.push('第'+(li+1)+'线 3连 '+sym(L[0])+' ×3');
+      win+=cost*3;
+      for(var k2=0;k2<3;k2++)cells[L[k2]].className='cell win';
+    }
+  }
+  if(win>0){addPts(win);document.getElementById('slotRes').textContent='🎉 中奖 +'+win+' 分 '+lines.join('  ')}
+  else document.getElementById('slotRes').textContent='未中奖，再试试';
+}
+
+window.addEventListener('DOMContentLoaded',function(){setPts(getPts());drawWheel();buildGrid();refreshCostLabel();refreshWeightsUI()});
+</script>
+</body>
+</html>

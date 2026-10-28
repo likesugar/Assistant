@@ -1,0 +1,91 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN" class="h-full bg-[#f2f1ec]">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小六壬 - 掌中乾坤</title>
+    <meta name="description" content="新中式雅致排盘" />
+    <meta name="theme-color" content="#2c2a29" />
+    <script src="tailwind.js"></script>
+    
+    
+    
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              serif: ['"Noto Serif SC"', 'serif'],
+              sans: ['"Noto Sans SC"', 'sans-serif'],
+              calligraphy: ['"Ma Shan Zheng"', 'cursive'],
+            },
+            colors: {
+              ink: '#2c2a29', // Charcoal Ink
+              paper: '#f2f1ec', // Rice Paper
+              gold: '#c6a87c', // Muted Gold
+              'gold-dark': '#8c7350',
+              red: '#9e2a2b', // Seal Red
+            },
+            backgroundImage: {
+               'noise': "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E\")",
+            },
+            boxShadow: {
+              'glass': '0 8px 32px 0 rgba(44, 42, 41, 0.05)',
+              'elevation': '0 20px 40px -10px rgba(44, 42, 41, 0.15)',
+              'glow': '0 0 20px rgba(198, 168, 124, 0.3)',
+            },
+            animation: {
+              'float': 'float 8s ease-in-out infinite',
+              'spin-slow': 'spin 90s linear infinite',
+              'spin-reverse': 'spin 120s linear infinite reverse',
+              'enter': 'enter 1s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+              'pulse-gold': 'pulseGold 4s ease-in-out infinite',
+            },
+            keyframes: {
+              float: {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-15px)' },
+              },
+              enter: {
+                '0%': { opacity: '0', transform: 'translateY(30px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+              pulseGold: {
+                '0%, 100%': { opacity: '0.5' },
+                '50%': { opacity: '1' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        -webkit-font-smoothing: antialiased;
+        background-color: #f2f1ec;
+      }
+      ::-webkit-scrollbar {
+        width: 0px;
+        background: transparent;
+      }
+      .writing-vertical-rl {
+        writing-mode: vertical-rl;
+        text-orientation: upright;
+      }
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+      }
+    </style>
+  <link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-paper text-ink antialiased bg-noise selection:bg-gold selection:text-white">
+    <div id="root" class="min-h-full flex flex-col"></div>
+    <script type="module" src="bundle.js"></script>
+  </body>
+</html>

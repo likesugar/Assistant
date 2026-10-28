@@ -1,4 +1,4 @@
-﻿package com.ziyuan.Assistant;
+package com.ziyuan.Assistant;
 
 import android.app.Activity;
 import android.content.ClipboardManager;
@@ -87,6 +87,7 @@ public class HomeActivity extends Activity {
     private boolean pagesBuilt = false;
     private CapsuleBottomBar bottomBar;
     private String lastCapsule = null;
+    private Boolean mOledCache = null;
     private static final int[] MEDIA_CARDS = {R.id.cardPlayer, R.id.cardDownload, R.id.cardVideoDl, R.id.cardSpider, R.id.cardXhs, R.id.cardLive};
 
     /** 三态导航: 0=首页 1=媒体 2=设置(内嵌页) */
@@ -646,8 +647,8 @@ public class HomeActivity extends Activity {
                 }
             }
             if (t.equals("card")) {
-                boolean oled = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("oled", true);
-                c.setBackgroundResource(dark ? (oled ? R.drawable.bg_card_oled : R.drawable.bg_card_md3_dark) : R.drawable.bg_card_md3);
+                if (mOledCache == null) mOledCache = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("oled", true);
+                c.setBackgroundResource(dark ? (mOledCache ? R.drawable.bg_card_oled : R.drawable.bg_card_md3_dark) : R.drawable.bg_card_md3);
             }
             if (c instanceof android.view.ViewGroup) applyTraversal((android.view.ViewGroup) c, dark);
         }
@@ -711,6 +712,12 @@ public class HomeActivity extends Activity {
         }
         return super.dispatchTouchEvent(ev);
     }
+    @Override
+    protected void onDestroy() {
+        calTick.removeCallbacks(calTickRun);
+        super.onDestroy();
+    }
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         RecManager.init(getApplicationContext());
@@ -746,8 +753,10 @@ public class HomeActivity extends Activity {
         Immersive.hide(this);
 
         // 启动即创建通知渠道 + 申请通知权限(Android 13+)
-        try { MedPlanActivity.ensureChannel(this); } catch (Throwable ignored) {}
-        try { MedWatchService.ensure(this); } catch (Throwable ignored) {}
+        new Thread(() -> {
+            try { MedPlanActivity.ensureChannel(this); } catch (Throwable ignored) {}
+            try { MedWatchService.ensure(this); } catch (Throwable ignored) {}
+        }, "boot-warmup").start();
         if (android.os.Build.VERSION.SDK_INT >= 33
             && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != android.content.pm.PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 990);
