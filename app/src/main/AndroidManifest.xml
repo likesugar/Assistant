@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.ziyuan.Assistant">
 
@@ -100,17 +100,14 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".ui.ComposeHome"
+        <activity android:name=".HomeActivity"
             android:exported="true"
-            android:theme="@android:style/Theme.Material.Light.NoActionBar">
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".HomeActivity"
-            android:exported="true"
-            android:windowSoftInputMode="adjustResize"/>
         <service android:name=".LanShareService" android:stopWithTask="true"/>
         <service android:name=".MedWatchService" android:exported="false" android:foregroundServiceType="dataSync"/>
         <service android:name=".DlKeepService" android:exported="false" android:stopWithTask="false"/>

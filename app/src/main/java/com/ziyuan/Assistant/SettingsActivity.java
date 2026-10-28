@@ -23,7 +23,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
-/** 设置页：平台账号(动态渲染) / 剪贴板开关 / 下载通知 / 主题 */
+/** 设置页：平台账号(动态渲染) / 剪贴板开关 / 下载通知 / OLED 主题 */
 public class SettingsActivity extends Activity {
 
     /** 内置平台: 名称 / 登录页 / Cookie特征 / 站点域 / 圆标emoji / 圆标色(暗) */
@@ -94,6 +94,14 @@ public class SettingsActivity extends Activity {
             public void onCheckedChanged(android.widget.CompoundButton b, boolean on) {
                 getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("clipboard", on).apply();
                 Toast.makeText(SettingsActivity.this, on ? "已开启自动检测剪贴板" : "已关闭自动检测剪贴板", Toast.LENGTH_SHORT).show();
+            }
+        });
+        findViewById(R.id.cardOled).setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                boolean oled = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("oled", false);
+                getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("oled", !oled).apply();
+                dark = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", false);
+                applyTheme();
             }
         });
         findViewById(R.id.cardNotify).setOnClickListener(new View.OnClickListener() {
@@ -338,24 +346,27 @@ public class SettingsActivity extends Activity {
     private int color(int darkC, int lightC) { return dark ? darkC : lightC; }
 
     private void applyTheme() {
-        int bg = color(0xFF11151D, 0xFFEEF4FF);
-        int card = color(0xFF191F2E, 0xFFFFFFFF);
+        boolean oled = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("oled", true);
+        int bg = color(oled ? 0xFF000000 : 0xFF11151D, 0xFFEEF4FF);
+        int card = color(oled ? 0xFF000000 : 0xFF191F2E, 0xFFFFFFFF);
         int title = color(0xFFE8ECF4, 0xFF1F2329);
         int sub = color(0xFF8A94A6, 0xFF8A94A6);
         int accent = color(0xFFB4C5FF, 0xFF315CDE);
         int div = color(0xFF2A3142, 0xFFEDEFF3);
         findViewById(R.id.settingsRoot).setBackgroundColor(bg);
-        int[] titles = {R.id.tvTitle, R.id.t4, R.id.t5, R.id.t6, R.id.tvAboutTitle2};
+        int[] titles = {R.id.tvTitle, R.id.t4, R.id.t5, R.id.t6, R.id.tOled, R.id.tvAboutTitle2};
         for (int id : titles) ((TextView) findViewById(id)).setTextColor(title);
-        int[] subs = {R.id.label1, R.id.label2, R.id.desc1, R.id.desc2,
+        int[] subs = {R.id.label1, R.id.label2, R.id.descOled, R.id.desc1, R.id.desc2,
                 R.id.desc3, R.id.desc5, R.id.desc6, R.id.tvAboutText2};
         for (int id : subs) ((TextView) findViewById(id)).setTextColor(sub);
         int[] accents = {R.id.btnClearAll, R.id.arrow};
         for (int id : accents) ((TextView) findViewById(id)).setTextColor(accent);
-        int[] cards = {R.id.card1, R.id.card2, R.id.card3, R.id.cardNotify, R.id.cardAbout2};
-        for (int id : cards) findViewById(id).setBackgroundResource(dark ? R.drawable.bg_card_md3_dark : R.drawable.bg_card_md3);
+        int[] cards = {R.id.card1, R.id.card2, R.id.card3, R.id.cardOled, R.id.cardNotify, R.id.cardAbout2};
+        for (int id : cards) findViewById(id).setBackgroundResource(dark ? (oled ? R.drawable.bg_card_oled : R.drawable.bg_card_md3_dark) : R.drawable.bg_card_md3);
         View dv = null;
         if (dv != null) dv.setBackgroundColor(div);
+        TextView tvO = (TextView) findViewById(R.id.tvOled);
+        if (tvO != null) tvO.setText(oled ? "开" : "关");
         if (Build.VERSION.SDK_INT >= 23) {
             getWindow().getDecorView().setSystemUiVisibility(
                     dark ? 0 : View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
