@@ -24,6 +24,10 @@ public class RecManager {
         int notifId;
         volatile long secs = 0;
         volatile long startTs = 0;
+        tv.danmaku.ijk.media.player.IjkMediaPlayer bgPlayer;
+        com.arthenica.ffmpegkit.FFmpegSession bgSession;
+        int bgGen = 0;
+        volatile boolean bgCancel = false;
     }
     public static final java.util.concurrent.ConcurrentHashMap<Integer, RecJob> recJobs =
         new java.util.concurrent.ConcurrentHashMap<>();
@@ -121,9 +125,10 @@ public class RecManager {
         String u = url == null ? "" : url.trim();
         while (u.endsWith("\\") || u.endsWith("\"") || u.endsWith("'") || u.endsWith(",")) u = u.substring(0, u.length() - 1).trim();
         if (u.isEmpty() || !u.startsWith("http")) return;
-        startBgRec(u, title); return;
-        /*
-*/
+        String t = cleanTitle(title);
+        if (t == null) t = nameFromUrl(u);
+        if (t == null) t = "直播·原画_" + System.currentTimeMillis() / 1000;
+        startBgRec(u, t);
     }
 
 
@@ -412,8 +417,8 @@ public class RecManager {
     public static void recFinish(int jid) {
         RecJob live = recJobs.get(jid);
         if (live != null && live.file != null && live.file.isDirectory()) {
-            stopBgSession();
-            stopBgPlayer();
+            stopBgSession(live);
+            stopBgPlayer(live);
             live.active = false;
             if (live.startTs > 0) {  // 结束时固化已录时长
                 live.secs += (System.currentTimeMillis() - live.startTs) / 1000;
@@ -476,20 +481,38 @@ public class RecManager {
 
 
     // ---------- 后台静音播放器拉流录制：分段落盘 + 无流量自动暂停 ----------
-    private static tv.danmaku.ijk.media.player.IjkMediaPlayer bgPlayer;
-    private static com.arthenica.ffmpegkit.FFmpegSession bgSession;
-    private static volatile boolean bgCancel = false;
     private static final String BG_UA = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
 
     static String cleanTitle(String t) {
         if (t == null) return null;
         t = t.replace("\r", " ").replace("\n", " ").trim();
+        // 整串像 URL / 流地址(剪贴板直接开录)时不当标题, 交由 nameFromUrl 推断
+        if (t.startsWith("http://") || t.startsWith("https://") || t.contains("://")
+                || t.contains(".com") || t.contains("pull-hls") || t.contains(".tv") || t.contains(".cn")) return null;
         // 分享文案：取第二组 #...# 之后、正在直播之前的主体
         java.util.regex.Matcher m = java.util.regex.Pattern.compile("#[^#]+#(.+?)正在直播").matcher(t);
         if (m.find()) t = m.group(1).trim();
         t = t.replace("[", "").replace("]", "").replace("/", "-").replace("\\", "-").replace(":", "-")
              .replace("*", "").replace("?", "").replace("\"", "").replace("<", "").replace(">", "").replace("|", "-");
         return t.length() == 0 ? null : (t.length() > 40 ? t.substring(0, 40) : t);
+    }
+
+    /** 剪贴板直接开录没标题时, 从流地址推断可读名: 抖音 pull-hls 取房间标识, 否则取路径段 */
+    static String nameFromUrl(String url) {
+        if (url == null) return null;
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("pull-hls-([a-zA-Z0-9_-]+)").matcher(url);
+        if (m.find()) return "直播·" + m.group(1);
+        try {
+            java.net.URL u = new java.net.URL(url);
+            String p = u.getPath();
+            if (p != null && p.length() > 1) {
+                String seg = p.substring(1).split("/")[0];
+                if (seg.length() > 0) return "直播·" + seg;
+            }
+            String host = u.getHost();
+            if (host != null && host.length() > 0) return "直播·" + host;
+        } catch (Throwable ignored) {}
+        return null;
     }
 
     static void startBgRec(final String url) { startBgRec(url, null); }
@@ -560,29 +583,28 @@ public class RecManager {
     }
 
     static void startWatchdog(final RecJob job) {
-        new Thread(new Runnable() { public void run() {  // 流量看门狗：1s刷大小，5s查流量
+        new Thread(new Runnable() { public void run() {  // 流量看门狗：2s刷大小、2s查流量
             long last = -1;
             int idle = 0;
-            int c = 0;
+            long grace = System.currentTimeMillis() + 8000;  // 启动前8s宽限(ffmpeg缓冲/等原画), 不计无流量
             while (job.active) {
-                try { Thread.sleep(1000); } catch (Throwable e) { break; }
+                try { Thread.sleep(2000); } catch (Throwable e) { break; }
                 if (!job.active) break;
                 job.bytes = dirTotal(job);
-                c++;
-                if (c % 5 != 0) continue;
                 long total = job.bytes;
                 if (total == last) {
+                    if (System.currentTimeMillis() < grace) { last = total; continue; }
                     idle++;
-                    if (idle <= 3) {   // 无流量 → 自动重试抓流
-                        job.state = "无流量，重试抓流 " + idle + "/3…";
-                        stopBgSession();
-                        stopBgPlayer();
-                        try { Thread.sleep(5000); } catch (Throwable e) { break; }
+                    if (idle <= 2) {   // 无流量 → 自动重试抓流
+                        job.state = "无流量，重试抓流 " + idle + "/2…";
+                        stopBgSession(job);
+                        stopBgPlayer(job);
+                        try { Thread.sleep(3000); } catch (Throwable e) { break; }
                         if (!job.active) break;
                         job.state = null;
                         startBgPlayer(job);
                         startBgSession(job);
-                    } else {           // 连续3轮重试都拉不到 → 非手动暂停场景自动结束并合并MP4
+                    } else {           // 连续重试都拉不到 → 自动结束并合并MP4
                         job.state = "拉取不到，自动合并";
                         recFinish(job.id);
                         break;
@@ -603,7 +625,6 @@ public class RecManager {
         } catch (Throwable e) { return -1; }
     }
 
-    static volatile int bgGen = 0;  // 会话代号：旧会话回调不作数
 
     static void dump(String st) {
         try {
@@ -616,8 +637,8 @@ public class RecManager {
     }
 
     static void startBgSession(final RecJob job) {
-        final int gen = ++bgGen;
-        bgCancel = false;
+        final int gen = ++job.bgGen;
+        job.bgCancel = false;
         // 续录：分段号接着已有 seg 继续编，避免覆盖旧分段
         int segN = 0;
         try {
@@ -630,7 +651,7 @@ public class RecManager {
             "-f", "segment", "-segment_time", "30", "-reset_timestamps", "1",
             "-segment_start_number", String.valueOf(segN),
             new java.io.File(job.file, "seg%03d.ts").getAbsolutePath() };
-        bgSession = com.arthenica.ffmpegkit.FFmpegKit.executeWithArgumentsAsync(args,
+        job.bgSession = com.arthenica.ffmpegkit.FFmpegKit.executeWithArgumentsAsync(args,
             new com.arthenica.ffmpegkit.FFmpegSessionCompleteCallback() {
                 public void apply(com.arthenica.ffmpegkit.FFmpegSession st) {
                     try {
@@ -638,17 +659,17 @@ public class RecManager {
                         dump("BG sess rc=" + st.getReturnCode() + " state=" + st.getState()
                             + " tail=" + (logs.length() > 600 ? logs.substring(logs.length() - 600) : logs));
                     } catch (Throwable ignored) {}
-                    if (gen != bgGen || bgCancel) return;  // 旧会话/已暂停：直接作废
+                    if (gen != job.bgGen || job.bgCancel) return;  // 旧会话/已暂停：直接作废
                     if (job.active) {
                         try { Thread.sleep(1000); } catch (Throwable e) { }
-                        if (job.active && gen == bgGen) startBgSession(job);  // 断流自动重连续录
+                        if (job.active && gen == job.bgGen) startBgSession(job);  // 断流自动重连续录
                     }
                 }
             });
     }
 
     static void startBgPlayer(final RecJob job) {
-        stopBgPlayer();
+        stopBgPlayer(job);
         try {
             tv.danmaku.ijk.media.player.IjkMediaPlayer m = new tv.danmaku.ijk.media.player.IjkMediaPlayer();
             java.util.Map<String, String> h = new java.util.HashMap<String, String>();
@@ -658,25 +679,25 @@ public class RecManager {
             m.setVolume(0f, 0f);
             m.prepareAsync();
             m.start();
-            bgPlayer = m;
-        } catch (Throwable e) { stopBgPlayer(); }
+            job.bgPlayer = m;
+        } catch (Throwable e) { stopBgPlayer(job); }
     }
 
-    static void stopBgPlayer() {
-        try { if (bgPlayer != null) bgPlayer.stop(); } catch (Throwable ignored) {}
-        try { if (bgPlayer != null) bgPlayer.release(); } catch (Throwable ignored) {}
-        bgPlayer = null;
+    static void stopBgPlayer(RecJob job) {
+        try { if (job.bgPlayer != null) job.bgPlayer.stop(); } catch (Throwable ignored) {}
+        try { if (job.bgPlayer != null) job.bgPlayer.release(); } catch (Throwable ignored) {}
+        job.bgPlayer = null;
     }
 
-    static void stopBgSession() {
-        bgCancel = true;
-        try { if (bgSession != null) com.arthenica.ffmpegkit.FFmpegKit.cancel(bgSession.getSessionId()); } catch (Throwable ignored) {}
-        bgSession = null;
+    static void stopBgSession(RecJob job) {
+        job.bgCancel = true;
+        try { if (job.bgSession != null) com.arthenica.ffmpegkit.FFmpegKit.cancel(job.bgSession.getSessionId()); } catch (Throwable ignored) {}
+        job.bgSession = null;
     }
 
     static void pauseBg(RecJob job, String why) {
-        stopBgSession();
-        stopBgPlayer();
+        stopBgSession(job);
+        stopBgPlayer(job);
         job.active = false;
         job.paused = true;
         if (job.startTs > 0) {

@@ -18,6 +18,11 @@ public class HistoryStore {
         return c.getApplicationContext().getSharedPreferences("dl_history", Context.MODE_PRIVATE);
     }
 
+    /** 历史条目数(供下载页按需刷新: 仅数量变化才重新解析) */
+    public static int count(Context c) {
+        try { return sp(c).getInt("count", 0); } catch (Throwable ignored) { return 0; }
+    }
+
     public static void add(Context c, String type, String title, String path) {
         try {
             SharedPreferences s = sp(c);

@@ -31,6 +31,7 @@ public class RecordActivity extends Activity {
     private View[] tabLines;
     private int curTab = 0;  // 0全部 1视频 2录制 3下载
     private java.util.ArrayList<HistoryStore.Item> hist;
+    private int lastHistCount = -1;
 
     private void placeSegBar() {
         LinearLayout seg = tabBar;
@@ -106,7 +107,7 @@ public class RecordActivity extends Activity {
                     Toast.makeText(RecordActivity.this, "剪贴板里没有有效链接", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                RecManager.startRecJob(u, u);
+                RecManager.startRecJob(u, null);
                 rebuild();
                 Toast.makeText(RecordActivity.this, "已开始录制", Toast.LENGTH_SHORT).show();
             }
@@ -178,7 +179,7 @@ public class RecordActivity extends Activity {
         tick = new Runnable() {
             public void run() {
                 rebuild();
-                handler.postDelayed(this, 500);
+                handler.postDelayed(this, 800);
             }
         };
     }
@@ -202,8 +203,9 @@ public class RecordActivity extends Activity {
     private final java.util.HashMap<String, TextView> rowInfo = new java.util.HashMap<String, TextView>();
 
     private void rebuild() {
-        // 每次重建前刷新历史记录, 合并完成的文件立即可见(免重进)
-        try { hist = HistoryStore.load(this); } catch (Throwable ignored) {}
+        // 历史按需刷新: 仅条目数变化时重新解析(避免每轮全量 load 卡顿)
+        int hc = HistoryStore.count(this);
+        if (hc != lastHistCount) { try { hist = HistoryStore.load(this); } catch (Throwable ignored) {} lastHistCount = hc; }
         // key -> [type(0录制/1下载), job, live]
         final java.util.LinkedHashMap<String, Object[]> meta = new java.util.LinkedHashMap<String, Object[]>();
         for (RecManager.RecJob j : RecManager.recJobs.values()) meta.put("R" + j.id, new Object[]{0, j, (Boolean) j.active});
@@ -265,13 +267,13 @@ public class RecordActivity extends Activity {
                 addRow(list, j, live, infoRef);
                 row = (LinearLayout) list.getChildAt(list.getChildCount() - 1);
                 final RecManager.RecJob fj = j;
-                rowUpdaters.put(key, new Runnable() { public void run() { if (infoRef.get() != null) infoRef.get().setText(buildInfo(fj, fj.active)); } });
+                rowUpdaters.put(key, new Runnable() { public void run() { android.widget.TextView v = infoRef.get(); if (v != null) { String t = buildInfo(fj, fj.active); if (!t.equals(v.getText().toString())) v.setText(t); } } });
             } else if ((Integer) m[0] == 1) {
                 final DlManager.DlJob j = (DlManager.DlJob) m[1];
                 addDlRow(list, j, infoRef);
                 row = (LinearLayout) list.getChildAt(list.getChildCount() - 1);
                 final TextView infoDl = infoRef.get();
-                rowUpdaters.put(key, new Runnable() { public void run() { if (infoDl != null) infoDl.setText(dlInfo(j)); } });
+                rowUpdaters.put(key, new Runnable() { public void run() { if (infoDl != null) { String t = dlInfo(j); if (!t.equals(infoDl.getText().toString())) infoDl.setText(t); } } });
             } else {
                 final HistoryStore.Item it = (HistoryStore.Item) m[1];
                 final int hidx = Integer.parseInt(key.substring(1));
@@ -396,7 +398,6 @@ public class RecordActivity extends Activity {
                             try { playInApp(it.path, it.title); } catch (Throwable e) { Toast.makeText(RecordActivity.this, "打不开", Toast.LENGTH_SHORT).show(); }
                         } else if (t.equals("删除")) {
                             HistoryStore.removeAt(RecordActivity.this, idx);
-                            hist = HistoryStore.load(RecordActivity.this);
                             rowOrder.clear();
                             rebuild();
                         }
