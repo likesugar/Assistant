@@ -354,6 +354,7 @@ public class RecordActivity extends Activity {
         more.setTextSize(22);
         more.setGravity(Gravity.CENTER);
         more.setPadding(24, 24, 24, 24);
+        TapGuard.guard(more);
         more.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { showDlMenu(v, j); }
         });
@@ -408,6 +409,7 @@ public class RecordActivity extends Activity {
         more.setTextSize(22);
         more.setGravity(Gravity.CENTER);
         more.setPadding(24, 24, 24, 24);
+        TapGuard.guard(more);
         more.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 PopupMenu pm = new PopupMenu(RecordActivity.this, v);
@@ -555,6 +557,7 @@ public class RecordActivity extends Activity {
         more.setTextSize(22);
         more.setGravity(Gravity.CENTER);
         more.setPadding(24, 24, 24, 24);
+        TapGuard.guard(more);
         more.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 RecManager.RecJob cur = RecManager.recJobs.get(j.id);
