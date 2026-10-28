@@ -153,10 +153,6 @@ public final class GlassDialog {
 
         @Override public Builder setView(int layoutResId) { super.setView(layoutResId); return this; }
 
-        @Override public Builder setView(View view, int l, int t, int r, int b) {
-            super.setView(view, l, t, r, b); return this;
-        }
-
         @Override public Builder setPositiveButton(CharSequence text, android.content.DialogInterface.OnClickListener listener) {
             super.setPositiveButton(text, listener); return this;
         }
@@ -217,10 +213,6 @@ public final class GlassDialog {
 
         @Override public Builder setOnCancelListener(android.content.DialogInterface.OnCancelListener l) {
             super.setOnCancelListener(l); return this;
-        }
-
-        @Override public Builder setOnShowListener(android.content.DialogInterface.OnShowListener l) {
-            super.setOnShowListener(l); return this;
         }
 
         @Override public android.app.AlertDialog create() {
