@@ -3311,7 +3311,9 @@ id cancel_button
 id card1
 id card2
 id card3
+id cardAbout
 id cardAbout2
+id cardAutoplay
 id cardCapsule
 id cardChat
 id cardDark
@@ -3378,6 +3380,8 @@ id desc2
 id desc3
 id desc5
 id desc6
+id descAbout
+id descAutoplay
 id descDark
 id descLan
 id descOled
@@ -3716,6 +3720,7 @@ id stop_fullscreen
 id stretch
 id submenuarrow
 id submit_area
+id swAutoplay
 id swClipboard
 id swHideHome
 id swHideMedia
@@ -3725,6 +3730,8 @@ id sys_time
 id t4
 id t5
 id t6
+id tAbout
+id tAutoplay
 id tDark
 id tLan
 id tOled

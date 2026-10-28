@@ -763,6 +763,13 @@ public class HomeActivity extends Activity {
         }
 
         if (getIntent() != null && getIntent().getBooleanExtra("goto_play", false)) showPlayChoice();
+        try {
+            String openCard = getIntent() != null ? getIntent().getStringExtra("open_card") : null;
+            if (openCard != null && openCard.length() > 0) {
+                android.view.View v = findViewById(getResources().getIdentifier(openCard, "id", getPackageName()));
+                if (v != null) v.performClick();
+            }
+        } catch (Throwable ignored) {}
         setupCalendar();
         applyTheme();
         applyImmersive();

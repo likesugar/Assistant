@@ -11,7 +11,7 @@ android {
         applicationId = "com.ziyuan.Assistant"
         minSdk = 24
         targetSdk = 36
-        versionCode = 487
+        versionCode = 489
         versionName = "1.0"
     }
     buildTypes {

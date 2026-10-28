@@ -69,6 +69,12 @@ public class SettingsPageView extends android.widget.FrameLayout {
         ghList = (LinearLayout) findViewById(R.id.ghList);
         android.widget.Switch swC = (android.widget.Switch) findViewById(R.id.swClipboard);
         swC.setChecked(host.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE).getBoolean("clipboard", true));
+        android.widget.Switch swAuto = (android.widget.Switch) findViewById(R.id.swAutoplay);
+        if (swAuto != null) {
+            swAuto.setChecked(host.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE).getBoolean("autoplay", true));
+            swAuto.setOnCheckedChangeListener((bv, checked) ->
+                host.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE).edit().putBoolean("autoplay", checked).apply());
+        }
 
         // 胶囊: 开关先缓存, 点"确认生效"才写入并重建
         final int[] capIds={R.id.swHidePan,R.id.swHideHome,R.id.swHideMedia,R.id.swHidePlayer};
@@ -126,7 +132,8 @@ public class SettingsPageView extends android.widget.FrameLayout {
         findViewById(R.id.cardDark).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 android.content.SharedPreferences esp = host.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE);
-                esp.edit().putBoolean("dark", !esp.getBoolean("dark", false)).apply();
+                boolean newDark = !esp.getBoolean("dark", false);
+                esp.edit().putBoolean("dark", newDark).putBoolean("oled", newDark).apply();
                 dark = esp.getBoolean("dark", false);
                 applyTheme();
                 if (host instanceof HomeActivity) ((HomeActivity) host).refreshGlobalTheme();

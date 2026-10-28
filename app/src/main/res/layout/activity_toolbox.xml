@@ -48,7 +48,29 @@
                         android:layout_width="0dp" android:layout_height="wrap_content"
                         android:layout_weight="1" android:layout_marginRight="6dp"
                         android:orientation="vertical">
-<LinearLayout android:tag="card" android:id="@+id/cardPlayer"
+<LinearLayout android:tag="card" android:id="@+id/cardDownload"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/bg_card_md3" android:orientation="horizontal"
+        android:gravity="center_vertical" android:padding="14dp">
+        <TextView
+            android:layout_width="44dp" android:layout_height="44dp"
+            android:background="@drawable/bg_badge_blue"
+            android:text="➼" android:textSize="20sp" android:gravity="center"/>
+        <LinearLayout
+            android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:layout_marginLeft="12dp"
+            android:orientation="vertical">
+            <TextView
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="资源下载" android:textSize="14sp"
+                android:textStyle="bold" android:tag="title" android:textColor="@color/textMain"/>
+            <TextView
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="下载管理器" android:textSize="11sp" android:tag="sub" android:textColor="@color/textSub"/>
+        </LinearLayout>
+    </LinearLayout><LinearLayout android:tag="card" android:id="@+id/cardPlayer"
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
         android:background="@drawable/bg_card_md3" android:orientation="horizontal"
@@ -234,29 +256,7 @@
                         android:layout_width="0dp" android:layout_height="wrap_content"
                         android:layout_weight="1" android:layout_marginLeft="6dp"
                         android:orientation="vertical">
-<LinearLayout android:tag="card" android:id="@+id/cardDownload"
-        android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
-        android:background="@drawable/bg_card_md3" android:orientation="horizontal"
-        android:gravity="center_vertical" android:padding="14dp">
-        <TextView
-            android:layout_width="44dp" android:layout_height="44dp"
-            android:background="@drawable/bg_badge_blue"
-            android:text="➼" android:textSize="20sp" android:gravity="center"/>
-        <LinearLayout
-            android:layout_width="0dp" android:layout_height="wrap_content"
-            android:layout_weight="1" android:layout_marginLeft="12dp"
-            android:orientation="vertical">
-            <TextView
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="资源下载" android:textSize="14sp"
-                android:textStyle="bold" android:tag="title" android:textColor="@color/textMain"/>
-            <TextView
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="下载管理器" android:textSize="11sp" android:tag="sub" android:textColor="@color/textSub"/>
-        </LinearLayout>
-    </LinearLayout><LinearLayout android:tag="card" android:id="@+id/cardSpider"
+<LinearLayout android:tag="card" android:id="@+id/cardSpider"
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
         android:background="@drawable/bg_card_md3" android:orientation="horizontal"

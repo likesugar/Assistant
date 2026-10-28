@@ -1,1026 +1,1034 @@
 [
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_input.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_input.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_battery_80.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_battery_80.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_badge_indigo.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_badge_indigo.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_lock_open.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_lock_open.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_battery_60.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_battery_60.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_shape_back_bg.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_shape_back_bg.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_pill_idle_dark.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_pill_idle_dark.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_ic_tri_left.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/ic_tri_left.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_btn_deep.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_btn_deep.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_badge_purple.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_badge_purple.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/layout_dkplayer_layout_error_view.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/layout/dkplayer_layout_error_view.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_volume_off.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_volume_off.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_replay.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_replay.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/anim_slide_in_right.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/anim/slide_in_right.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_battery_60.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_battery_60.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/anim_slide_in_left.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/anim/slide_in_left.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_battery_40.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_battery_40.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/layout_dkplayer_layout_complete_view.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/layout/dkplayer_layout_complete_view.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_btn_md3.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_btn_md3.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_battery_60.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_battery_60.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/layout_dkplayer_layout_vod_control_view.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/layout/dkplayer_layout_vod_control_view.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_input_dark.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_input_dark.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_card_white.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_card_white.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_editor_text_select_start.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/editor_text_select_start.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_lock_open.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_lock_open.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_fast_rewind.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_fast_rewind.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_arrow_back.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_arrow_back.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_card_oled.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_card_oled.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_btn_md3_dark.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_btn_md3_dark.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_play_arrow.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_play_arrow.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_pill_capsule.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/pill_capsule.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_arrow_back.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_arrow_back.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/layout_activity_sniff.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/layout/activity_sniff.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_battery_60.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_battery_60.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_fast_forward.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_fast_forward.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_softwrap_left.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/softwrap_left.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_battery_10.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_battery_10.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_target.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/target.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_fullscreen_exit.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_fullscreen_exit.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/layout_magnifier_popup.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/layout/magnifier_popup.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_swipe_up.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/swipe_up.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_chip_dark.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_chip_dark.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/xml_gkd_a11y_config.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/xml/gkd_a11y_config.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/layout_dkplayer_layout_error_view.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/layout/dkplayer_layout_error_view.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_battery_60.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_battery_60.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_pill_blue.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_pill_blue.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_fab_circle.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/fab_circle.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_volume_up.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_volume_up.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_row_oled.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_row_oled.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/layout_dialog_vdl.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/layout/dialog_vdl.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_arrow_back.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_arrow_back.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_btn_outline.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_btn_outline.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/mipmap-xxxhdpi_ic_launcher.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/mipmap-xxxhdpi/ic_launcher.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_selector_full_screen_button.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_selector_full_screen_button.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_autorenew.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_autorenew.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/layout_activity_login_web.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/layout/activity_login_web.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_chip_green.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_chip_green.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_battery_70.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_battery_70.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_autorenew.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_autorenew.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_battery.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_battery.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_battery_90.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_battery_90.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_seekbar_thumb.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_seekbar_thumb.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_editor_text_select_start.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/editor_text_select_start.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_dialog_dark_round.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_dialog_dark_round.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_fast_rewind.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_fast_rewind.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/layout_text_compose_panel.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/layout/text_compose_panel.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_volume_up.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_volume_up.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_btn_deep.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_btn_deep.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_fullscreen_exit.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_fullscreen_exit.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_battery_10.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_battery_10.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_battery_50.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_battery_50.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_battery.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_battery.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/anim_anim_text_action_popup_exit.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/anim/anim_text_action_popup_exit.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_fullscreen.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_fullscreen.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_fullscreen.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_fullscreen.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_dot_green.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_dot_green.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_fullscreen_exit.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_fullscreen_exit.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_arrow_back.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_arrow_back.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_battery_70.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_battery_70.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_battery_10.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_battery_10.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_round_content_paste_20.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/round_content_paste_20.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_chip_dash.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_chip_dash.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_battery_50.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_battery_50.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_ic_headphone_blue.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_ic_headphone_blue.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_brightness.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_brightness.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_badge_pink.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_badge_pink.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_c_outline_pause_circle_outline_black_48dp.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/c_outline_pause_circle_outline_black_48dp.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/anim_slide_out_right.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/anim/slide_out_right.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/layout_dkplayer_layout_complete_view.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/layout/dkplayer_layout_complete_view.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_battery_30.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_battery_30.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_lock_close.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_lock_close.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/layout_dialog_sniff.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/layout/dialog_sniff.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_battery_60.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_battery_60.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_badge_blue.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_badge_blue.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_ic_tri_left.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/ic_tri_left.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_replay.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_replay.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_seg_bar.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_seg_bar.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_selector_lock_button.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_selector_lock_button.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/layout_dkplayer_layout_prepare_view.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/layout/dkplayer_layout_prepare_view.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/mipmap-hdpi_ic_launcher.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/mipmap-hdpi/ic_launcher.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_lock_close.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_lock_close.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_lock_close.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_lock_close.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_seekbar_thumb_normal.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_seekbar_thumb_normal.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_fullscreen.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_fullscreen.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/anim_slide_out_left.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/anim/slide_out_left.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_battery_40.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_battery_40.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_seekbar_thumb_pressed.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_seekbar_thumb_pressed.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_battery_30.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_battery_30.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/anim_slide_in_left.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/anim/slide_in_left.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/layout_dkplayer_layout_live_control_view.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/layout/dkplayer_layout_live_control_view.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_badge_green.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_badge_green.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_row_md3_dark.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_row_md3_dark.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_fast_forward.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_fast_forward.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_battery_70.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_battery_70.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_fullscreen.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_fullscreen.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_close.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_close.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_ic_sora_handle_drop.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/ic_sora_handle_drop.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_autorenew.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_autorenew.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_close.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_close.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_brightness.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_brightness.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_fast_forward.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_fast_forward.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_pill_seg_sel.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/pill_seg_sel.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_autorenew.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_autorenew.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_swipe_64.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/swipe_64.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_battery_level.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_battery_level.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_battery_50.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_battery_50.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_fast_rewind.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_fast_rewind.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_magnifier_background.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/magnifier_background.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_battery_70.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_battery_70.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_battery_20.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_battery_20.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_row_md3.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_row_md3.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_layer_progress_bar.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_layer_progress_bar.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_play_arrow.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_play_arrow.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_volume_up.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_volume_up.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_fullscreen_exit.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_fullscreen_exit.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_volume_off.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_volume_off.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/layout_dkplayer_layout_title_view.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/layout/dkplayer_layout_title_view.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_input_flat.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_input_flat.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_brightness.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_brightness.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_play_arrow.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_play_arrow.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_battery_40.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_battery_40.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_battery_20.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_battery_20.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_swipe_64.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/swipe_64.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_seekbar_thumb_pressed.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_seekbar_thumb_pressed.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_battery_40.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_battery_40.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_battery_60.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_battery_60.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_close.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_close.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_ic_more_vert_black_20dp.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/ic_more_vert_black_20dp.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_lock_open.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_lock_open.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_battery_80.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_battery_80.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_battery.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_battery.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_row_oled.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_row_oled.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_layer_progress_bar.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_layer_progress_bar.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_brightness.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_brightness.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_badge_red.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_badge_red.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_lock_close.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_lock_close.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_battery_80.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_battery_80.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_btn_blue.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_btn_blue.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_splash_transparent.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/splash_transparent.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/layout_default_completion_result_item.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/layout/default_completion_result_item.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/mipmap-xhdpi_ic_launcher.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/mipmap-xhdpi/ic_launcher.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_replay.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_replay.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_battery_20.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_battery_20.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_selector_headphone.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_selector_headphone.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_battery_20.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_battery_20.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_badge_red.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_badge_red.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_volume_off.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_volume_off.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_volume_up.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_volume_up.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_battery_30.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_battery_30.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_shape_status_view_btn.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_shape_status_view_btn.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_pause.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_pause.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_c_outline_settings_black_48dp.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/c_outline_settings_black_48dp.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_shape_standard_controller_top_bg.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_shape_standard_controller_top_bg.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_badge_green.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_badge_green.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_play_arrow.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_play_arrow.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/layout_activity_metronome.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/layout/activity_metronome.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_lock_open.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_lock_open.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_pause.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_pause.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_selector_headphone.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_selector_headphone.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/layout_dkplayer_layout_title_view.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/layout/dkplayer_layout_title_view.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_btn_red.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_btn_red.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_battery_50.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_battery_50.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_card_md3.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_card_md3.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_volume_off.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_volume_off.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_close.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_close.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_replay.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_replay.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_selector_play_button.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_selector_play_button.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_fullscreen_exit.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_fullscreen_exit.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_round_select_all_20.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/round_select_all_20.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_fast_forward.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_fast_forward.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_dot_off.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_dot_off.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_close.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_close.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_fullscreen.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_fullscreen.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_btn_md3_dark.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_btn_md3_dark.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_badge_teal.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_badge_teal.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_card.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_card.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_line_break.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/line_break.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_selector_play_button.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_selector_play_button.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/mipmap-mdpi_ic_launcher.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/mipmap-mdpi/ic_launcher.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_badge_orange.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_badge_orange.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_fullscreen.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_fullscreen.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_battery_90.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_battery_90.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_chip_on.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_chip_on.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_play_arrow.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_play_arrow.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_replay.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_replay.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_softwrap_right.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/softwrap_right.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_arrow_back.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_arrow_back.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_chip_on.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_chip_on.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_seg_bar_dark.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_seg_bar_dark.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_dialog_blue.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_dialog_blue.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_battery_80.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_battery_80.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_battery_20.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_battery_20.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_battery_20.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_battery_20.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_autorenew.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_autorenew.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_magnifier_background.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/magnifier_background.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_battery_70.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_battery_70.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_chip_gray.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_chip_gray.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_line_break.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/line_break.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_progress_loading.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_progress_loading.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/xml_gkd_a11y_config.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/xml/gkd_a11y_config.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_softwrap_left.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/softwrap_left.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_fast_rewind.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_fast_rewind.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/layout_text_compose_panel.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/layout/text_compose_panel.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_btn_red.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_btn_red.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_brightness.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_brightness.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_battery_10.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_battery_10.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_play_arrow.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_play_arrow.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/layout_activity_toolbox.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/layout/activity_toolbox.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_battery_40.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_battery_40.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_ic_headphone.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_ic_headphone.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_c_outline_visibility_off_black_48dp.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/c_outline_visibility_off_black_48dp.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_chip_off.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_chip_off.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_c_outline_close_black_48dp.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/c_outline_close_black_48dp.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_battery_90.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_battery_90.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_autorenew.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_autorenew.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_battery_40.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_battery_40.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_brightness.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_brightness.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/anim_anim_text_action_popup_exit.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/anim/anim_text_action_popup_exit.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_fast_rewind.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_fast_rewind.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_fullscreen.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_fullscreen.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_play_arrow.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_play_arrow.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_round_select_all_20.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/round_select_all_20.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_btn_outline.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_btn_outline.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_battery_level.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_battery_level.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_battery_70.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_battery_70.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_shape_play_bg.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_shape_play_bg.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_battery.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_battery.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_chip_gray.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_chip_gray.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_replay.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_replay.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_fullscreen_exit.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_fullscreen_exit.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_battery_90.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_battery_90.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_card_md3.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_card_md3.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_battery_30.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_battery_30.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_fullscreen_exit.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_fullscreen_exit.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_shape_play_bg.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_shape_play_bg.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_c_outline_remove_circle_outline_black_48dp.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/c_outline_remove_circle_outline_black_48dp.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/layout_activity_metronome.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/layout/activity_metronome.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_btn.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_btn.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_seg_sel.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_seg_sel.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_fast_forward.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_fast_forward.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_volume_up.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_volume_up.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_battery_90.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_battery_90.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/layout_default_completion_result_item.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/layout/default_completion_result_item.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_lock_close.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_lock_close.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_close.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_close.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_battery_30.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_battery_30.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_battery_10.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_battery_10.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_pause.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_pause.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_battery_80.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_battery_80.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_pill_idle_dark.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_pill_idle_dark.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_pill_blue.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_pill_blue.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_close.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_close.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_arrow_back.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_arrow_back.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/mipmap-xhdpi/ic_launcher.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_fullscreen.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_fullscreen.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_seg_bar.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_seg_bar.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_battery.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_battery.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_lock_open.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_lock_open.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_round_content_copy_20.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/round_content_copy_20.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_volume_off.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_volume_off.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/layout_dialog_sniff.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/layout/dialog_sniff.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_round_content_paste_20.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/round_content_paste_20.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/mipmap-xxhdpi_ic_launcher.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/mipmap-xxhdpi/ic_launcher.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/layout_diagnostic_tooltip_window.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/layout/diagnostic_tooltip_window.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_badge_blue.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_badge_blue.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_dot_off.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_dot_off.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/layout_dkplayer_layout_gesture_control_view.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/layout/dkplayer_layout_gesture_control_view.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_lock_open.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_lock_open.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_battery_30.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_battery_30.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_battery_70.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_battery_70.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_card_oled.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_card_oled.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_seekbar_thumb_normal.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_seekbar_thumb_normal.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_battery_90.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_battery_90.png"
-    },
-    {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_volume_up.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_volume_up.png"
-    },
-    {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_volume_off.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_volume_off.png"
-    },
-    {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_c_outline_play_circle_filled_white_black_48dp.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/c_outline_play_circle_filled_white_black_48dp.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_fast_rewind.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_fast_rewind.png"
     },
     {
         "merged": "com.ziyuan.Assistant.app-release-55:/layout_activity_toolbox.xml.flat",
         "source": "com.ziyuan.Assistant.app-main-56:/layout/activity_toolbox.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_battery_30.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_battery_30.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_arrow_back.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_arrow_back.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/layout_diagnostic_tooltip_window.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/layout/diagnostic_tooltip_window.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_arrow_back.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_arrow_back.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_chip_dark.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_chip_dark.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_battery_50.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_battery_50.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_battery_90.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_battery_90.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_battery_80.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_battery_80.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_battery.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_battery.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_brightness.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_brightness.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_battery_20.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_battery_20.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/xml_provider_paths.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/xml/provider_paths.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/anim_anim_diagnostic_tooltip_window_exit.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/anim/anim_diagnostic_tooltip_window_exit.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_battery.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_battery.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_c_outline_add_circle_outline_black_48dp.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/c_outline_add_circle_outline_black_48dp.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_row_md3.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_row_md3.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_chip_dash.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_chip_dash.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_battery_10.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_battery_10.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/layout_dialog_vdl.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/layout/dialog_vdl.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_fab_circle.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/fab_circle.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_selector_full_screen_button.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_selector_full_screen_button.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_close.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_close.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_battery_90.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_battery_90.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_pill_capsule.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/pill_capsule.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_round_content_cut_20.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/round_content_cut_20.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_badge_indigo.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_badge_indigo.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/layout_magnifier_popup.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/layout/magnifier_popup.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_battery_10.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_battery_10.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_fast_rewind.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_fast_rewind.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_chip_green.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_chip_green.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_battery_30.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_battery_30.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_battery_60.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_battery_60.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_dialog_blue.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_dialog_blue.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_c_outline_close_black_48dp.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/c_outline_close_black_48dp.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_pill_seg_sel.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/pill_seg_sel.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_input.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_input.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_shape_back_bg.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_shape_back_bg.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/mipmap-mdpi_ic_launcher.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/mipmap-mdpi/ic_launcher.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_fullscreen_exit.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_fullscreen_exit.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/layout_activity_settings.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/layout/activity_settings.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_battery_40.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_battery_40.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_badge_teal.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_badge_teal.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/xml_provider_paths.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/xml/provider_paths.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_shape_stardard_controller_bottom_bg.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_shape_stardard_controller_bottom_bg.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_autorenew.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_autorenew.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/layout_dkplayer_layout_vod_control_view.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/layout/dkplayer_layout_vod_control_view.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_btn_blue.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_btn_blue.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_battery.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_battery.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_input_flat.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_input_flat.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_baseline_more_vert_24.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/baseline_more_vert_24.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/layout_dkplayer_layout_standard_controller.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/layout/dkplayer_layout_standard_controller.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_fast_forward.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_fast_forward.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_battery_80.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_battery_80.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_replay.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_replay.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_ic_more_vert_black_20dp.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/ic_more_vert_black_20dp.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_swipe_up.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/swipe_up.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_pause.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_pause.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_fullscreen_exit.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_fullscreen_exit.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_softwrap_right.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/softwrap_right.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_battery_40.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_battery_40.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_lock_close.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_lock_close.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/layout_activity_sniff.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/layout/activity_sniff.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_c_outline_drag_handle_black_48dp.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/c_outline_drag_handle_black_48dp.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_fast_forward.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_fast_forward.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_badge_purple.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_badge_purple.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_battery_30.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_battery_30.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_baseline_more_vert_24.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/baseline_more_vert_24.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_battery_80.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_battery_80.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_battery_60.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_battery_60.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/xml_tapper_config.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/xml/tapper_config.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_seekbar_thumb.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_seekbar_thumb.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_pause.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_pause.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_badge_pink.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_badge_pink.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_autorenew.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_autorenew.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_input_dark.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_input_dark.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_replay.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_replay.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_battery_50.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_battery_50.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_volume_off.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_volume_off.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_volume_off.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_volume_off.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_volume_up.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_volume_up.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_arrow_back.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_arrow_back.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_round_content_copy_20.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/round_content_copy_20.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_battery_80.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_battery_80.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/mipmap-xxxhdpi/ic_launcher.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_lock_close.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_lock_close.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_play_arrow.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_play_arrow.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/anim_slide_out_right.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/anim/slide_out_right.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_fullscreen.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_fullscreen.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_badge_orange.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_badge_orange.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_battery_40.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_battery_40.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_volume_up.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_volume_up.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_ic_sora_handle_drop.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/ic_sora_handle_drop.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_target.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/target.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/anim_anim_diagnostic_tooltip_window_exit.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/anim/anim_diagnostic_tooltip_window_exit.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_round_save_20.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/round_save_20.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_fast_rewind.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_fast_rewind.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_row_md3_dark.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_row_md3_dark.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_autorenew.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_autorenew.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_pause.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_pause.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_seg_sel.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_seg_sel.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_play_arrow.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_play_arrow.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_battery_90.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_battery_90.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_volume_off.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_volume_off.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/anim_anim_text_action_popup_enter.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/anim/anim_text_action_popup_enter.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_card_md3_dark.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_card_md3_dark.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_lock_open.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_lock_open.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/xml_tapper_config.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/xml/tapper_config.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/layout_dkplayer_layout_prepare_view.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/layout/dkplayer_layout_prepare_view.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_btn.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_btn.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_battery.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_battery.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_volume_up.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_volume_up.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_chip_blue.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_chip_blue.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_battery_10.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_battery_10.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_battery_20.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_battery_20.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_shape_status_view_btn.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_shape_status_view_btn.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/layout_dkplayer_layout_gesture_control_view.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/layout/dkplayer_layout_gesture_control_view.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_volume_off.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_volume_off.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_battery_50.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_battery_50.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_ic_launcher_fg.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/ic_launcher_fg.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_progress_loading.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_progress_loading.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_battery_20.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_battery_20.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_brightness.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_brightness.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_ic_tri_right.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/ic_tri_right.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_home_header.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_home_header.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_battery_10.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_battery_10.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_battery_30.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_battery_30.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/layout_dkplayer_layout_live_control_view.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/layout/dkplayer_layout_live_control_view.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_battery_60.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_battery_60.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_ic_metro_gear.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/ic_metro_gear.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_pause.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_pause.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_home_header.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_home_header.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_shape_standard_controller_top_bg.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_shape_standard_controller_top_bg.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/layout_activity_login_web.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/layout/activity_login_web.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_ic_tri_right.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/ic_tri_right.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_dot_red.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_dot_red.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_fullscreen_exit.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_fullscreen_exit.png"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/anim_slide_out_left.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/anim/slide_out_left.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_fullscreen.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_fullscreen.png"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/anim_anim_diagnostic_tooltip_window_enter.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/anim/anim_diagnostic_tooltip_window_enter.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_c_outline_play_circle_filled_white_black_48dp.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/c_outline_play_circle_filled_white_black_48dp.png"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_seg_bar_dark.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_seg_bar_dark.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_round_save_20.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/round_save_20.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/mipmap-xxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_pill_active.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_pill_active.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_fast_forward.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_fast_forward.png"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_lock_close.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_lock_close.png"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_battery_40.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_battery_40.png"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_battery_80.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_battery_80.png"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_btn_md3.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_btn_md3.xml"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_play_arrow.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_play_arrow.png"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_fast_rewind.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_fast_rewind.png"
+    },
+    {
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_autorenew.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_autorenew.png"
     },
     {
         "merged": "com.ziyuan.Assistant.app-release-55:/layout_activity_settings.xml.flat",
         "source": "com.ziyuan.Assistant.app-main-56:/layout/activity_settings.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_pause.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_pause.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_c_outline_add_circle_outline_black_48dp.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/c_outline_add_circle_outline_black_48dp.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/anim_slide_in_right.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/anim/slide_in_right.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_ic_metro_gear.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/ic_metro_gear.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_chip_blue.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_chip_blue.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_card_dark.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_card_dark.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_card_dark.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_card_dark.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_battery_90.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_battery_90.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_battery_70.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_battery_70.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_lock_open.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_lock_open.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_fast_forward.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_fast_forward.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_card_white.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_card_white.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_pill_active.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_pill_active.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_dot_red.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_dot_red.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_c_outline_remove_circle_outline_black_48dp.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/c_outline_remove_circle_outline_black_48dp.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_pill_idle.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_pill_idle.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_selector_lock_button.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_selector_lock_button.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_brightness.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_brightness.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_dot_green.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_dot_green.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_round_content_cut_20.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/round_content_cut_20.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_battery_50.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_battery_50.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_c_outline_drag_handle_black_48dp.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/c_outline_drag_handle_black_48dp.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_battery_10.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_battery_10.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_volume_up.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_volume_up.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_pill_idle.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_pill_idle.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_battery_70.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_battery_70.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_ic_headphone_blue.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_ic_headphone_blue.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_battery_20.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_battery_20.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/anim_anim_diagnostic_tooltip_window_enter.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/anim/anim_diagnostic_tooltip_window_enter.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_pause.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_pause.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_pause.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_pause.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_bg_card_md3_dark.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/bg_card_md3_dark.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/anim_anim_text_action_popup_enter.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/anim/anim_text_action_popup_enter.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_lock_close.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_lock_close.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_brightness.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_brightness.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_c_outline_visibility_off_black_48dp.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/c_outline_visibility_off_black_48dp.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_lock_open.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_lock_open.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_arrow_back.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_arrow_back.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_fast_rewind.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_fast_rewind.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_c_outline_pause_circle_outline_black_48dp.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/c_outline_pause_circle_outline_black_48dp.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxxhdpi_dkplayer_ic_action_battery_50.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxxhdpi/dkplayer_ic_action_battery_50.png"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_close.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_close.png"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_dialog_dark_round.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_dialog_dark_round.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_ic_launcher_fg.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/ic_launcher_fg.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_ic_headphone.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_ic_headphone.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable_splash_transparent.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable/splash_transparent.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_card.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_card.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/layout_dkplayer_layout_standard_controller.xml.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/layout/dkplayer_layout_standard_controller.xml"
     },
     {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_close.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_close.png"
-    },
-    {
-        "merged": "com.ziyuan.Assistant.app-release-55:/mipmap-hdpi_ic_launcher.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/mipmap-hdpi/ic_launcher.png"
-    },
-    {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xxhdpi_dkplayer_ic_action_battery.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xxhdpi/dkplayer_ic_action_battery.png"
-    },
-    {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_replay.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_replay.png"
-    },
-    {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_fast_forward.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_fast_forward.png"
-    },
-    {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-hdpi_dkplayer_ic_action_replay.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-hdpi/dkplayer_ic_action_replay.png"
-    },
-    {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_battery_70.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_battery_70.png"
-    },
-    {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_dkplayer_shape_stardard_controller_bottom_bg.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/dkplayer_shape_stardard_controller_bottom_bg.xml"
-    },
-    {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_lock_close.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_lock_close.png"
-    },
-    {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_c_outline_settings_black_48dp.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/c_outline_settings_black_48dp.png"
-    },
-    {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable-xhdpi_dkplayer_ic_action_lock_open.png.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable-xhdpi/dkplayer_ic_action_lock_open.png"
-    },
-    {
-        "merged": "com.ziyuan.Assistant.app-release-55:/drawable_bg_chip_off.xml.flat",
-        "source": "com.ziyuan.Assistant.app-main-56:/drawable/bg_chip_off.xml"
+        "merged": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-release-55:/drawable-mdpi_dkplayer_ic_action_battery_50.png.flat",
+        "source": "/home/z/.gradle/daemon/8.7/com.ziyuan.Assistant.app-main-56:/drawable-mdpi/dkplayer_ic_action_battery_50.png"
     }
 ]
