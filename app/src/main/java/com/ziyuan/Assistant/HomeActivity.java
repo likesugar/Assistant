@@ -894,7 +894,7 @@ public class HomeActivity extends Activity {
             }
         });
 
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
             .setTitle("🗄️ 局域网共享")
             .setView(box)
             .setPositiveButton("完成", null)
@@ -910,7 +910,7 @@ public class HomeActivity extends Activity {
 
     /** 播放入口选择：网络流 / 本地文件 */
     private void showPlayChoice() {
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
             .setTitle("播放")
             .setItems(new String[]{"网络流（输入链接）", "本地文件（选择视频）"}, new android.content.DialogInterface.OnClickListener() {
                 public void onClick(android.content.DialogInterface d, int w) {
@@ -924,7 +924,7 @@ public class HomeActivity extends Activity {
         final android.widget.EditText et = new android.widget.EditText(this);
         et.setHint("http(s)://");
         et.setSingleLine(true);
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
             .setTitle("网络流")
             .setView(et)
             .setPositiveButton("播放", new android.content.DialogInterface.OnClickListener() {

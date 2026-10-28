@@ -210,7 +210,7 @@ public class CalendarCardView extends LinearLayout {
             e.setTextSize(13); e.setTextColor(fgSub());
             box.addView(e);
         }
-        new AlertDialog.Builder(ctx).setTitle(date).setView(box)
+        new GlassDialog.Builder(ctx).setTitle(date).setView(box)
             .setPositiveButton("关闭", null).show();
     }
 
@@ -513,7 +513,7 @@ String[] labels = {"早上", "中午", "晚上"};
                 add.setOnClickListener(new OnClickListener() { public void onClick(View v) {
                     android.widget.EditText et = new android.widget.EditText(ctx);
                     et.setHint("药物名称"); et.setSingleLine(true);
-                    new AlertDialog.Builder(ctx).setTitle("添加" + MED_SLOTS[si] + "药物").setView(et)
+                    new GlassDialog.Builder(ctx).setTitle("添加" + MED_SLOTS[si] + "药物").setView(et)
                         .setPositiveButton("添加", new android.content.DialogInterface.OnClickListener() {
                             public void onClick(android.content.DialogInterface d2, int w) {
                                 String n = et.getText().toString().trim();
@@ -556,7 +556,7 @@ String[] labels = {"早上", "中午", "晚上"};
             }
         }};
         render[0].run();
-        new AlertDialog.Builder(ctx).setTitle("药物管理(点药删除)").setView(box)
+        new GlassDialog.Builder(ctx).setTitle("药物管理(点药删除)").setView(box)
             .setPositiveButton("完成", null)
             .setOnDismissListener(new android.content.DialogInterface.OnDismissListener() {
                 public void onDismiss(android.content.DialogInterface d) { build(); }
@@ -606,7 +606,7 @@ String[] labels = {"早上", "中午", "晚上"};
         wrap.setOrientation(VERTICAL);
         wrap.addView(box);
         wrap.addView(et);
-        new AlertDialog.Builder(ctx).setTitle("签到管理(点签到删除)")
+        new GlassDialog.Builder(ctx).setTitle("签到管理(点签到删除)")
             .setView(wrap)
             .setPositiveButton("添加", new android.content.DialogInterface.OnClickListener() {
                 public void onClick(android.content.DialogInterface d2, int w) {
@@ -945,7 +945,7 @@ String[] labels = {"早上", "中午", "晚上"};
             }, c0.get(Calendar.YEAR), c0.get(Calendar.MONTH), c0.get(Calendar.DAY_OF_MONTH)).show();
         }});
 
-        new AlertDialog.Builder(ctx)
+        new GlassDialog.Builder(ctx)
             .setTitle("新建日程")
             .setView(box)
             .setPositiveButton("确定", new android.content.DialogInterface.OnClickListener() {

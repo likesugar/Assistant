@@ -452,7 +452,7 @@ public class XhsActivity extends Activity implements XhsEngine.Listener {
         et.setPadding(dp(14), dp(10), dp(14), dp(10));
         if (preset != null) et.setText(preset);
         wrap.addView(et, new LinearLayout.LayoutParams(-1, -2));
-        new AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
                 .setTitle("输入链接")
                 .setView(wrap)
                 .setPositiveButton("下载", new android.content.DialogInterface.OnClickListener() {
@@ -486,7 +486,7 @@ public class XhsActivity extends Activity implements XhsEngine.Listener {
             names[i] = kind + " " + (i + 1) + (m.width > 0 ? " · " + m.width + "×" + m.height : "");
             checked[i] = true;
         }
-        new AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
                 .setTitle("选择要下载的媒体")
                 .setMultiChoiceItems(names, checked, new android.content.DialogInterface.OnMultiChoiceClickListener() {
                     public void onClick(android.content.DialogInterface d, int w, boolean isChecked) { }
@@ -527,7 +527,7 @@ public class XhsActivity extends Activity implements XhsEngine.Listener {
         if (t.files.isEmpty()) { toast("无文件"); return; }
         final String first = t.files.get(0);
         if (first.startsWith("content://")) {
-            AlertDialog.Builder b = new AlertDialog.Builder(this).setTitle("已保存 " + t.files.size() + " 个文件");
+            GlassDialog.Builder b = new GlassDialog.Builder(this).setTitle("已保存 " + t.files.size() + " 个文件");
             CharSequence[] names = new CharSequence[t.files.size()];
             for (int i = 0; i < t.files.size(); i++) {
                 String u = t.files.get(i);
@@ -540,7 +540,7 @@ public class XhsActivity extends Activity implements XhsEngine.Listener {
             return;
         }
         try {
-            AlertDialog.Builder b = new AlertDialog.Builder(this).setTitle("已保存 " + t.files.size() + " 个文件");
+            GlassDialog.Builder b = new GlassDialog.Builder(this).setTitle("已保存 " + t.files.size() + " 个文件");
             CharSequence[] names = new CharSequence[t.files.size()];
             for (int i = 0; i < t.files.size(); i++) names[i] = new File(t.files.get(i)).getName();
             b.setItems(names, new android.content.DialogInterface.OnClickListener() {
@@ -575,7 +575,7 @@ public class XhsActivity extends Activity implements XhsEngine.Listener {
     }
 
     private void confirmDelete(final XhsStore.Task t) {
-        new AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
                 .setMessage("删除该任务记录？（已下载的文件保留）")
                 .setPositiveButton("删除", new android.content.DialogInterface.OnClickListener() {
                     public void onClick(android.content.DialogInterface d, int w) { XhsEngine.remove(t); }

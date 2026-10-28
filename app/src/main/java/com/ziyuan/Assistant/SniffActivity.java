@@ -763,7 +763,7 @@ public class SniffActivity extends Activity {
                     act.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            new android.app.AlertDialog.Builder(act)
+                            new GlassDialog.Builder(act)
                                     .setTitle("需要登录B站")
                                     .setMessage("登录后才能解析并下载/播放最高画质，是否前往登录？")
                                     .setNegativeButton("取消", null)
@@ -968,7 +968,7 @@ public class SniffActivity extends Activity {
                 box.addView(tv);
             }
         }
-        adblockDlg = new AlertDialog.Builder(this).setTitle("广告屏蔽管理").setView(box).create();
+        adblockDlg = new GlassDialog.Builder(this).setTitle("广告屏蔽管理").setView(box).create();
         adblockDlg.show();
     }
 

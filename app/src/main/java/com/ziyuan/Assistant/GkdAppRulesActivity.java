@@ -62,7 +62,7 @@ public class GkdAppRulesActivity extends Activity {
         String sn = GkdStore.subName(this);
         subBar.setText((sn == null ? "未添加订阅" : sn) + "  ›");
         subBar.setOnClickListener(v -> {
-            new android.app.AlertDialog.Builder(this)
+            new GlassDialog.Builder(this)
                     .setTitle("订阅")
                     .setMessage(GkdStore.subName(this) + "\n" + GkdStore.subUrl(this))
                     .setPositiveButton("好", null).show();
@@ -157,7 +157,7 @@ public class GkdAppRulesActivity extends Activity {
                     rebuild();
                 }, false);
                 row.setOnLongClickListener(v -> {
-                    new android.app.AlertDialog.Builder(this)
+                    new GlassDialog.Builder(this)
                             .setTitle("删除自定义规则")
                             .setMessage(cu.optString("name", ""))
                             .setPositiveButton("删除", (d, w) -> { GkdStore.removeCustom(this, pkg, ci); rebuild(); })
@@ -219,7 +219,7 @@ public class GkdAppRulesActivity extends Activity {
         mEt.setHint("GKD 选择器, 如 [text*=\"跳过\"]");
         mEt.setTextSize(13);
         box.addView(mEt);
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
                 .setTitle("添加自定义规则组")
                 .setView(box)
                 .setPositiveButton("添加", (d, w) -> {
@@ -242,7 +242,7 @@ public class GkdAppRulesActivity extends Activity {
                     android.widget.ScrollView sv2 = new android.widget.ScrollView(this);
                     TextView tv2 = txt(tree, 11, txtMain, false);
                     sv2.addView(tv2);
-                    new android.app.AlertDialog.Builder(this)
+                    new GlassDialog.Builder(this)
                             .setTitle("界面快照 (截图发开发者)")
                             .setView(sv2)
                             .setPositiveButton("关闭", null).show();

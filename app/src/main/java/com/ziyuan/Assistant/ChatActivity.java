@@ -121,7 +121,7 @@ public class ChatActivity extends Activity {
                 java.util.List<String> names = new java.util.ArrayList<>();
                 while (it.hasNext()) names.add(it.next());
                 if (names.isEmpty()) { toast("还没有历史用户"); return; }
-                new AlertDialog.Builder(ChatActivity.this)
+                new GlassDialog.Builder(ChatActivity.this)
                     .setTitle("历史用户")
                     .setItems(names.toArray(new String[0]), new android.content.DialogInterface.OnClickListener() {
                         public void onClick(android.content.DialogInterface d, int w) {
@@ -160,7 +160,7 @@ public class ChatActivity extends Activity {
         cancel.setPadding(0, dip(14), 0, 0);
         card.addView(cancel, new LinearLayout.LayoutParams(-1, -2));
 
-        final AlertDialog dlg = new AlertDialog.Builder(this)
+        final AlertDialog dlg = new GlassDialog.Builder(this)
             .setView(card)
             .setCancelable(false)
             .create();
@@ -330,7 +330,7 @@ public class ChatActivity extends Activity {
                 input.append(es[pos]);
             }
         });
-        new AlertDialog.Builder(this).setView(gv).setNegativeButton("收起", null).show();
+        new GlassDialog.Builder(this).setView(gv).setNegativeButton("收起", null).show();
     }
 
     /** 选文件 → 缓存+注册HTTP服务 → 广播文件消息 */

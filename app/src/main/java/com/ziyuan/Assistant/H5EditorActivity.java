@@ -331,7 +331,7 @@ public class H5EditorActivity extends Activity {
                 openFile(new File(projDir, name));
             });
             t.setOnLongClickListener(v -> {
-                new android.app.AlertDialog.Builder(this)
+                new GlassDialog.Builder(this)
                         .setTitle("删除文件")
                         .setMessage(name)
                         .setPositiveButton("删除", (d, w) -> { new File(projDir, name).delete(); renderFileList(); })
@@ -355,7 +355,7 @@ public class H5EditorActivity extends Activity {
     private void newFileDialog() {
         EditText et = new EditText(this);
         et.setHint("路径, 如 jc/4/8.html 或 style.css");
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
                 .setTitle("新建文件")
                 .setView(et)
                 .setPositiveButton("创建", (d, w) -> {

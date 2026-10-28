@@ -44,7 +44,7 @@ public class MetroSettingsActivity extends Activity {
             names[i] = displayName(ks.get(i));
             if (ks.get(i).equals(audioKey)) cur = i;
         }
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
             .setTitle("音色")
             .setSingleChoiceItems(names, cur, (d, w) -> {
                 audioKey = ks.get(w);
@@ -329,7 +329,7 @@ public class MetroSettingsActivity extends Activity {
         closeLk.setOnClickListener(v -> { if (dlgHolder[0] != null) dlgHolder[0].dismiss(); });
         box.addView(closeLk);
 
-        android.app.AlertDialog dlg = new android.app.AlertDialog.Builder(this)
+        android.app.AlertDialog dlg = new GlassDialog.Builder(this)
                 .setView(box)
                 .show();
         dlgHolder[0] = dlg;
@@ -352,7 +352,7 @@ public class MetroSettingsActivity extends Activity {
             e.setText(String.valueOf(vals[i]));
             box.addView(e); ets[i] = e;
         }
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
                 .setTitle("训练参数")
                 .setView(box)
                 .setPositiveButton("保存", (d, w) -> {
@@ -450,7 +450,7 @@ public class MetroSettingsActivity extends Activity {
         int pd = (int) (getResources().getDisplayMetrics().density * 20);
         wrap.setPadding(pd, pd / 2, pd, 0);
         wrap.addView(et);
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
             .setTitle("下载背景音")
             .setView(wrap)
             .setPositiveButton("下载", (d, w) -> {
@@ -516,7 +516,7 @@ public class MetroSettingsActivity extends Activity {
         int pd = (int) (getResources().getDisplayMetrics().density * 20);
         wrap.setPadding(pd, pd / 2, pd, 0);
         wrap.addView(et);
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
             .setTitle("马费通跑法 (MAF 180-年龄)")
             .setView(wrap)
             .setPositiveButton("计算", (d, w) -> {
@@ -524,7 +524,7 @@ public class MetroSettingsActivity extends Activity {
                     int age = Math.max(5, Math.min(100, Integer.parseInt(et.getText().toString().trim())));
                     prefs.edit().putInt("metroAge", age).apply();
                     int maf = 180 - age;
-                    new android.app.AlertDialog.Builder(this)
+                    new GlassDialog.Builder(this)
                         .setTitle("你的 MAF 训练心率")
                         .setMessage("年龄 " + age + " 岁\n\nMAF 心率 = 180 - " + age + " = " + maf + " bpm\n\n日常有氧跑不要超过 " + maf + "，热身阶段可以低 10 拍（" + (maf - 10) + " 左右）起步")
                         .setPositiveButton("知道了", (d2, w2) -> recreate())
@@ -545,7 +545,7 @@ public class MetroSettingsActivity extends Activity {
         int pd = (int) (getResources().getDisplayMetrics().density * 20);
         wrap.setPadding(pd, pd / 2, pd, 0);
         wrap.addView(et);
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
             .setTitle("年龄 (5-100)")
             .setView(wrap)
             .setPositiveButton("确定", (d, w) -> {
@@ -578,7 +578,7 @@ public class MetroSettingsActivity extends Activity {
         final int[] mins = {0, 5, 10, 15, 30, 60};
         int cur = 0;
         for (int i = 0; i < mins.length; i++) if (mins[i] == timerMin) cur = i;
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
             .setTitle("定时器")
             .setSingleChoiceItems(opts, cur, (d, w) -> {
                 timerMin = mins[w];

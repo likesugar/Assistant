@@ -459,7 +459,7 @@ public class PanApiActivity extends Activity {
         close.setPadding((int) (10 * den), (int) (12 * den), (int) (14 * den), (int) (10 * den));
         box.addView(close);
         close.setOnClickListener(new View.OnClickListener() { public void onClick(View v) { dlgRef.dismiss(); } });
-        AlertDialog d = new AlertDialog.Builder(this).create();
+        AlertDialog d = new GlassDialog.Builder(this).create();
         d.setView(box);
         dlgRef = d;
         // 关闭按钮经 dlgRef
@@ -475,7 +475,7 @@ public class PanApiActivity extends Activity {
     private void manualModel() {
         final EditText in = new EditText(this);
         in.setHint("model-name");
-        new AlertDialog.Builder(this).setTitle("手动输入模型")
+        new GlassDialog.Builder(this).setTitle("手动输入模型")
             .setView(in).setPositiveButton("确定", (d, w) -> {
                 String m = in.getText().toString().trim();
                 if (!m.isEmpty()) { eModelParse.setText(m); eModelChat.setText(m); }
@@ -506,7 +506,7 @@ public class PanApiActivity extends Activity {
                 }
                 runOnUiThread(new Runnable() { public void run() {
                     if (list.isEmpty()) { Toast.makeText(PanApiActivity.this, "未识别到模型", Toast.LENGTH_SHORT).show(); return; }
-                    new AlertDialog.Builder(PanApiActivity.this).setTitle("选择模型")
+                    new GlassDialog.Builder(PanApiActivity.this).setTitle("选择模型")
                         .setItems(list.toArray(new String[0]), (d, w) -> {
                             eModelParse.setText(list.get(w)); eModelChat.setText(list.get(w));
                         }).show();
@@ -611,7 +611,7 @@ public class PanApiActivity extends Activity {
             String cur = sp2.getString("aiRole", "");
             int checked = 0;
             for (int i = 0; i < ROLES.length; i++) if (ROLES[i].equals(cur)) checked = i;
-            AlertDialog roleDlg = new AlertDialog.Builder(PanApiActivity.this)
+            AlertDialog roleDlg = new GlassDialog.Builder(PanApiActivity.this)
                 .setTitle("选择角色预设")
                 .setSingleChoiceItems(ROLE_NAMES, checked, new android.content.DialogInterface.OnClickListener() {
                     public void onClick(android.content.DialogInterface d, int which) {

@@ -258,7 +258,7 @@ public class AiChatActivity extends Activity {
         slp.topMargin = dip(16);
         card.addView(save, slp);
 
-        final AlertDialog dlg = new AlertDialog.Builder(this).setView(card).create();
+        final AlertDialog dlg = new GlassDialog.Builder(this).setView(card).create();
         dlg.show();
         dlg.getWindow().setLayout(dip(360), -2);
         dlg.getWindow().setBackgroundDrawableResource(android.R.color.transparent);

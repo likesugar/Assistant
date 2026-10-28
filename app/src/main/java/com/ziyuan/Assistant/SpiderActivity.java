@@ -230,7 +230,7 @@ public class SpiderActivity extends Activity {
         tip.setTextSize(11);
         tip.setTextColor(0xFF888888);
         box.addView(tip);
-        new AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
             .setTitle("编辑收藏")
             .setView(box)
             .setPositiveButton("保存", new android.content.DialogInterface.OnClickListener() {
@@ -260,7 +260,7 @@ public class SpiderActivity extends Activity {
         et.setInputType(EditorInfo.TYPE_TEXT_VARIATION_URI);
         et.setTextSize(15);
         box.addView(et, new LinearLayout.LayoutParams(-1, -2));
-        new AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
             .setTitle("跳转")
             .setView(box)
             .setPositiveButton("前往", new android.content.DialogInterface.OnClickListener() {

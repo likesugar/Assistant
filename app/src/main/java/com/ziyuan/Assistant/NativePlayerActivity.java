@@ -54,7 +54,7 @@ public class NativePlayerActivity extends Activity {
             fw.append(android.util.Log.getStackTraceString(e));
             fw.close();
         } catch (Throwable e2) { }
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
                 .setTitle("播放页闪退原因")
                 .setCancelable(false)
                 .setMessage(android.util.Log.getStackTraceString(e))

@@ -268,7 +268,7 @@ public class MetronomeActivity extends Activity {
             names[i] = displayName(ks.get(i));
             if (ks.get(i).equals(audioKey)) cur = i;
         }
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
             .setTitle("音色")
             .setSingleChoiceItems(names, cur, (d, w) -> {
                 audioKey = ks.get(w);
@@ -413,7 +413,7 @@ public class MetronomeActivity extends Activity {
     }
 
     private void showMenu() {
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
             .setTitle("节拍器")
             .setItems(new String[]{bgDownloading ? "下载背景音..." : "下载背景音"}, (d, w) -> showDownloadDialog())
             .show();
@@ -548,7 +548,7 @@ public class MetronomeActivity extends Activity {
         android.widget.FrameLayout wrap = new android.widget.FrameLayout(this);
         wrap.setPadding(pd, dp(10), pd, 0);
         wrap.addView(et);
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
             .setTitle("下载背景音")
             .setView(wrap)
             .setPositiveButton("下载", (d, w) -> {
@@ -614,7 +614,7 @@ public class MetronomeActivity extends Activity {
         et.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
         et.setHint("分钟数, 0=不限");
         et.setText(String.valueOf(timerMin));
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
             .setTitle("定时停止")
             .setView(et)
             .setPositiveButton("确定", (d, w) -> {
@@ -822,7 +822,7 @@ public class MetronomeActivity extends Activity {
             requestPermissions(new String[]{P}, 2);
         } else {
             // 永久拒绝(不再询问): 弹窗引导去应用设置页
-            new android.app.AlertDialog.Builder(this)
+            new GlassDialog.Builder(this)
                 .setTitle("需要定位权限")
                 .setMessage("配速/距离/步频需要定位权限。\n\n点击去设置 → 权限 → 位置信息 → 允许")
                 .setPositiveButton("去设置", (d, w) -> startActivity(new android.content.Intent(
@@ -1606,7 +1606,7 @@ public class MetronomeActivity extends Activity {
         else if (hi >= 6)  { top = "毛衣 / 卫衣";       pants = "厚长裤";         coat = "大衣 / 厚外套"; }
         else               { top = "厚毛衣 / 加绒卫衣"; pants = "加绒裤";         coat = "羽绒服"; }
         String extra = lo <= 10 && hi - lo >= 10 ? "\n早晚温差大，注意加件外套" : "";
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
             .setTitle("穿衣推荐 · " + String.format("%.0f", lo) + "~" + String.format("%.0f", hi) + "°C")
             .setMessage("上衣：" + top + "\n裤子：" + pants + "\n外套：" + coat + extra)
             .setPositiveButton("知道了", null)
@@ -1725,7 +1725,7 @@ public class MetronomeActivity extends Activity {
 
     /** 定位未开提醒: 确定去开定位, 取消不打拍 (最简系统弹窗, 同下载弹窗样式) */
     private void showLocReminder() {
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
             .setTitle("提醒")
             .setMessage("该功能需使用定位服务，是否开启？")
             .setPositiveButton("确定", (d, w) -> {

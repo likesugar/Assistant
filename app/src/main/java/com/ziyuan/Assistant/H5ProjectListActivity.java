@@ -65,7 +65,7 @@ public class H5ProjectListActivity extends Activity {
         fab.setOnClickListener(v -> {
             android.widget.EditText et = new android.widget.EditText(this);
             et.setHint("项目名 (如 myweb)");
-            new android.app.AlertDialog.Builder(this)
+            new GlassDialog.Builder(this)
                     .setTitle("新建项目")
                     .setView(et)
                     .setPositiveButton("创建", (d, w) -> {
@@ -115,7 +115,7 @@ public class H5ProjectListActivity extends Activity {
                 startActivity(i);
             });
             row.setOnLongClickListener(v -> {
-                new android.app.AlertDialog.Builder(this)
+                new GlassDialog.Builder(this)
                         .setTitle("删除项目")
                         .setMessage(name)
                         .setPositiveButton("删除", (d, w) -> { H5Store.removeProject(this, name); render(); })

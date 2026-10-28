@@ -232,7 +232,7 @@ public class ShortcutActivity extends Activity {
 
     // ---------- 菜单/启动 ----------
     private void itemMenu(final String[] us, final String key) {
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
             .setTitle(z(us, 0))
             .setItems(new String[]{"打开", "编辑", "删除"}, new android.content.DialogInterface.OnClickListener() {
                 public void onClick(android.content.DialogInterface d, int w) {

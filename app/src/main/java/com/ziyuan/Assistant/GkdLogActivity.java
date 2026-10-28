@@ -47,7 +47,7 @@ public class GkdLogActivity extends Activity {
         top.addView(back);
         top.addView(txt("触发记录", 18, txtMain, true), new LinearLayout.LayoutParams(0, -2, 1f));
         TextView clr = txt("🗑", 18, txtSub, false);
-        clr.setOnClickListener(v -> new android.app.AlertDialog.Builder(this)
+        clr.setOnClickListener(v -> new GlassDialog.Builder(this)
                 .setMessage("清空全部触发记录?")
                 .setPositiveButton("清空", (d, w) -> { GkdStore.clearLogV2(this); rebuild(); })
                 .setNegativeButton("取消", null).show());

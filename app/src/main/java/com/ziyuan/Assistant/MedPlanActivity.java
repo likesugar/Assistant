@@ -423,7 +423,7 @@ public class MedPlanActivity extends Activity {
             del.setGravity(Gravity.CENTER);
             del.setPadding(0, dp(14), 0, 0);
             card.addView(del, new LinearLayout.LayoutParams(-1, -2));
-            del.setOnClickListener(v -> new AlertDialog.Builder(this).setTitle("删除计划")
+            del.setOnClickListener(v -> new GlassDialog.Builder(this).setTitle("删除计划")
                 .setMessage("删除「" + name.getText().toString() + "」?")
                 .setPositiveButton("删除", (d, w) -> { removePlan(editIdx); formHost.setVisibility(View.GONE); listScroll.setVisibility(View.VISIBLE); })
                 .setNegativeButton("取消", null).show());

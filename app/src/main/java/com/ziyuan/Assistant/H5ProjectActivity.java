@@ -163,7 +163,7 @@ public class H5ProjectActivity extends Activity {
             }
         });
         row.setOnLongClickListener(v -> {
-            new android.app.AlertDialog.Builder(this)
+            new GlassDialog.Builder(this)
                     .setTitle("删除")
                     .setMessage(f.getName())
                     .setPositiveButton("删除", (d, w) -> { delRec(f); render(); })
@@ -194,7 +194,7 @@ public class H5ProjectActivity extends Activity {
         final TextView tip = txt("子目录会自动创建", 11, txtSub, false);
         tip.setPadding(0, dp(8), 0, 0);
         box.addView(tip, -1, -2);
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
                 .setTitle("新建文件")
                 .setView(box)
                 .setPositiveButton("创建", (d, w) -> {

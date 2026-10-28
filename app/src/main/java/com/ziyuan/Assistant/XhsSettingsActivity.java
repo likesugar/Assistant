@@ -120,7 +120,7 @@ public class XhsSettingsActivity extends Activity {
         LinearLayout clr = card();
         TextView clear = linkBtn("清除已完成任务的记录（文件保留）");
         clear.setOnClickListener(new View.OnClickListener() { public void onClick(View v) {
-            new AlertDialog.Builder(XhsSettingsActivity.this)
+            new GlassDialog.Builder(XhsSettingsActivity.this)
                     .setMessage("清除已完成任务的记录？已下载文件保留在原目录。")
                     .setPositiveButton("清除", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface d, int w) { XhsEngine.clearDone(); Toast.makeText(XhsSettingsActivity.this, "已清除", Toast.LENGTH_SHORT).show(); }
@@ -157,7 +157,7 @@ public class XhsSettingsActivity extends Activity {
         hint.setTextColor(0xFF8A94A6);
         hint.setPadding(0, dp(8), 0, 0);
         box.addView(hint);
-        new AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
                 .setTitle("命名模板")
                 .setView(box)
                 .setPositiveButton("保存", new DialogInterface.OnClickListener() {
@@ -175,7 +175,7 @@ public class XhsSettingsActivity extends Activity {
         input.setBackgroundResource(dark ? R.drawable.bg_input_flat : R.drawable.bg_input);
         input.setTextColor(dark ? Color.WHITE : 0xFF1F2329);
         box.addView(input);
-        new AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
                 .setTitle("自定义保存目录")
                 .setView(box)
                 .setPositiveButton("保存", new DialogInterface.OnClickListener() {

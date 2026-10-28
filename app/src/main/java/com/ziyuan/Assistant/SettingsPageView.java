@@ -274,7 +274,7 @@ public class SettingsPageView extends android.widget.FrameLayout {
             final android.widget.EditText et = new android.widget.EditText(host);
             et.setHint("留空 = 用当前token");
             { String gt = sp.getString("ghToken", ""); et.setText(gt.startsWith("GITHUB_TOKEN") || gt.startsWith("[REDACTED") ? "" : gt); }
-            new android.app.AlertDialog.Builder(host)
+            new GlassDialog.Builder(host)
                 .setTitle("GitHub Token")
                 .setView(et)
                 .setPositiveButton("确定", new android.content.DialogInterface.OnClickListener() {
@@ -288,7 +288,7 @@ public class SettingsPageView extends android.widget.FrameLayout {
             final android.widget.EditText et2 = new android.widget.EditText(host);
             et2.setHint("留空 = 用当前token");
             { String gt2 = sp.getString("ghToken", ""); et2.setText(gt2.startsWith("GITHUB_TOKEN") || gt2.startsWith("[REDACTED") ? "" : gt2); }
-            new android.app.AlertDialog.Builder(host)
+            new GlassDialog.Builder(host)
                 .setTitle("GitHub Token")
                 .setView(et2)
                 .setPositiveButton("确定", new android.content.DialogInterface.OnClickListener() {
@@ -523,7 +523,7 @@ public class SettingsPageView extends android.widget.FrameLayout {
 
     private void confirmDelete(final int idx) {
         final String name = allPlatforms().get(idx)[0];
-        new AlertDialog.Builder(host)
+        new GlassDialog.Builder(host)
                 .setTitle("删除平台")
                 .setMessage("删除「" + name + "」？")
                 .setPositiveButton("删除", new DialogInterface.OnClickListener() {
@@ -559,7 +559,7 @@ public class SettingsPageView extends android.widget.FrameLayout {
         RadioButton rbP = new RadioButton(host); rbP.setText("PC版"); rbP.setId(102);
         rg.addView(rbM); rg.addView(rbP);
         box.addView(rg);
-        new AlertDialog.Builder(host)
+        new GlassDialog.Builder(host)
                 .setTitle("添加平台")
                 .setView(box)
                 .setPositiveButton("保存", new DialogInterface.OnClickListener() {

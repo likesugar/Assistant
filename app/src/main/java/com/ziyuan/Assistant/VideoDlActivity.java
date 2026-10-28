@@ -219,7 +219,7 @@ public class VideoDlActivity extends Activity {
         go.setText("→"); go.setTextSize(20);
         go.setTextColor(dark ? 0xFFB4C5FF : 0xFF315CDE);
         go.setPadding(dp(12), 0, dp(6), 0);
-        final android.app.AlertDialog dlg = new android.app.AlertDialog.Builder(this).create();
+        final android.app.AlertDialog dlg = new GlassDialog.Builder(this).create();
         go.setOnClickListener(new OnClickListener() { public void onClick(View v) {
             String u = input.getText().toString().trim();
             if (u.length() > 0) { dlg.dismiss(); submit(u); }
@@ -873,7 +873,7 @@ public class VideoDlActivity extends Activity {
     }
 
     private void taskMenu(final Task tk) {
-        android.app.AlertDialog.Builder b = new android.app.AlertDialog.Builder(this);
+        GlassDialog.Builder b = new GlassDialog.Builder(this);
         java.util.ArrayList<String> its = new java.util.ArrayList<String>();
         if (tk.percent == 100) its.add("播放");
         if (tk.percent == -2 || tk.percent == 100) its.add("删除");

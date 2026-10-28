@@ -333,7 +333,7 @@ public class GkdActivity extends Activity {
             android.widget.EditText et = new android.widget.EditText(this);
             et.setHint("搜索应用名/包名");
             et.setText(query);
-            new android.app.AlertDialog.Builder(this)
+            new GlassDialog.Builder(this)
                     .setTitle("搜索")
                     .setView(et)
                     .setPositiveButton("确定", (d, w) -> { query = et.getText().toString().trim(); applyFilter(); })
@@ -465,7 +465,7 @@ public class GkdActivity extends Activity {
         android.widget.CheckBox cbSub = new android.widget.CheckBox(this);
         cbSub.setText("仅显示有订阅规则的应用"); cbSub.setChecked(onlySub); cbSub.setTextSize(14);
         box.addView(cbSub);
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
                 .setTitle("排序与分组")
                 .setView(box)
                 .setPositiveButton("确定", (d, w) -> {
@@ -608,7 +608,7 @@ public class GkdActivity extends Activity {
             head.addView(sw);
             card.addView(head);
             card.setOnLongClickListener(v -> {
-                new android.app.AlertDialog.Builder(this)
+                new GlassDialog.Builder(this)
                         .setTitle("删除订阅")
                         .setMessage(o.optString("name"))
                         .setPositiveButton("删除", (d, w) -> { GkdStore.removeSub(this, idx); renderSubs(); })
@@ -685,7 +685,7 @@ public class GkdActivity extends Activity {
         et.setHint("订阅 URL");
         et.setText(GkdStore.AISOULER_SUB);
         et.setTextSize(12);
-        new android.app.AlertDialog.Builder(this)
+        new GlassDialog.Builder(this)
                 .setTitle("添加订阅")
                 .setView(et)
                 .setPositiveButton("添加", (d, w) -> {
