@@ -603,8 +603,20 @@ public class RecManager {
             while (job.active) {
                 try { Thread.sleep(1000); } catch (Throwable e) { break; }
                 if (!job.active) break;
-                long total = job.bytes;         // 大小/速率均由 ffmpeg statistics 上报, 看门狗只判有无增长
+                // 录制大小: 目录求和(分段 .ts 文件). 分段封装下 ffmpeg getSize 恒为0/逐段重置, 目录求和是稳定真实的实时大小
+                long d = dirTotal(job);
+                if (d >= 0) job.bytes = d;
                 long now = System.currentTimeMillis();
+                // 速率: 固定 ~1s 窗口算, 避开 getSize 0.5s 上报周期错位导致的翻倍, dv>0 才记
+                if (job.statTs == 0) { job.statTs = now; job.rateBytes = job.bytes; }
+                else if (now - job.statTs >= 900) {
+                    long dv = job.bytes - job.rateBytes;
+                    long dt = now - job.statTs;
+                    job.bps = dv > 0 ? dv * 1000 / dt : 0;
+                    job.statTs = now;
+                    job.rateBytes = job.bytes;
+                }
+                long total = job.bytes;
                 if (total == last) {
                     if (now < grace) { last = total; continue; }
                     idle++;
@@ -637,7 +649,8 @@ public class RecManager {
             long t = 0;
             java.io.File[] fs = job.file.listFiles();
             if (fs == null) return -1;
-            for (java.io.File f : fs) t += f.length();
+            for (java.io.File f : fs)           // 只统计分段 .ts, 避免把残留的 out.mp4/list.txt 也算进大小
+                if (f.getName().startsWith("seg") && f.length() > 0) t += f.length();
             return t;
         } catch (Throwable e) { return -1; }
     }
@@ -662,9 +675,7 @@ public class RecManager {
             java.io.File[] fs = job.file.listFiles();
             if (fs != null) for (java.io.File f : fs) if (f.getName().startsWith("seg")) segN++;
         } catch (Throwable ignored) {}
-        long already = dirTotal(job);
-        job.baseBytes = already > 0 ? already : job.bytes;   // 重连续录/重试: 已落盘部分作为基准, statistics 从0重新数
-        job.statTs = 0;
+        job.statTs = 0;          // 速率窗口由看门狗接管; 大小走目录求和, 不依赖 ffmpeg getSize
         job.rateBytes = 0;
         String[] args = { "-y", "-stats_period", "0.5",   // 显式指定统计周期, 保证大小约每 0.5s 上报一次
             "-user_agent", BG_UA,
@@ -690,27 +701,7 @@ public class RecManager {
                 }
             },
             null,   // log 回调
-            new com.arthenica.ffmpegkit.StatisticsCallback() {   // ffmpeg 每 ~0.5s 上报一次输出字节数
-                public void apply(com.arthenica.ffmpegkit.Statistics statistics) {
-                    if (gen != job.bgGen || job.bgCancel) return;
-                    long s = statistics.getSize();
-                    if (s <= 0) return;                         // 尚未开始写, 保持上次值
-                    long v = job.baseBytes + s;                 // 纯 ffmpeg 上报值: 不再遍历目录(外部存储 stat 开销大且会跳)
-                    if (v < job.bytes) v = job.bytes;           // 同一会话只增不减, 抵消个别机型上报抖动
-                    long now = System.currentTimeMillis();
-                    if (job.statTs == 0) {                      // 速率窗口起始
-                        job.statTs = now;
-                        job.rateBytes = v;
-                    } else if (now - job.statTs >= 900) {       // 固定 ~1s 窗口算速率, 避免 0.5s 上报与 250ms 回调相位错位导致翻倍
-                        long dv = v - job.rateBytes;
-                        long dt = now - job.statTs;
-                        job.bps = dv > 0 ? dv * 1000 / dt : 0;
-                        job.statTs = now;
-                        job.rateBytes = v;
-                    }
-                    job.bytes = v;
-                }
-            });
+            null);  // 录制阶段大小走目录求和(看门狗1s采样): ffmpeg getSize 对分段封装返回0, 不可靠
     }
 
     static void startBgPlayer(final RecJob job) {
