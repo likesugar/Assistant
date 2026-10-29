@@ -767,7 +767,7 @@ public class RecManager {
                 job.mergePct = 0;
                 job.bytes = 0;                                  // 合并阶段: 已生成 mp4 字节数, 从 0 涨到最终
                 com.arthenica.ffmpegkit.FFmpegSession st = com.arthenica.ffmpegkit.FFmpegKit.executeWithArgumentsAsync(
-                    new String[]{"-y", "-f", "concat", "-safe", "0", "-i", listFile.getAbsolutePath(),
+                    new String[]{"-y", "-stats_period", "0.5", "-f", "concat", "-safe", "0", "-i", listFile.getAbsolutePath(),
                         "-c", "copy", "-fflags", "+genpts", mp4.getAbsolutePath()},
                     new com.arthenica.ffmpegkit.FFmpegSessionCompleteCallback() {
                         public void apply(com.arthenica.ffmpegkit.FFmpegSession st2) { }
@@ -788,10 +788,16 @@ public class RecManager {
                             } catch (Throwable ignored) {}
                         }
                     });
+                long mergeStart = System.currentTimeMillis();
                 while (!st.getState().equals(com.arthenica.ffmpegkit.SessionState.COMPLETED)
                     && !st.getState().equals(com.arthenica.ffmpegkit.SessionState.FAILED)
                     ) {
                     try { job.state = "合并视频"; } catch (Throwable ignored) {}
+                    // 时间驱动兜底进度: concat 流拷贝的 ffmpeg 进度上报很稀疏(甚至为0), 靠已用时间从0爬到95%,
+                    // 保证用户能看到 0→100 的推进; 若 ffmpeg 真有上报, 统计回调的 mergePct 会更高, 取两者最大
+                    long el = System.currentTimeMillis() - mergeStart;
+                    int timeP = (int) Math.min(95, el * 95L / 4000);
+                    if (timeP > job.mergePct) job.mergePct = timeP;
                     try { Thread.sleep(500); } catch (Throwable e) { }
                 }
                 if (st.getState().equals(com.arthenica.ffmpegkit.SessionState.COMPLETED) && mp4.length() > 0) {
