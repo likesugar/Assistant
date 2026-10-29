@@ -231,12 +231,23 @@ public class HomeActivity extends Activity {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        TextView icon = new TextView(this);
-        icon.setTag("icon");
-        icon.setText(emoji);
-        icon.setTextSize(15);
-        icon.setGravity(android.view.Gravity.CENTER);
-        row.addView(icon, new LinearLayout.LayoutParams((int) dp2(28), (int) dp2(28)));
+        // 萌系图标: 有匹配 drawable 用 ImageView(圆润扁平风), 否则仍是 emoji 文字块
+        int icRes = cuteIconRes(key, emoji);
+        android.view.View iconView;
+        if (icRes != 0) {
+            android.widget.ImageView iv = new android.widget.ImageView(this);
+            iv.setImageResource(icRes);
+            iv.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
+            iconView = iv;
+        } else {
+            TextView icon = new TextView(this);
+            icon.setText(emoji);
+            icon.setTextSize(15);
+            icon.setGravity(android.view.Gravity.CENTER);
+            iconView = icon;
+        }
+        iconView.setTag("icon");
+        row.addView(iconView, new LinearLayout.LayoutParams((int) dp2(24), (int) dp2(24)));
         TextView t = new TextView(this);
         t.setTag("title");
         t.setText(title);
@@ -409,6 +420,7 @@ public class HomeActivity extends Activity {
             }
         }
         CARD_VIEWS.put(key, card);
+        swapIconToCute(card); // 静态卡/动态卡的 emoji 图标就地换成萌系 ImageView
         boolean isFav = favSet().contains(key);
         android.widget.FrameLayout wrap = new android.widget.FrameLayout(this);
         android.view.ViewGroup.LayoutParams clp = card.getLayoutParams();
@@ -801,6 +813,89 @@ public class HomeActivity extends Activity {
         put("netstream", new String[]{"网络流", "🌐"});
         put("localfile", new String[]{"本地文件", "📁"});
     }};
+
+    /** 萌系图标: 用 Microsoft Fluent Emoji (Flat, MIT) 的 PNG 替换系统 emoji。
+     *  键为卡片传入的 emoji 字符, 命中则改用 ImageView 渲染对应 drawable, 否则仍是 emoji 文字。 */
+    private final java.util.HashMap<String, Integer> EMOJI_RES = new java.util.HashMap<String, Integer>() {{
+        // 排盘页 / 媒体页动态卡
+        put("🔑", R.drawable.ic_cute_1f511);   // 我的api设置
+        put("🔮", R.drawable.ic_cute_1f52e);   // 小六壬
+        put("☯️", R.drawable.ic_cute_262f);    // 六爻
+        put("⚡", R.drawable.ic_cute_26a1);     // 梅花易数 / 创建快捷键
+        put("🌀", R.drawable.ic_cute_1f300);   // 奇门遁甲
+        put("🌟", R.drawable.ic_cute_1f31f);   // 八字
+        put("🌐", R.drawable.ic_cute_1f310);   // 网络流
+        put("📁", R.drawable.ic_cute_1f4c1);   // 本地文件
+        put("📺", R.drawable.ic_cute_1f4fa);   // 媒体类(m:)
+        put("🏠", R.drawable.ic_cute_1f3e0);   // 主页类(h:)
+        put("📌", R.drawable.ic_cute_1f4cc);   // 默认
+        // 首页静态卡
+        put("🪩", R.drawable.ic_cute_1f50e);    // 资源嗅探 -> 放大镜
+        put("➼", R.drawable.ic_cute_1f4e5);     // 资源下载 -> 收件盘
+        put("🎬", R.drawable.ic_cute_1f3ac);    // 视频下载 -> 场记板
+        put("🕷️", R.drawable.ic_cute_1f577);    // 爬虫 -> 蜘蛛
+        put("📕", R.drawable.ic_cute_1f4d5);    // 小红书 -> 书
+        put("🔴", R.drawable.ic_cute_1f534);    // 开播通知 -> 红点
+        put("💬", R.drawable.ic_cute_1f4ac);    // 聊天室 -> 气泡
+        put("📅", R.drawable.ic_cute_1f4c5);    // 日历
+        put("💊", R.drawable.ic_cute_1f48a);    // 用药提醒 -> 药丸
+        put("👆", R.drawable.ic_cute_1f5b1);    // 点击器 -> 鼠标
+    }};
+
+    /** 去掉 emoji 的变体选择符(U+FE0F)与零宽连字(U+200D), 使 ☯️/🕷️/👆 等能稳定命中映射 */
+    private static String stripVS(String s) {
+        if (s == null) return "";
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '\uFE0F' || c == '\u200D') continue;
+            b.append(c);
+        }
+        return b.toString();
+    }
+
+    /** 返回 emoji 字符对应的萌图标资源 id; 无匹配返回 0(退回 emoji 文字) */
+    private int iconFor(String emoji) {
+        if (emoji == null) return 0;
+        String n = stripVS(emoji);
+        Integer r = EMOJI_RES.get(n);
+        if (r != null) return r;
+        for (java.util.Map.Entry<String, Integer> e : EMOJI_RES.entrySet())
+            if (stripVS(e.getKey()).equals(n)) return e.getValue();
+        return 0;
+    }
+
+    /** 返回该卡片应使用的萌图标资源 id; 无匹配返回 0(退回 emoji 文字) */
+    private int cuteIconRes(String key, String emoji) {
+        int r = iconFor(emoji);
+        if (r != 0) return r;
+        if (key != null && key.startsWith("m:")) return R.drawable.ic_cute_1f4fa; // 媒体类 -> 电视
+        if (key != null && key.startsWith("h:")) return R.drawable.ic_cute_1f3e0; // 主页类 -> 房子
+        return 0;
+    }
+
+    /** 把卡片里命中的 emoji 图标 TextView 就地替换成萌系 ImageView(24dp, 透明底, 与动态卡一致) */
+    private void swapIconToCute(View card) {
+        if (!(card instanceof android.view.ViewGroup)) return;
+        java.util.List<TextView> tvs = new java.util.ArrayList<>();
+        collectTextViews((android.view.ViewGroup) card, tvs);
+        for (TextView tv : tvs) {
+            int res = iconFor(tv.getText() == null ? "" : tv.getText().toString());
+            if (res == 0) continue;
+            android.widget.ImageView iv = new android.widget.ImageView(this);
+            iv.setImageResource(res);
+            iv.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
+            iv.setTag("icon");
+            android.view.ViewGroup parent = (android.view.ViewGroup) tv.getParent();
+            int idx = parent.indexOfChild(tv);
+            android.widget.LinearLayout.LayoutParams ilp =
+                    new android.widget.LinearLayout.LayoutParams((int) dp2(24), (int) dp2(24));
+            ilp.gravity = android.view.Gravity.CENTER_VERTICAL;
+            parent.removeView(tv);
+            parent.addView(iv, idx, ilp);
+            return;
+        }
+    }
 
     public void refreshGlobalTheme() { applyTheme(); }
 
