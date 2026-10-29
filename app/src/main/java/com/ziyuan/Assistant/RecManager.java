@@ -787,7 +787,7 @@ public class RecManager {
                             try {
                                 long s = stat.getSize();
                                 if (s > 0) job.bytes = s;               // 已生成字节, 从 0 增长
-                                long t = stat.getTime();                // 输出时间(ms): 流拷贝也连续递增 0→总时长
+                                long t = (long) stat.getTime();         // 输出时间(ms, double→long): 流拷贝也连续递增 0→总时长
                                 int p;
                                 if (t > 0 && job.mergeDurMs > 0) p = (int) (t * 100 / job.mergeDurMs);
                                 else if (job.mergeTotal > 0) p = (int) (s * 100 / job.mergeTotal);
