@@ -35,6 +35,14 @@ public class SettingsPageView extends android.widget.FrameLayout {
             {"小红书", "https://www.xiaohongshu.com", "web_session=", "https://www.xiaohongshu.com", "📕", "0xFFFF2442"},
     };
 
+    /** 平台官方 logo(白色, Simple Icons CC0): 有则用 ImageView 渲染在品牌色圆底上, 否则退回 emoji */
+    private static final java.util.HashMap<String, Integer> PLAT_RES = new java.util.HashMap<String, Integer>() {{
+        put("哔哩哔哩", R.drawable.ic_brand_bilibili);
+        put("抖音", R.drawable.ic_brand_douyin);
+        put("YouTube", R.drawable.ic_brand_youtube);
+        put("小红书", R.drawable.ic_brand_xiaohongshu);
+    }};
+
     private boolean dark;
     private android.widget.ScrollView platScroll;
     private LinearLayout platList;
@@ -187,8 +195,10 @@ public class SettingsPageView extends android.widget.FrameLayout {
             String sub;
             if (isCustom(i)) sub = in ? "已登录(检测到Cookie)" : "已配置 · 点登录生效";
             else sub = in ? "已登录" : "未登录";
+            Integer pr = PLAT_RES.get(p[0]);
             View row = platRow(p[4], (int) ((long) Long.decode(p[5])), p[0], sub,
                     in ? "管理" : "登录", color(0xFFB4C5FF, 0xFF315CDE),
+                    pr != null ? pr : 0,
                     new View.OnClickListener() {
                         public void onClick(View v) { openWeb(idx); }
                     });
@@ -461,24 +471,40 @@ public class SettingsPageView extends android.widget.FrameLayout {
 
     private View platRow(String emoji, int avColor, String name, String sub, String action, int actionColor,
                          View.OnClickListener click) {
+        return platRow(emoji, avColor, name, sub, action, actionColor, 0, click);
+    }
+
+    /** iconRes!=0: 用 ImageView 渲染品牌 logo(白色logo置于品牌色圆底, 内缩留白); 否则退回 emoji 文字 */
+    private View platRow(String emoji, int avColor, String name, String sub, String action, int actionColor,
+                         int iconRes, View.OnClickListener click) {
         int dp8 = dp(8);
         LinearLayout row = new LinearLayout(host);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(0, dp8, 0, dp8);
 
-        TextView av = new TextView(host);
-        av.setText(emoji);
-        av.setTextSize(16);
-        av.setGravity(Gravity.CENTER);
         GradientDrawable bg = new GradientDrawable();
         bg.setShape(GradientDrawable.OVAL);
         bg.setColor(avColor);
-        av.setBackground(bg);
         LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(dp(40), dp(40));
         alp.rightMargin = dp(12);
-        av.setLayoutParams(alp);
-        row.addView(av);
+        if (iconRes != 0) {
+            android.widget.ImageView av = new android.widget.ImageView(host);
+            av.setImageResource(iconRes);
+            av.setScaleType(android.widget.ImageView.ScaleType.CENTER_INSIDE);
+            av.setPadding(dp(7), dp(7), dp(7), dp(7)); // 内缩, 让 logo 不顶满圆边
+            av.setBackground(bg);
+            av.setLayoutParams(alp);
+            row.addView(av);
+        } else {
+            TextView av = new TextView(host);
+            av.setText(emoji);
+            av.setTextSize(16);
+            av.setGravity(Gravity.CENTER);
+            av.setBackground(bg);
+            av.setLayoutParams(alp);
+            row.addView(av);
+        }
 
         LinearLayout mid = new LinearLayout(host);
         mid.setOrientation(LinearLayout.VERTICAL);
