@@ -226,7 +226,8 @@ public class HomeActivity extends Activity {
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
         lp.topMargin = (box == null || box.getChildCount() == 0) ? 0 : (int) dp2(14); // 第一卡对齐其他页
         card.setLayoutParams(lp);
-        card.setBackgroundResource(R.drawable.bg_card_md3);
+        card.setBackgroundResource(getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", false)
+                ? R.drawable.bg_card_md3_dark : R.drawable.bg_card_md3);
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(android.view.Gravity.CENTER_VERTICAL);
@@ -728,9 +729,10 @@ public class HomeActivity extends Activity {
                     tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
                 } else if (visibleTextCount(s) > 4) {
                     // 标题超过4个字: 横向滚动(跑马灯)显示完整内容, 不再截断
+                    // 关闭 horizontallyScrolling, 否则 TextView 会按内容撑宽、压住右侧爱心
+                    tv.setHorizontallyScrolling(false);
                     tv.setEllipsize(android.text.TextUtils.TruncateAt.MARQUEE);
                     tv.setMarqueeRepeatLimit(-1);
-                    tv.setHorizontallyScrolling(true);
                     tv.setSelected(true);
                 } else {
                     tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
@@ -832,7 +834,8 @@ public class HomeActivity extends Activity {
                     ((TextView) c).setTextColor(dark ? 0xFF9AA3AE : 0xFF8A94A6);
                 }
             }
-            if (t.equals("card")) {
+            // 只给真实卡片(LinearLayout)设边框; 💖包裹层(FrameLayout)跳过, 避免两层描边叠加导致粗细/亮度不一致
+            if (t.equals("card") && !(c instanceof android.widget.FrameLayout)) {
                 c.setBackgroundResource(dark ? R.drawable.bg_card_md3_dark : R.drawable.bg_card_md3);
             }
             if (c instanceof android.view.ViewGroup) applyTraversal((android.view.ViewGroup) c, dark);
