@@ -40,17 +40,17 @@ public class CapsuleBottomBar extends FrameLayout {
         int screenW = getResources().getDisplayMetrics().widthPixels;
         itemW = Math.min(dp(78), (screenW - dp(20)) / Math.max(1, visible));
 
-        int barBg = dark ? 0x991A1E28 : 0xB3E6EFFF;   // 悬浮玻璃: 半透明磨砂
-        int barStroke = dark ? 0xFF3A4254 : 0xFFC5D2EC;
+        int barBg = dark ? 0x0AFFFFFF : 0x59EFF5FF;      // 悬浮玻璃: 近透明白釉(深约4%/浅约35%), 能透出页面
+        int barStroke = dark ? 0x40FFFFFF : 0x66FFFFFF;  // 细白描边, 只勾勒玻璃轮廓
         int pillBg = dark ? 0xFF3D6DFF : 0xFF1677FF;
         int pillStroke = dark ? 0xFF5A7BD8 : 0xFF0B5BD6;
         int onPill = 0xFFFFFFFF;
         int offText = dark ? 0xFF8A94A6 : 0xFF7C8694;
 
         FrameLayout capsule = new FrameLayout(c);
-        // 悬浮玻璃感: 顶亮底沉的竖向微渐变(半透明) + 描边 + 投影
+        // 悬浮玻璃: 顶部微亮(约17%)到底部近全透(约8%)的竖向渐变 + 细描边 + 投影
         GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[]{ dark ? 0xCC2A3142 : 0xD0F4F8FF, barBg });
+                new int[]{ dark ? 0x1FFFFFFF : 0x73FFFFFF, barBg });
         bg.setCornerRadius(dp(22));
         bg.setStroke(dp(1), barStroke);
         capsule.setBackground(bg);
