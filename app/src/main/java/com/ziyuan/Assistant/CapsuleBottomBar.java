@@ -38,9 +38,9 @@ public class CapsuleBottomBar extends FrameLayout {
         int visible = 0;
         for (boolean h2 : hide) if (!h2) visible++;
         int screenW = getResources().getDisplayMetrics().widthPixels;
-        itemW = Math.min(dp(72), (screenW - dp(24)) / Math.max(1, visible));
+        itemW = Math.min(dp(78), (screenW - dp(20)) / Math.max(1, visible));
 
-        int barBg = dark ? 0xF51A1E28 : 0xFFE6EFFF;
+        int barBg = dark ? 0x991A1E28 : 0xB3E6EFFF;   // 悬浮玻璃: 半透明磨砂
         int barStroke = dark ? 0xFF3A4254 : 0xFFC5D2EC;
         int pillBg = dark ? 0xFF3D6DFF : 0xFF1677FF;
         int pillStroke = dark ? 0xFF5A7BD8 : 0xFF0B5BD6;
@@ -48,26 +48,28 @@ public class CapsuleBottomBar extends FrameLayout {
         int offText = dark ? 0xFF8A94A6 : 0xFF7C8694;
 
         FrameLayout capsule = new FrameLayout(c);
-        // 玻璃感: 顶亮底沉的竖向微渐变 + 描边 + 投影
+        // 悬浮玻璃感: 顶亮底沉的竖向微渐变(半透明) + 描边 + 投影
         GradientDrawable bg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[]{ dark ? 0xFF2A3142 : 0xFFF4F8FF, barBg });
-        bg.setCornerRadius(dp(19));
+                new int[]{ dark ? 0xCC2A3142 : 0xD0F4F8FF, barBg });
+        bg.setCornerRadius(dp(22));
         bg.setStroke(dp(1), barStroke);
         capsule.setBackground(bg);
-        capsule.setElevation(dp(12));
+        capsule.setElevation(dp(18));
         capsule.setOutlineAmbientShadowColor(dark ? 0xFF000000 : 0xFF8FB0E8);
         capsule.setOutlineSpotShadowColor(0x55000000);
-        addView(capsule, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT,
-                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL));
+        LayoutParams rootLp = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT,
+                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+        rootLp.bottomMargin = dp(12);   // 悬浮: 离屏幕底边一点间距
+        addView(capsule, rootLp);
 
         pill = new View(c);
         GradientDrawable pg = new GradientDrawable();
-        pg.setCornerRadius(dp(13));
+        pg.setCornerRadius(dp(16));
         pg.setColor(pillBg);
         pg.setStroke(dp(1), pillStroke);
         pill.setBackground(pg);
-        LayoutParams plp = new LayoutParams(itemW - dp(8), dp(30), Gravity.CENTER_VERTICAL | Gravity.START);
-        plp.leftMargin = dp(4);
+        LayoutParams plp = new LayoutParams(itemW - dp(10), dp(36), Gravity.CENTER_VERTICAL | Gravity.START);
+        plp.leftMargin = dp(5);
         capsule.addView(pill, plp);
 
         LinearLayout row = new LinearLayout(c);
@@ -77,7 +79,7 @@ public class CapsuleBottomBar extends FrameLayout {
             if (hide[i]) continue;
             TextView t = new TextView(c);
             t.setText(LABELS[i]);
-            t.setTextSize(11.5f);
+            t.setTextSize(12.5f);
             t.setGravity(Gravity.CENTER);
             t.setTypeface("home".equals(TAGS[i]) ? Typeface.DEFAULT_BOLD : Typeface.DEFAULT);
             t.setTextColor("home".equals(TAGS[i]) ? onPill : offText);
@@ -85,7 +87,7 @@ public class CapsuleBottomBar extends FrameLayout {
             t.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) { select(idx, true); }
             });
-            row.addView(t, new LinearLayout.LayoutParams(itemW, dp(36)));
+            row.addView(t, new LinearLayout.LayoutParams(itemW, dp(42)));
             items[i] = t;
         }
     }
