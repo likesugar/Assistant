@@ -20,6 +20,8 @@ public class RecManager {
         volatile long bytes = 0;
         volatile long bps = 0;          // 实时写入速率(字节/秒), 看门狗每次采样更新
         volatile long baseBytes = 0;    // 本次 ffmpeg 会话开始前已落盘量(用于 statistics 累加基准)
+        volatile long mergeTotal = 0;   // 合并阶段输入总大小(进度分母)
+        volatile long statTs = 0;       // 上次 statistics 上报时间(算速率用)
         volatile boolean finishNow = false;
         volatile String state = null;   // null=暂停录制 / 转换MP4中 / 转换失败
         volatile boolean savedToHistory = false;  // 已写入历史记录（下载页去重用）
@@ -41,6 +43,12 @@ public class RecManager {
     private static Context sCtx;
     public static void init(Context appCtx) {
         if (sCtx == null) sCtx = appCtx;
+        // ffmpeg-kit 默认把 statistics 回调节流到约 1s 一次, 这里压到 250ms, 大小才会跟手
+        // (反射调用: 不同 ffmpeg-kit 版本该方法可能不存在, 缺失时保持默认)
+        try {
+            Class.forName("com.arthenica.ffmpegkit.FFmpegKitConfig")
+                .getMethod("setStatisticsCallbackInterval", int.class).invoke(null, 250);
+        } catch (Throwable ignored) {}
         // 进程被杀(手动/系统)后重启: 遗留录制任务自动转为暂停, 文件保留可续录
         try {
             android.content.SharedPreferences sp = sCtx.getSharedPreferences("rec_live", 0);
@@ -586,20 +594,14 @@ public class RecManager {
 
     static void startWatchdog(final RecJob job) {
         new Thread(new Runnable() { public void run() {  // 流量看门狗：1s刷大小(与列表刷新同频)，无增长自动重试
-            long last = -1, lastBytes = 0, lastTs = 0;
+            long last = -1;
             int idle = 0, retry = 0;
             long grace = System.currentTimeMillis() + 10000;  // 启动前10s宽限(ffmpeg缓冲/等原画), 不计无流量
             while (job.active) {
                 try { Thread.sleep(1000); } catch (Throwable e) { break; }
                 if (!job.active) break;
-                long total = job.bytes;         // 大小由 ffmpeg statistics 实时上报, 看门狗只判有无增长
+                long total = job.bytes;         // 大小/速率均由 ffmpeg statistics 上报, 看门狗只判有无增长
                 long now = System.currentTimeMillis();
-                if (lastTs > 0 && now > lastTs) {          // 实时速率
-                    long d = total - lastBytes;
-                    job.bps = d > 0 ? d * 1000 / (now - lastTs) : 0;
-                }
-                lastBytes = total;
-                lastTs = now;
                 if (total == last) {
                     if (now < grace) { last = total; continue; }
                     idle++;
@@ -659,7 +661,9 @@ public class RecManager {
         } catch (Throwable ignored) {}
         long already = dirTotal(job);
         job.baseBytes = already > 0 ? already : job.bytes;   // 重连续录/重试: 已落盘部分作为基准, statistics 从0重新数
-        String[] args = { "-y", "-user_agent", BG_UA,
+        job.statTs = 0;
+        String[] args = { "-y", "-stats_period", "0.5",   // 显式指定统计周期, 保证大小约每 0.5s 上报一次
+            "-user_agent", BG_UA,
             "-headers", "Referer: https://live.douyin.com/\r\n",
             "-i", job.url, "-c", "copy",
             "-flush_packets", "1",   // 每包立即写盘: 文件大小实时增长, 而不是攒够缓冲才落
@@ -685,10 +689,20 @@ public class RecManager {
             new com.arthenica.ffmpegkit.StatisticsCallback() {   // ffmpeg 约每 0.5s 上报一次输出字节数
                 public void apply(com.arthenica.ffmpegkit.Statistics statistics) {
                     if (gen != job.bgGen || job.bgCancel) return;
+                    long now = System.currentTimeMillis();
                     long s = statistics.getSize();
                     long v = job.baseBytes + (s > 0 ? s : 0);
                     long d = dirTotal(job);      // 文件系统视角兜底: 上报滞后/单位偏差时不倒退
                     if (d > v) v = d;
+                    long prev = job.bytes;
+                    int els = job.statTs > 0 ? (int) (now - job.statTs) : 0;
+                    if (els > 100 && v > prev) { // 速率在统计回调里算(0.5s级), 用 EMA 平滑抖动
+                        long inst = (v - prev) * 1000 / els;
+                        job.bps = job.bps > 0 ? (job.bps * 2 + inst) / 3 : inst;
+                    } else if (els > 3000) {
+                        job.bps = 0;             // 长时间没增长: 速率归零
+                    }
+                    job.statTs = now;
                     job.bytes = v;
                 }
             });
@@ -753,6 +767,8 @@ public class RecManager {
                 long totalIn = 1;
                 for (java.io.File f : list) totalIn += f.length();
                 final long totalInF = totalIn;
+                job.mergeTotal = totalIn;   // 合并进度分母(输入总大小)
+                job.bytes = 0;              // 合并阶段大小改为"已生成 mp4 字节数", 由 statistics 上报
                 com.arthenica.ffmpegkit.FFmpegSession st = com.arthenica.ffmpegkit.FFmpegKit.executeWithArgumentsAsync(
                     new String[]{"-y", "-f", "concat", "-safe", "0", "-i", listFile.getAbsolutePath(),
                         "-c", "copy", "-fflags", "+genpts", "-movflags", "+faststart", mp4.getAbsolutePath()},
@@ -764,17 +780,15 @@ public class RecManager {
                         public void apply(com.arthenica.ffmpegkit.Statistics stat) {
                             try {
                                 job.state = "合并视频";
-                                job.bytes = mp4.length();
+                                long s = stat.getSize();
+                                if (s > 0) job.bytes = s;   // 正在写的 mp4 用 length() 恒为 0, 只能取 ffmpeg 上报值
                             } catch (Throwable ignored) {}
                         }
                     });
                 while (!st.getState().equals(com.arthenica.ffmpegkit.SessionState.COMPLETED)
                     && !st.getState().equals(com.arthenica.ffmpegkit.SessionState.FAILED)
                     ) {
-                    try {
-                        job.state = "合并视频";
-                        job.bytes = mp4.length();
-                    } catch (Throwable ignored) {}
+                    try { job.state = "合并视频"; } catch (Throwable ignored) {}
                     try { Thread.sleep(500); } catch (Throwable e) { }
                 }
                 if (st.getState().equals(com.arthenica.ffmpegkit.SessionState.COMPLETED) && mp4.length() > 0) {
