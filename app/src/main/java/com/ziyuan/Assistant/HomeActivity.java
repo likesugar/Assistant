@@ -250,7 +250,7 @@ public class HomeActivity extends Activity {
         boolean isFav = (favs0 + ",").contains("," + key + ",");
         final TextView heart = new TextView(this);
         heart.setText(isFav ? "💖" : "🤍");
-        heart.setTextSize(16);
+        heart.setTextSize(15);
         heart.setPadding((int) dp2(8), 0, 0, 0);
         registerHeart(key, heart);
         TapGuard.guard(heart);
@@ -669,12 +669,15 @@ public class HomeActivity extends Activity {
         return "card".equals(String.valueOf(v.getTag())) || v instanceof android.widget.FrameLayout;
     }
 
-    /** 两列紧凑化: 缩边距/字号、右侧给悬浮💖让位、内容垂直居中，避免文字被压或被撑高 */
+    /** 两列紧凑化: 统一字号/内边距，右侧给悬浮💖让位，所有卡片同高同宽 */
     private void compactForTwoCol(View v) {
-        boolean wrapped = !"card".equals(String.valueOf(v.getTag()));
+        // 💖包裹层(FrameLayout)只是容器: 内边距必须落在内层真卡上, 否则包裹层和内层各加一层 padding,
+        // 卡片会被撑高变窄(网络流/本地文件是裸卡, 才显得"特别大")
+        boolean wrapped = v instanceof android.widget.FrameLayout;
         android.view.ViewGroup card;
         if (wrapped) {
-            if (!(v instanceof android.view.ViewGroup) || ((android.view.ViewGroup) v).getChildCount() == 0) return;
+            v.setPadding(0, 0, 0, 0);
+            if (((android.view.ViewGroup) v).getChildCount() == 0) return;
             View c0 = ((android.view.ViewGroup) v).getChildAt(0);
             if (!(c0 instanceof android.view.ViewGroup)) return;
             card = (android.view.ViewGroup) c0;
@@ -688,19 +691,21 @@ public class HomeActivity extends Activity {
             android.view.ViewGroup wg = (android.view.ViewGroup) v;
             if (wg.getChildCount() > 1 && wg.getChildAt(1) instanceof TextView) {
                 TextView h = (TextView) wg.getChildAt(1);
-                h.setTextSize(13f);
-                h.setPadding((int) dp2(4), 0, (int) dp2(6), 0);
+                h.setTextSize(15f);
+                h.setPadding((int) dp2(4), 0, (int) dp2(8), 0);
             }
         } else {
             if (!(v instanceof android.view.ViewGroup)) return;
             card = (android.view.ViewGroup) v;
         }
-        card.setPadding((int) dp2(12), (int) dp2(10), (int) dp2(wrapped ? 28 : 12), (int) dp2(10));
+        // 右侧 30dp 固定给悬浮💖, 标题滚动时不会钻到爱心下面
+        card.setPadding((int) dp2(12), (int) dp2(10), (int) dp2(wrapped ? 32 : 12), (int) dp2(10));
+        card.setMinimumHeight((int) dp2(46));
         if (card instanceof LinearLayout) ((LinearLayout) card).setGravity(android.view.Gravity.CENTER_VERTICAL);
         compactText(card);
     }
 
-    /** 两列下压缩卡内文字: 主标题 12.5sp 单行省略、副标题 10sp 单行、emoji 图标缩到 22dp */
+    /** 两列下的卡内文字: 主标题 15sp(超过4字跑马灯)、副标题 10.5sp 单行、emoji 图标 24dp */
     private void compactText(android.view.ViewGroup g) {
         for (int i = 0; i < g.getChildCount(); i++) {
             View c = g.getChildAt(i);
@@ -715,20 +720,24 @@ public class HomeActivity extends Activity {
                 }
                 android.view.ViewGroup.LayoutParams lp = tv.getLayoutParams();
                 if (pureSym) {
-                    if (lp != null && lp.width > 0 && lp.width <= (int) dp2(30)) {
-                        lp.width = (int) dp2(22); lp.height = (int) dp2(22);
+                    // 只有带固定方框的纯符号才是圆形图标块; 爱心等其它符号保持原样, 避免大小不一
+                    boolean boxed = lp != null && lp.width > 0 && lp.width <= (int) dp2(32)
+                            && lp.height > 0 && lp.height <= (int) dp2(32);
+                    if (boxed) {
+                        lp.width = (int) dp2(24); lp.height = (int) dp2(24);
                         tv.setLayoutParams(lp);
+                        tv.setTextSize(13.5f);
+                        tv.setGravity(android.view.Gravity.CENTER);
                     }
-                    tv.setTextSize(12.5f);
                     continue;
                 }
                 boolean sub = "sub".equals(String.valueOf(tv.getTag()));
-                tv.setTextSize(sub ? 10f : 12.5f);
+                tv.setTextSize(sub ? 10.5f : 15f);
                 tv.setSingleLine(true);
                 if (sub) {
                     tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
-                } else if (visibleTextCount(s) > 4) {
-                    // 标题超过4个字: 横向滚动(跑马灯)显示完整内容, 不再截断
+                } else if (visibleTextCount(s) >= 4) {
+                    // 标题满4个字就交给跑马灯: 放得下时静止显示, 放不下自动横向滚动, 绝不截断
                     // 关闭 horizontallyScrolling, 否则 TextView 会按内容撑宽、压住右侧爱心
                     tv.setHorizontallyScrolling(false);
                     tv.setEllipsize(android.text.TextUtils.TruncateAt.MARQUEE);
@@ -745,8 +754,8 @@ public class HomeActivity extends Activity {
                 }
             } else if (c instanceof android.view.ViewGroup) {
                 android.view.ViewGroup.LayoutParams lp = c.getLayoutParams();
-                if (lp != null && lp.width > 0 && lp.width <= (int) dp2(30) && lp.height > 0 && lp.height <= (int) dp2(30)) {
-                    lp.width = (int) dp2(22); lp.height = (int) dp2(22);
+                if (lp != null && lp.width > 0 && lp.width <= (int) dp2(32) && lp.height > 0 && lp.height <= (int) dp2(32)) {
+                    lp.width = (int) dp2(24); lp.height = (int) dp2(24);
                     c.setLayoutParams(lp);
                 }
                 compactText((android.view.ViewGroup) c);
