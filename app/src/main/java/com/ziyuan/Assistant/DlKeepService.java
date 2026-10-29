@@ -13,6 +13,7 @@ public class DlKeepService extends Service {
     private static final String CH = "dl_keep";
     private static final String CH_P = "dl_progress";
     private final Handler h = new Handler();
+    private android.os.PowerManager.WakeLock wl;   // 后台保活: 锁 CPU 直到下载结束
 
     @Override
     public IBinder onBind(Intent i) { return null; }
@@ -30,6 +31,12 @@ public class DlKeepService extends Service {
             pc.setSound(null, null);
             pc.enableVibration(false);
             ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).createNotificationChannel(pc);
+        } catch (Throwable ignored) {}
+        try {
+            android.os.PowerManager pm = (android.os.PowerManager) getSystemService(Context.POWER_SERVICE);
+            wl = pm.newWakeLock(android.os.PowerManager.PARTIAL_WAKE_LOCK, "Assistant:dlkeep");
+            wl.setReferenceCounted(false);
+            wl.acquire(6L * 60 * 60 * 1000);   // 最长 6 小时, 空闲自停时释放
         } catch (Throwable ignored) {}
         startForeground(20001, buildNote("下载进行中…"));
         h.postDelayed(tick, 1500);
@@ -62,6 +69,30 @@ public class DlKeepService extends Service {
                     }
                 }
             }
+            // ===== 视频下载(VideoDlActivity) 任务: 逐任务进度/结果通知 =====
+            try {
+                java.util.List<VideoDlActivity.Task> vts = VideoDlActivity.tasks();
+                if (vts != null) {
+                    java.util.ArrayList<VideoDlActivity.Task> snap;
+                    synchronized (vts) { snap = new java.util.ArrayList<VideoDlActivity.Task>(vts); }
+                    for (VideoDlActivity.Task t : snap) {
+                        if (t == null || t.title == null) continue;
+                        int nid = 31000 + (t.nid % 16000);
+                        if (t.percent >= -1 && t.percent < 100 && t.percent != -2 && t.percent != -3) busy = true;
+                        if (t.percent == 100) {
+                            if (!t.notified) { t.notified = true; nm.notify(nid, progNote(t.title, "已完成 ✓ " + (t.size != null ? t.size : ""), 100, 100, false, true)); }
+                        } else if (t.percent == -2) {
+                            if (!t.notified) { t.notified = true; nm.notify(nid, progNote(t.title, "失败: " + (t.err != null ? t.err : "下载失败"), 0, 0, false, true)); }
+                        } else if (t.percent == -3) {
+                            nm.notify(nid, progNote(t.title, "已暂停", 0, 0, false, false));
+                        } else if (t.percent >= 0) {
+                            nm.notify(nid, progNote(t.title, (t.size != null ? t.size : "") + (t.percent > 0 ? "  " + t.percent + "%" : ""), t.percent, 100, true, false));
+                        } else {
+                            nm.notify(nid, progNote(t.title, "解析中…", 0, 0, true, false));
+                        }
+                    }
+                }
+            } catch (Throwable ignored) {}
         } catch (Throwable ignored) {}
         if (!busy) {
             stopForeground(true);
@@ -105,6 +136,12 @@ public class DlKeepService extends Service {
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
+    }
+
+    @Override
+    public void onDestroy() {
+        try { if (wl != null && wl.isHeld()) wl.release(); } catch (Throwable ignored) {}
+        super.onDestroy();
     }
 
     public static void ensure(Context c) {
