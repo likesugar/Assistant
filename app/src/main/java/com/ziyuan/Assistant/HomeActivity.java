@@ -246,18 +246,6 @@ public class HomeActivity extends Activity {
         LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(0, -2, 1f);
         tlp.leftMargin = (int) dp2(10);
         row.addView(t, tlp);
-        final String favs0 = getSharedPreferences("settings", MODE_PRIVATE).getString("favCards", "");
-        boolean isFav = (favs0 + ",").contains("," + key + ",");
-        final TextView heart = new TextView(this);
-        heart.setText(isFav ? "💖" : "🤍");
-        heart.setTextSize(15);
-        heart.setPadding((int) dp2(8), 0, 0, 0);
-        registerHeart(key, heart);
-        TapGuard.guard(heart);
-        heart.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) { toggleFav(key); }
-        });
-        row.addView(heart);
         card.addView(row);
         card.setClickable(true);
         if ("api".equals(key)) {
@@ -303,7 +291,8 @@ public class HomeActivity extends Activity {
                 }
             });
         }
-        return card;
+        // 💖改成与首页卡一致的悬浮覆盖层(右侧), 这样标题可被限定为固定宽度并真正跑马灯滚动, 对齐也统一
+        return wrapWithHeart(card, key);
     }
 
 
@@ -736,15 +725,26 @@ public class HomeActivity extends Activity {
                 tv.setSingleLine(true);
                 if (sub) {
                     tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
-                } else if (visibleTextCount(s) >= 4) {
-                    // 标题满4个字就交给跑马灯: 放得下时静止显示, 放不下自动横向滚动, 绝不截断
-                    // 关闭 horizontallyScrolling, 否则 TextView 会按内容撑宽、压住右侧爱心
-                    tv.setHorizontallyScrolling(false);
-                    tv.setEllipsize(android.text.TextUtils.TruncateAt.MARQUEE);
-                    tv.setMarqueeRepeatLimit(-1);
-                    tv.setSelected(true);
                 } else {
-                    tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                    int n = visibleTextCount(s);
+                    if (n >= 4) {
+                        // 满4字: 把标题宽度锁在约4个字, 超出部分用跑马灯横向滚动(开启横向滚动才会真正滚动)
+                        // 右侧已固定留 32dp 给悬浮💖, 滚动文字不会钻到爱心下面
+                        if (lp instanceof LinearLayout.LayoutParams) {
+                            LinearLayout.LayoutParams llp = (LinearLayout.LayoutParams) lp;
+                            llp.width = -2; llp.weight = 0;
+                            if (llp.leftMargin > dp2(10)) llp.leftMargin = (int) dp2(7);
+                            tv.setLayoutParams(llp);
+                        }
+                        tv.setMaxWidth((int) dp2(64));
+                        tv.setHorizontallyScrolling(true);
+                        tv.setEllipsize(android.text.TextUtils.TruncateAt.MARQUEE);
+                        tv.setMarqueeRepeatLimit(-1);
+                        tv.setSelected(true);
+                    } else {
+                        tv.setMaxWidth(Integer.MAX_VALUE);
+                        tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                    }
                 }
                 if (lp instanceof LinearLayout.LayoutParams) {
                     LinearLayout.LayoutParams llp = (LinearLayout.LayoutParams) lp;
