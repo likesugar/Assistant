@@ -158,8 +158,8 @@ public class HomeActivity extends Activity {
             wrapped.setLayoutParams(lp);
             mediaBox.addView(wrapped);
         }
-        mediaBox.addView(makeCard("网络流(输入链接)", "🌐", "netstream", mediaBox));
-        mediaBox.addView(makeCard("本地文件(选择视频)", "📁", "localfile", mediaBox));
+        mediaBox.addView(makeCard("网络流", "🌐", "netstream", mediaBox));
+        mediaBox.addView(makeCard("本地文件", "📁", "localfile", mediaBox));
         mediaScroll.addView(mediaBox, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT));
         // 页容器
@@ -181,7 +181,7 @@ public class HomeActivity extends Activity {
         panBox.addView(panCard("小六壬排盘", "🔮", "mystic-six-ren"));
         panBox.addView(panCard("六爻排盘", "☯️", "liu-yao"));
         panBox.addView(panCard("梅花易数", "⚡", "meihua"));
-        panBox.addView(panCard("奇门遁甲在线排盘(转盘)", "🌀", "qimen"));
+        panBox.addView(panCard("奇门遁甲", "🌀", "qimen"));
         panBox.addView(panCard("八字命理排盘", "🌟", "bazi"));
         panScroll.addView(panBox, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT));
@@ -603,7 +603,7 @@ public class HomeActivity extends Activity {
         box.removeAllViews();
         int gap = (int) dp2(10);
         for (int i = 0; i < kids.size(); i += 2) {
-            LinearLayout row = new LinearLayout(this);
+            final LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setGravity(android.view.Gravity.CENTER_VERTICAL);
             LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(-1, -2);
@@ -616,7 +616,7 @@ public class HomeActivity extends Activity {
                     LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(0, -2, 1f);
                     if (c == 0) clp.rightMargin = gap / 2; else clp.leftMargin = gap / 2;
                     v.setLayoutParams(clp);
-                    singleLineTitles(v);
+                    compactForTwoCol(v);
                     row.addView(v);
                 } else {
                     View sp = new View(this);
@@ -625,24 +625,104 @@ public class HomeActivity extends Activity {
                     row.addView(sp, slp);
                 }
             }
+            // 行内等高: 布局完成后把同行两张卡拉到同一高度，保证左右严格对齐
+            row.post(new Runnable() {
+                public void run() {
+                    int h = 0;
+                    for (int k = 0; k < row.getChildCount(); k++) {
+                        View c = row.getChildAt(k);
+                        if (isCardView(c)) h = Math.max(h, c.getHeight());
+                    }
+                    if (h <= 0) return;
+                    for (int k = 0; k < row.getChildCount(); k++) {
+                        View c = row.getChildAt(k);
+                        if (!isCardView(c)) continue;
+                        if (!(c.getLayoutParams() instanceof LinearLayout.LayoutParams)) continue;
+                        LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) c.getLayoutParams();
+                        if (lp.height != h) { lp.height = h; c.setLayoutParams(lp); }
+                    }
+                }
+            });
             box.addView(row);
         }
     }
 
-    /** 两列下把卡内带 weight 的标题设为单行省略，避免换行导致同行高度不齐 */
-    private void singleLineTitles(View v) {
-        if (!(v instanceof android.view.ViewGroup)) return;
-        android.view.ViewGroup g = (android.view.ViewGroup) v;
+    /** 是否是卡片视图(直接卡片或带💖的包裹层) */
+    private boolean isCardView(View v) {
+        return "card".equals(String.valueOf(v.getTag())) || v instanceof android.widget.FrameLayout;
+    }
+
+    /** 两列紧凑化: 缩边距/字号、右侧给悬浮💖让位、内容垂直居中，避免文字被压或被撑高 */
+    private void compactForTwoCol(View v) {
+        boolean wrapped = !"card".equals(String.valueOf(v.getTag()));
+        android.view.ViewGroup card;
+        if (wrapped) {
+            if (!(v instanceof android.view.ViewGroup) || ((android.view.ViewGroup) v).getChildCount() == 0) return;
+            View c0 = ((android.view.ViewGroup) v).getChildAt(0);
+            if (!(c0 instanceof android.view.ViewGroup)) return;
+            card = (android.view.ViewGroup) c0;
+            android.view.ViewGroup.LayoutParams wlp = c0.getLayoutParams();
+            if (wlp instanceof android.widget.FrameLayout.LayoutParams) {
+                ((android.widget.FrameLayout.LayoutParams) wlp).gravity =
+                        android.view.Gravity.LEFT | android.view.Gravity.CENTER_VERTICAL;
+                c0.setLayoutParams(wlp);
+            }
+            // 悬浮💖收紧，给标题让出宽度
+            android.view.ViewGroup wg = (android.view.ViewGroup) v;
+            if (wg.getChildCount() > 1 && wg.getChildAt(1) instanceof TextView) {
+                TextView h = (TextView) wg.getChildAt(1);
+                h.setTextSize(13f);
+                h.setPadding((int) dp2(4), 0, (int) dp2(6), 0);
+            }
+        } else {
+            if (!(v instanceof android.view.ViewGroup)) return;
+            card = (android.view.ViewGroup) v;
+        }
+        card.setPadding((int) dp2(12), (int) dp2(10), (int) dp2(wrapped ? 28 : 12), (int) dp2(10));
+        if (card instanceof LinearLayout) ((LinearLayout) card).setGravity(android.view.Gravity.CENTER_VERTICAL);
+        compactText(card);
+    }
+
+    /** 两列下压缩卡内文字: 主标题 12.5sp 单行省略、副标题 10sp 单行、emoji 图标缩到 22dp */
+    private void compactText(android.view.ViewGroup g) {
         for (int i = 0; i < g.getChildCount(); i++) {
             View c = g.getChildAt(i);
             if (c instanceof TextView) {
-                android.view.ViewGroup.LayoutParams lp = c.getLayoutParams();
-                if (lp instanceof LinearLayout.LayoutParams && ((LinearLayout.LayoutParams) lp).weight > 0) {
-                    ((TextView) c).setSingleLine(true);
-                    ((TextView) c).setEllipsize(android.text.TextUtils.TruncateAt.END);
+                TextView tv = (TextView) c;
+                CharSequence cs = tv.getText();
+                String s = cs == null ? "" : cs.toString().trim();
+                boolean pureSym = true; // 纯 emoji/符号 = 图标
+                for (int p = 0; p < s.length(); p++) {
+                    char ch = s.charAt(p);
+                    if ((ch >= 0x4E00 && ch <= 0x9FFF) || (ch < 128 && Character.isLetterOrDigit(ch))) { pureSym = false; break; }
                 }
+                android.view.ViewGroup.LayoutParams lp = tv.getLayoutParams();
+                if (pureSym) {
+                    if (lp != null && lp.width > 0 && lp.width <= (int) dp2(30)) {
+                        lp.width = (int) dp2(22); lp.height = (int) dp2(22);
+                        tv.setLayoutParams(lp);
+                    }
+                    tv.setTextSize(12.5f);
+                    continue;
+                }
+                boolean sub = "sub".equals(String.valueOf(tv.getTag()));
+                tv.setTextSize(sub ? 10f : 12.5f);
+                tv.setSingleLine(true);
+                tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                if (lp instanceof LinearLayout.LayoutParams) {
+                    LinearLayout.LayoutParams llp = (LinearLayout.LayoutParams) lp;
+                    if (llp.leftMargin > dp2(10)) llp.leftMargin = (int) dp2(7);
+                    if (llp.topMargin > dp2(6)) llp.topMargin = (int) dp2(3);
+                    tv.setLayoutParams(llp);
+                }
+            } else if (c instanceof android.view.ViewGroup) {
+                android.view.ViewGroup.LayoutParams lp = c.getLayoutParams();
+                if (lp != null && lp.width > 0 && lp.width <= (int) dp2(30) && lp.height > 0 && lp.height <= (int) dp2(30)) {
+                    lp.width = (int) dp2(22); lp.height = (int) dp2(22);
+                    c.setLayoutParams(lp);
+                }
+                compactText((android.view.ViewGroup) c);
             }
-            if (c instanceof android.view.ViewGroup) singleLineTitles(c);
         }
     }
 
@@ -659,10 +739,10 @@ public class HomeActivity extends Activity {
         put("mystic-six-ren", new String[]{"小六壬排盘", "🔮"});
         put("liu-yao", new String[]{"六爻排盘", "☯️"});
         put("meihua", new String[]{"梅花易数", "⚡"});
-        put("qimen", new String[]{"奇门遁甲在线排盘(转盘)", "🌀"});
-        put("bazi", new String[]{"八字命理排盘", "🌟"});
-        put("netstream", new String[]{"网络流(输入链接)", "🌐"});
-        put("localfile", new String[]{"本地文件(选择视频)", "📁"});
+        put("qimen", new String[]{"奇门遁甲", "🌀"});
+        put("bazi", new String[]{"八字命理", "🌟"});
+        put("netstream", new String[]{"网络流", "🌐"});
+        put("localfile", new String[]{"本地文件", "📁"});
     }};
 
     public void refreshGlobalTheme() { applyTheme(); }
