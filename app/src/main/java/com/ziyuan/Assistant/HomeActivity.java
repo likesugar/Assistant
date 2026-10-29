@@ -560,6 +560,7 @@ public class HomeActivity extends Activity {
             tv.setTextSize(15);
             tv.setTypeface(null, android.graphics.Typeface.BOLD);
             tv.setTextColor(txt);
+            tv.setTag("title");
             card.addView(tv, new LinearLayout.LayoutParams(0, -2, 1f));
             TextView hv = new TextView(this);
             registerHeart(key, hv);
@@ -645,6 +646,21 @@ public class HomeActivity extends Activity {
             });
             box.addView(row);
         }
+        // 布局完成后统一启动跑马灯: 标题超长(>4字)用 MARQUEE, 需在已 measure 后 setSelected 才真正滚动
+        box.post(new Runnable() { public void run() { startMarquee(box); } });
+    }
+
+    /** 遍历容器, 对所有已设为 MARQUEE 的标题重新触发横向滚动 */
+    private void startMarquee(android.view.ViewGroup g) {
+        for (int i = 0; i < g.getChildCount(); i++) {
+            View c = g.getChildAt(i);
+            if (c instanceof TextView) {
+                TextView tv = (TextView) c;
+                if (tv.getEllipsize() == android.text.TextUtils.TruncateAt.MARQUEE) tv.setSelected(true);
+            } else if (c instanceof android.view.ViewGroup) {
+                startMarquee((android.view.ViewGroup) c);
+            }
+        }
     }
 
     /** 是否是卡片视图(直接卡片或带💖的包裹层) */
@@ -708,7 +724,17 @@ public class HomeActivity extends Activity {
                 boolean sub = "sub".equals(String.valueOf(tv.getTag()));
                 tv.setTextSize(sub ? 10f : 12.5f);
                 tv.setSingleLine(true);
-                tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                if (sub) {
+                    tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                } else if (visibleTextCount(s) > 4) {
+                    // 标题超过4个字: 横向滚动(跑马灯)显示完整内容, 不再截断
+                    tv.setEllipsize(android.text.TextUtils.TruncateAt.MARQUEE);
+                    tv.setMarqueeRepeatLimit(-1);
+                    tv.setHorizontallyScrolling(true);
+                    tv.setSelected(true);
+                } else {
+                    tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                }
                 if (lp instanceof LinearLayout.LayoutParams) {
                     LinearLayout.LayoutParams llp = (LinearLayout.LayoutParams) lp;
                     if (llp.leftMargin > dp2(10)) llp.leftMargin = (int) dp2(7);
@@ -724,6 +750,18 @@ public class HomeActivity extends Activity {
                 compactText((android.view.ViewGroup) c);
             }
         }
+    }
+
+    /** 统计可见文字(中文/字母/数字)个数, emoji 与空白不计, 用于判断是否启用跑马灯 */
+    private int visibleTextCount(String s) {
+        if (s == null) return 0;
+        int n = 0;
+        for (int p = 0; p < s.length(); p++) {
+            char ch = s.charAt(p);
+            if ((ch >= 0x4E00 && ch <= 0x9FFF) || (ch >= '0' && ch <= '9')
+                    || (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z')) n++;
+        }
+        return n;
     }
 
     private static final java.util.HashMap<String, String> CN_NAMES = new java.util.HashMap<String, String>() {{
