@@ -339,18 +339,30 @@ public class HomeActivity extends Activity {
         return info != null ? info[1] : "📌";
     }
 
+    /** 收藏列表解析成集合: 去空项/去空格/去重, 避免脏数据让某张卡误判成"未收藏" */
+    private java.util.LinkedHashSet<String> favSet() {
+        java.util.LinkedHashSet<String> set = new java.util.LinkedHashSet<>();
+        String s = getSharedPreferences("settings", MODE_PRIVATE).getString("favCards", "");
+        for (String k : s.split(",")) { k = k.trim(); if (!k.isEmpty()) set.add(k); }
+        return set;
+    }
+
     private void registerHeart(String key, android.widget.TextView heart) {
         java.util.List<android.widget.TextView> l = HEART_VIEWS.get(key);
         if (l == null) { l = new java.util.ArrayList<>(); HEART_VIEWS.put(key, l); }
+        // 清掉上一轮收藏页遗留的已分离 heart, 否则列表只增不减
+        for (java.util.Iterator<android.widget.TextView> it = l.iterator(); it.hasNext(); ) {
+            android.widget.TextView t = it.next();
+            if (t != heart && !t.isAttachedToWindow() && "fav".equals(String.valueOf(t.getTag(R.id.tag_hearted)))) it.remove();
+        }
         l.add(heart);
-        boolean f = (getSharedPreferences("settings", MODE_PRIVATE).getString("favCards", "") + ",").contains("," + key + ",");
-        heart.setText(f ? "💖" : "🤍");
+        heart.setText(favSet().contains(key) ? "💖" : "🤍");
     }
 
     private void toggleFav(String key) {
         android.content.SharedPreferences sp = getSharedPreferences("settings", MODE_PRIVATE);
         java.util.LinkedHashSet<String> set = new java.util.LinkedHashSet<>();
-        for (String k : sp.getString("favCards", "").split(",")) if (!k.isEmpty()) set.add(k);
+        for (String k : sp.getString("favCards", "").split(",")) { k = k.trim(); if (!k.isEmpty()) set.add(k); }
         boolean nowFav;
         if (set.contains(key)) { set.remove(key); nowFav = false; }
         else { set.add(key); nowFav = true; }
@@ -397,13 +409,13 @@ public class HomeActivity extends Activity {
             }
         }
         CARD_VIEWS.put(key, card);
-        android.content.SharedPreferences sp = getSharedPreferences("settings", MODE_PRIVATE);
-        boolean isFav = (sp.getString("favCards", "") + ",").contains("," + key + ",");
+        boolean isFav = favSet().contains(key);
         android.widget.FrameLayout wrap = new android.widget.FrameLayout(this);
         android.view.ViewGroup.LayoutParams clp = card.getLayoutParams();
         wrap.addView(card, new android.widget.FrameLayout.LayoutParams(
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
         android.widget.TextView heart = new android.widget.TextView(this);
+        heart.setTag("heart");
         heart.setText(isFav ? "💖" : "🤍");
         heart.setTextSize(16);
         heart.setPadding((int) dp2(10), (int) dp2(4), (int) dp2(10), (int) dp2(4));
@@ -513,8 +525,8 @@ public class HomeActivity extends Activity {
         favBox.removeAllViews();
         boolean dark = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", false);
         int txt = dark ? 0xFFFFFFFF : 0xFF1F2329;
-        String favs = getSharedPreferences("settings", MODE_PRIVATE).getString("favCards", "");
-        if (favs.isEmpty()) {
+        java.util.LinkedHashSet<String> favList = favSet();
+        if (favList.isEmpty()) {
             TextView empty = new TextView(this);
             empty.setText("暂无收藏卡片\n点卡片右侧的 🤍 收藏");
             empty.setTextSize(14);
@@ -525,7 +537,7 @@ public class HomeActivity extends Activity {
             return;
         }
         int idx = 0;
-        for (String k : favs.split(",")) {
+        for (String k : favList) {
             final String key = k;
             String title;
             if (k.startsWith("m:") || k.startsWith("h:")) {
@@ -551,6 +563,7 @@ public class HomeActivity extends Activity {
                 pc = makeCard(info != null ? info[0] : key, info != null ? info[1] : "📌", key, favBox);
             }
             if (orig != null) CARD_VIEWS.put(key, orig); // 功能卡仍指回首页原卡
+            forceFavHeart(pc); // 收藏页的卡必然已收藏, 爱心强制实心
             if (orig != null && pc instanceof android.view.ViewGroup
                     && ((android.view.ViewGroup) pc).getChildCount() > 0) {
                 View inner = ((android.view.ViewGroup) pc).getChildAt(0);
@@ -566,6 +579,20 @@ public class HomeActivity extends Activity {
         }
         applyTraversal(favScroll, getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", false));
         twoColumnify(favBox);
+    }
+
+    /** 收藏页里的卡必然是已收藏: 爱心强制实心, 不受历史脏 key(重复项/带空格)影响 */
+    private void forceFavHeart(View pc) {
+        if (!(pc instanceof android.view.ViewGroup)) return;
+        android.view.ViewGroup wg = (android.view.ViewGroup) pc;
+        for (int i = 0; i < wg.getChildCount(); i++) {
+            View c = wg.getChildAt(i);
+            if (c instanceof TextView && "heart".equals(String.valueOf(c.getTag()))) {
+                ((TextView) c).setText("💖");
+                c.setTag(R.id.tag_hearted, "fav"); // 标记来源, 下次重建时清理旧实例
+                return;
+            }
+        }
     }
 
     /** 把竖直卡片容器重排为左右两列：每两卡一行，行内各占一半宽，奇数补空位保持左对齐 */
@@ -630,6 +657,7 @@ public class HomeActivity extends Activity {
             View c = g.getChildAt(i);
             if (c instanceof TextView) {
                 TextView tv = (TextView) c;
+                if ("heart".equals(String.valueOf(tv.getTag()))) continue;
                 if (tv.getEllipsize() == android.text.TextUtils.TruncateAt.MARQUEE) tv.setSelected(true);
             } else if (c instanceof android.view.ViewGroup) {
                 startMarquee((android.view.ViewGroup) c);
@@ -684,6 +712,7 @@ public class HomeActivity extends Activity {
             View c = g.getChildAt(i);
             if (c instanceof TextView) {
                 TextView tv = (TextView) c;
+                if ("heart".equals(String.valueOf(tv.getTag()))) continue; // 爱心不参与压缩
                 CharSequence cs = tv.getText();
                 String s = cs == null ? "" : cs.toString().trim();
                 boolean pureSym = true; // 纯 emoji/符号 = 图标
