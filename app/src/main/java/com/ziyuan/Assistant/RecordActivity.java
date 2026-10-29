@@ -191,9 +191,10 @@ public class RecordActivity extends Activity {
      *  - 全部空闲(仅历史/已完成):      5s  —— 几乎只做一次无变化的 diff, 省电省 CPU
      */
     private long nextDelay() {
-        boolean live = false, waiting = false;
+        boolean live = false, waiting = false, merging = false;
         for (RecManager.RecJob j : RecManager.recJobs.values()) {
             if (j.active) { live = true; break; }
+            if (j.state != null && j.state.startsWith("合并视频")) merging = true;
         }
         if (!live) {
             for (DlManager.DlJob j : DlManager.jobs()) {
@@ -202,6 +203,7 @@ public class RecordActivity extends Activity {
             }
         }
         if (live) return 1000;
+        if (merging) return 500;     // 合并阶段快刷, 才能看到 0→100 的推进
         if (waiting) return 3000;
         return 5000;
     }
@@ -507,9 +509,8 @@ public class RecordActivity extends Activity {
         String size = fmtCompact(j.bytes);
         if (live && j.bps > 0) size += "  ↓" + fmtCompact(j.bps) + "/s";   // 实时写入速率
         String state = live ? "录制中" : (j.state != null ? j.state : "暂停录制");
-        if (!live && j.mergeTotal > 0 && "合并视频".equals(j.state)) {       // 合并阶段: 已生成大小 + 百分比
-            int pct = (int) Math.min(100, j.bytes * 100 / j.mergeTotal);
-            state = "合并视频 " + pct + "%";
+        if (!live && j.state != null && j.state.startsWith("合并视频")) {   // 合并阶段: 0-100% 由 ffmpeg 输出时间推进
+            state = "合并视频 " + j.mergePct + "%";
         }
         return "录制时长: " + fmtDur(secs)
             + "\n录制大小: " + size
