@@ -516,7 +516,6 @@ public class HomeActivity extends Activity {
         favBox.removeAllViews();
         boolean dark = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", false);
         int txt = dark ? 0xFFFFFFFF : 0xFF1F2329;
-        int cardBg = dark ? 0xFF1C2430 : 0xFFFFFFFF;
         String favs = getSharedPreferences("settings", MODE_PRIVATE).getString("favCards", "");
         if (favs.isEmpty()) {
             TextView empty = new TextView(this);
@@ -545,10 +544,7 @@ public class HomeActivity extends Activity {
             LinearLayout card = new LinearLayout(this);
             card.setOrientation(LinearLayout.HORIZONTAL);
             card.setTag("card");
-            GradientDrawable bgc = new GradientDrawable();
-            bgc.setCornerRadius(dp2(16));
-            bgc.setColor(cardBg);
-            card.setBackground(bgc);
+            card.setBackgroundResource(dark ? R.drawable.bg_card_md3_dark : R.drawable.bg_card_md3);
             card.setPadding((int) dp2(16), (int) dp2(14), (int) dp2(16), (int) dp2(14));
             if (k.startsWith("m:") || k.startsWith("h:")) card.setMinimumHeight((int) dp2(52));
             TextView tv = new TextView(this);
