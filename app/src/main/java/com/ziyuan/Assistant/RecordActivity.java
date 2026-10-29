@@ -495,13 +495,25 @@ public class RecordActivity extends Activity {
         return q == null ? j.name : (u.contains("douyin") ? "抖音·" : "") + q + " " + j.name;
     }
 
+    /** 紧凑单位: 2.25M / 766K, 不带 B */
+    private static String fmtCompact(long b) {
+        if (b >= 1048576) return String.format(java.util.Locale.US, "%.2fM", b / 1048576.0);
+        if (b >= 1024) return String.format(java.util.Locale.US, "%.0fK", b / 1024.0);
+        return String.valueOf(b);
+    }
+
     private String buildInfo(RecManager.RecJob j, boolean live) {
         long secs = j.secs + (live && j.startTs > 0 ? (System.currentTimeMillis() - j.startTs) / 1000 : 0);
-        String size = fmtSize(j.bytes);
-        if (live && j.bps > 0) size += "  ↓" + fmtSize(j.bps) + "/s";   // 实时写入速率
+        String size = fmtCompact(j.bytes);
+        if (live && j.bps > 0) size += "  ↓" + fmtCompact(j.bps) + "/s";   // 实时写入速率
+        String state = live ? "录制中" : (j.state != null ? j.state : "暂停录制");
+        if (!live && j.mergeTotal > 0 && "合并视频".equals(j.state)) {       // 合并阶段: 已生成大小 + 百分比
+            int pct = (int) Math.min(100, j.bytes * 100 / j.mergeTotal);
+            state = "合并视频 " + pct + "%";
+        }
         return "录制时长: " + fmtDur(secs)
             + "\n录制大小: " + size
-            + "\n录制状态: " + (live ? "录制中" : (j.state != null ? j.state : "暂停录制"));
+            + "\n录制状态: " + state;
     }
 
     private void addRow(LinearLayout parent, final RecManager.RecJob j, final boolean live, final java.util.concurrent.atomic.AtomicReference<TextView> infoRef) {
