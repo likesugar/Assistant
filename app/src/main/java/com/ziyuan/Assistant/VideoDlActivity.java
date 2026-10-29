@@ -32,6 +32,8 @@ public class VideoDlActivity extends Activity {
         String url, title = "解析中…", size = "", res = "";
         long expect = 0;               // 预期总字节数(视频+音频)
         volatile boolean paused = false;   // 用户请求暂停
+        volatile boolean notified = false;   // 状态栏结果通知是否已发(去重)
+        int nid;                             // 状态栏通知稳定id(= NEXT_NID 自增)
         String pid;                        // 文件匹配token(BV号/视频id)
         String runId;                      // 每次尝试唯一的进程id(库要求不复用)
         int gen = 0;                       // 代数: 暂停/停止/重开时+1, 旧线程发现换代即退出
@@ -41,6 +43,8 @@ public class VideoDlActivity extends Activity {
     }
 
     private static final ArrayList<Task> TASKS = new ArrayList<Task>();
+    private static final java.util.concurrent.atomic.AtomicInteger NEXT_NID = new java.util.concurrent.atomic.AtomicInteger(0);
+    public static java.util.List<Task> tasks() { return TASKS; }   // 供保活服务读取下载进度/状态
 
     // ---------- 任务持久化(重进不丢) ----------
     static void saveTasks(android.content.Context c) {
@@ -75,6 +79,7 @@ public class VideoDlActivity extends Activity {
                 t.err = o.optString("err", "");
                 String sv = o.optString("saved", "");
                 if (sv.length() > 0) t.saved = android.net.Uri.parse(sv);
+                t.notified = true;   // 历史已完成/失败任务不再弹状态栏通知
                 synchronized (TASKS) { TASKS.add(0, t); }
             }
         } catch (Throwable ignored) {}
@@ -263,6 +268,7 @@ public class VideoDlActivity extends Activity {
         for (Task t : TASKS) if (t.url.equals(u) && t.percent < 100 && t.percent != -2) { Toast.makeText(this, "该链接已在队列", Toast.LENGTH_SHORT).show(); return; }
         if (urlIn == null) input.setText("");
         final Task tk = new Task(); tk.url = u;
+        tk.nid = NEXT_NID.incrementAndGet();
         TASKS.add(0, tk);
         render();
         // B站 URL 规范化: m.bilibili.com -> www, 去查询参数只留 BV 号
@@ -306,6 +312,7 @@ public class VideoDlActivity extends Activity {
     }
 
     private void runTask(final Task tk) {
+        try { DlKeepService.ensure(VideoDlActivity.this); } catch (Throwable ignored) {}
         new Thread(new Runnable() { public void run() {
             try {
                 // 归一化放在这里: 短链302解析后再进 runTask 时也能生效
