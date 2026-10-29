@@ -612,7 +612,7 @@ public class HomeActivity extends Activity {
 
     private void applyTheme() {
         boolean dark = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", false);
-        findViewById(R.id.toolRoot).setBackgroundColor(dark ? 0xFF000000 : 0xFFEEF4FF);
+        findViewById(R.id.toolRoot).setBackgroundColor(0x00000000); // 胶囊悬浮透明: 背景透出页面, 不另设实色条
         // 底部胶囊导航（SmoothBottomBar 风格）
         android.view.ViewGroup root = (android.view.ViewGroup) findViewById(R.id.toolRoot);
         for (int i = root.getChildCount() - 1; i >= 0; i--) {
