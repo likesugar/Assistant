@@ -134,6 +134,7 @@ public class HomeActivity extends Activity {
             View c = toolColumn.getChildAt(i);
             if (c instanceof ScrollView) { homeScroll = (ScrollView) c; break; }
         }
+        if (homeScroll != null) homeScroll.setVerticalScrollBarEnabled(false);
         LinearLayout cardsBox = (LinearLayout) homeScroll.getChildAt(0);
         // 媒体页
         ScrollView mediaScroll = new ScrollView(this);
@@ -206,6 +207,10 @@ public class HomeActivity extends Activity {
         }
         // buildPages 晚于首跑的主题遍历, 这里补一次, 保证排盘卡跟随明暗
         applyTraversal(toolColumn, getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", false));
+        // 卡片改为左右两列
+        twoColumnify(cardsBox);
+        twoColumnify(mediaBox);
+        twoColumnify(panBox);
     }
 
     /** 排盘页卡片(以首页第一卡为标准: 28dp图标块+15sp粗标题+14dp内边距) */
@@ -438,6 +443,7 @@ public class HomeActivity extends Activity {
         if (aboutScroll == null) {
             aboutScroll = new android.widget.ScrollView(this);
             aboutScroll.setFillViewport(true);
+            aboutScroll.setVerticalScrollBarEnabled(false);
             aboutScroll.setTag("about");
             LinearLayout box = new LinearLayout(this);
             box.setOrientation(LinearLayout.VERTICAL);
@@ -504,9 +510,10 @@ public class HomeActivity extends Activity {
         if (favScroll == null) {
             favScroll = new android.widget.ScrollView(this);
             favScroll.setFillViewport(true);
+            favScroll.setVerticalScrollBarEnabled(false);
             favBox = new LinearLayout(this);
             favBox.setOrientation(LinearLayout.VERTICAL);
-            favBox.setPadding(0, (int) dp2(10), 0, (int) dp2(50)); // 底部避开胶囊
+            favBox.setPadding((int) dp2(18), (int) dp2(10), (int) dp2(18), (int) dp2(50)); // 左右留边+底部避开胶囊
             favScroll.setTag("fav");
             favScroll.addView(favBox, new FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT));
@@ -583,6 +590,60 @@ public class HomeActivity extends Activity {
             idx++;
         }
         applyTraversal(favScroll, getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", false));
+        twoColumnify(favBox);
+    }
+
+    /** 把竖直卡片容器重排为左右两列：每两卡一行，行内各占一半宽，奇数补空位保持左对齐 */
+    private void twoColumnify(LinearLayout box) {
+        if (box == null) return;
+        int n = box.getChildCount();
+        if (n == 0) return;
+        java.util.ArrayList<View> kids = new java.util.ArrayList<View>();
+        for (int i = 0; i < n; i++) kids.add(box.getChildAt(i));
+        box.removeAllViews();
+        int gap = (int) dp2(10);
+        for (int i = 0; i < kids.size(); i += 2) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(-1, -2);
+            rlp.topMargin = (i == 0) ? 0 : gap;
+            row.setLayoutParams(rlp);
+            for (int c = 0; c < 2; c++) {
+                int ki = i + c;
+                if (ki < kids.size()) {
+                    View v = kids.get(ki);
+                    LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(0, -2, 1f);
+                    if (c == 0) clp.rightMargin = gap / 2; else clp.leftMargin = gap / 2;
+                    v.setLayoutParams(clp);
+                    singleLineTitles(v);
+                    row.addView(v);
+                } else {
+                    View sp = new View(this);
+                    LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(0, 1, 1f);
+                    slp.leftMargin = gap / 2;
+                    row.addView(sp, slp);
+                }
+            }
+            box.addView(row);
+        }
+    }
+
+    /** 两列下把卡内带 weight 的标题设为单行省略，避免换行导致同行高度不齐 */
+    private void singleLineTitles(View v) {
+        if (!(v instanceof android.view.ViewGroup)) return;
+        android.view.ViewGroup g = (android.view.ViewGroup) v;
+        for (int i = 0; i < g.getChildCount(); i++) {
+            View c = g.getChildAt(i);
+            if (c instanceof TextView) {
+                android.view.ViewGroup.LayoutParams lp = c.getLayoutParams();
+                if (lp instanceof LinearLayout.LayoutParams && ((LinearLayout.LayoutParams) lp).weight > 0) {
+                    ((TextView) c).setSingleLine(true);
+                    ((TextView) c).setEllipsize(android.text.TextUtils.TruncateAt.END);
+                }
+            }
+            if (c instanceof android.view.ViewGroup) singleLineTitles(c);
+        }
     }
 
     private static final java.util.HashMap<String, String> CN_NAMES = new java.util.HashMap<String, String>() {{
