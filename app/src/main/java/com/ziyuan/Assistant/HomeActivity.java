@@ -538,46 +538,30 @@ public class HomeActivity extends Activity {
                 String[] info = CARD_INFO.get(k);
                 title = info != null ? info[0] : k;
             }
-            LinearLayout card = new LinearLayout(this);
-            card.setOrientation(LinearLayout.HORIZONTAL);
-            card.setTag("card");
-            card.setBackgroundResource(dark ? R.drawable.bg_card_md3_dark : R.drawable.bg_card_md3);
-            card.setPadding((int) dp2(16), (int) dp2(14), (int) dp2(16), (int) dp2(14));
-            if (k.startsWith("m:") || k.startsWith("h:")) card.setMinimumHeight((int) dp2(52));
-            TextView tv = new TextView(this);
-            String ico = ICONS.containsKey(k) ? ICONS.get(k) : k2icon(k);
-            tv.setText(ico + " " + title);
-            tv.setTextSize(15);
-            tv.setTypeface(null, android.graphics.Typeface.BOLD);
-            tv.setTextColor(txt);
-            tv.setTag("title");
-            card.addView(tv, new LinearLayout.LayoutParams(0, -2, 1f));
-            TextView hv = new TextView(this);
-            registerHeart(key, hv);
-            hv.setText("💖"); // 在收藏列表内必然已收藏
-            hv.setTextSize(16);
-            hv.setPadding((int) dp2(8), 0, 0, 0);
-            TapGuard.guard(hv);
-            hv.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) { toggleFav(key); }
-            });
-            card.addView(hv);
-            TapGuard.guard(card);
-            card.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    View oc = CARD_VIEWS.get(key);
-                    if (oc != null) oc.performClick(); // 直接触发原卡功能, 不跳页
-                }
-            });
+            // 与首页完全同一套卡结构: 图标 + 标题 + 右上悬浮💖。
+            // 之前收藏页 m:/h: 卡是"行内爱心", 爱心跟着标题宽度跑; makeCard 卡是"悬浮爱心"靠右,
+            // 两种混排导致爱心位置乱七八糟。现在统一走 makeCard, 爱心永远固定在同一处。
+            final View orig = CARD_VIEWS.get(key);
+            final View pc;
+            if (k.startsWith("m:") || k.startsWith("h:")) {
+                String ico = ICONS.containsKey(k) ? ICONS.get(k) : k2icon(k);
+                pc = makeCard(title, ico, key, favBox);
+            } else {
+                String[] info = CARD_INFO.get(k);
+                pc = makeCard(info != null ? info[0] : key, info != null ? info[1] : "📌", key, favBox);
+            }
+            if (orig != null) CARD_VIEWS.put(key, orig); // 功能卡仍指回首页原卡
+            if (orig != null && pc instanceof android.view.ViewGroup
+                    && ((android.view.ViewGroup) pc).getChildCount() > 0) {
+                View inner = ((android.view.ViewGroup) pc).getChildAt(0);
+                TapGuard.guard(inner);
+                inner.setOnClickListener(new View.OnClickListener() {
+                    public void onClick(View v) { orig.performClick(); } // 直接触发原卡功能, 不跳页
+                });
+            }
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
             lp.topMargin = idx == 0 ? (int) dp2(20) : (int) dp2(14);
-            if (key.startsWith("m:") || key.startsWith("h:")) {
-                favBox.addView(card, lp);
-            } else {
-                String[] info = CARD_INFO.get(key);
-                View pc = makeCard(info != null ? info[0] : key, info != null ? info[1] : "📌", key, favBox);
-                favBox.addView(pc, lp);
-            }
+            favBox.addView(pc, lp);
             idx++;
         }
         applyTraversal(favScroll, getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", false));
@@ -726,25 +710,20 @@ public class HomeActivity extends Activity {
                 if (sub) {
                     tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
                 } else {
-                    int n = visibleTextCount(s);
-                    if (n >= 4) {
-                        // 满4字: 把标题宽度锁在约4个字, 超出部分用跑马灯横向滚动(开启横向滚动才会真正滚动)
-                        // 右侧已固定留 32dp 给悬浮💖, 滚动文字不会钻到爱心下面
-                        if (lp instanceof LinearLayout.LayoutParams) {
-                            LinearLayout.LayoutParams llp = (LinearLayout.LayoutParams) lp;
-                            llp.width = -2; llp.weight = 0;
-                            if (llp.leftMargin > dp2(10)) llp.leftMargin = (int) dp2(7);
-                            tv.setLayoutParams(llp);
-                        }
-                        tv.setMaxWidth((int) dp2(64));
-                        tv.setHorizontallyScrolling(true);
-                        tv.setEllipsize(android.text.TextUtils.TruncateAt.MARQUEE);
-                        tv.setMarqueeRepeatLimit(-1);
-                        tv.setSelected(true);
-                    } else {
-                        tv.setMaxWidth(Integer.MAX_VALUE);
-                        tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                    // 所有标题统一成"4 字窗口": 4 字以内完整显示, 满 4 字起在窗口内横向滚动。
+                    // 关键: 窗口宽必须同时把 weight 置 0 —— 之前 weight=1 会覆盖 width,
+                    // TextView 仍撑满剩余空间, 5~6 个字放得下就永远不滚(还被 END 截成"资源喷")。
+                    if (lp instanceof LinearLayout.LayoutParams) {
+                        LinearLayout.LayoutParams llp = (LinearLayout.LayoutParams) lp;
+                        llp.weight = 0;
+                        llp.width = (int) Math.ceil(tv.getPaint().measureText("字字字字")) + (int) dp2(2);
+                        tv.setLayoutParams(llp);
                     }
+                    tv.setMaxWidth(Integer.MAX_VALUE);
+                    tv.setHorizontallyScrolling(true);
+                    tv.setEllipsize(android.text.TextUtils.TruncateAt.MARQUEE);
+                    tv.setMarqueeRepeatLimit(-1);
+                    tv.setSelected(true);
                 }
                 if (lp instanceof LinearLayout.LayoutParams) {
                     LinearLayout.LayoutParams llp = (LinearLayout.LayoutParams) lp;
