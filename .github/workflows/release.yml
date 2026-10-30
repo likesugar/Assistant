@@ -26,8 +26,8 @@ jobs:
       - name: Upload to Release
         uses: softprops/action-gh-release@v3.0.3
         with:
-          tag_name: v1.0
-          name: Assistant v1.0
+          tag_name: test-ijk
+          name: Assistant test-ijk (no ijk)
           files: Assistant.apk
           overwrite_files: true
         env:
