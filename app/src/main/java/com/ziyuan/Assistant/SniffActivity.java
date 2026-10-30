@@ -1620,7 +1620,7 @@ public class SniffActivity extends Activity {
         row.setPadding(16, 12, 16, 12);
         row.setBackgroundColor(0x33222244);
 
-        TextView tv = new TextView(this);
+        final TextView tv = new TextView(this);
         tv.setTextColor(0xFFFFFFFF);
         tv.setTextSize(13);
         String label = (title == null || title.length() == 0) ? "嗅探 " + (foundUrls.size()) : title;
@@ -1684,6 +1684,19 @@ public class SniffActivity extends Activity {
         if (isDy && rank == 0) genericBase = bk;  // 记住兜底那条，便于高画质到达时移除
         layoutRecords.addView(row, 0);
         dumpFc2Debug("ADD-ROW ok bk=" + bk + " rank=" + rank);
+        // M3U8Manger 识别: 嗅探到 m3u8 时解析分片数与时长, 标注到记录(他的"识别记录")
+        if (real.toLowerCase().contains(".m3u8") || real.toLowerCase().contains("playlist") || real.toLowerCase().contains("/hls/")) {
+            final String rawU = real;
+            new Thread(new Runnable() { public void run() {
+                try {
+                    M3u8Util.M3U8 m = M3u8Util.parseIndex(rawU);
+                    final String info = " · " + m.tsList.size() + "分片 · 约" + M3u8Util.fmtDur((long) m.totalSeconds);
+                    main.post(new Runnable() { public void run() {
+                        try { tv.setText(tv.getText() + info); } catch (Throwable ignored) {}
+                    }});
+                } catch (Throwable ignored) {}
+            }}).start();
+        }
     }
 
     private String genericBase = null;
@@ -1778,8 +1791,10 @@ public class SniffActivity extends Activity {
     void downloadUrl(String url) {
         try {
             String lu = url.toLowerCase();
-            if (lu.contains("127.0.0.1:8123/relay") || lu.contains(".m3u8") || lu.contains("playlist")) {
-                DlManager.startHls(url);  // HLS 流：ffmpeg 后台下载，卡片在下载页"下载"栏
+            if (lu.contains("127.0.0.1:8123/relay")) {
+                DlManager.startHls(url);  // 本地中转直播流: ffmpeg 后台下载
+            } else if (lu.contains(".m3u8") || lu.contains("playlist")) {
+                DlManager.startM3u8(url);  // M3U8Manger 方式: 纯 HTTP 解析分片+并行下载+合并
             } else {
                 DlManager.start(url);
             }
