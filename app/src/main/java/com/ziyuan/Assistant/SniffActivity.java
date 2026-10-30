@@ -1685,8 +1685,8 @@ public class SniffActivity extends Activity {
         layoutRecords.addView(row, 0);
         dumpFc2Debug("ADD-ROW ok bk=" + bk + " rank=" + rank);
         // M3U8Manger 识别: 嗅探到 m3u8 时解析分片数与时长, 标注到记录(他的"识别记录")
-        if (real.toLowerCase().contains(".m3u8") || real.toLowerCase().contains("playlist") || real.toLowerCase().contains("/hls/")) {
-            final String rawU = real;
+        if (url.toLowerCase().contains(".m3u8") || url.toLowerCase().contains("playlist") || url.toLowerCase().contains("/hls/")) {
+            final String rawU = url;
             new Thread(new Runnable() { public void run() {
                 try {
                     M3u8Util.M3U8 m = M3u8Util.parseIndex(rawU);
