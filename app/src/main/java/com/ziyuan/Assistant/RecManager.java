@@ -31,7 +31,6 @@ public class RecManager {
         int notifId;
         volatile long secs = 0;
         volatile long startTs = 0;
-        tv.danmaku.ijk.media.player.IjkMediaPlayer bgPlayer;
         com.arthenica.ffmpegkit.FFmpegSession bgSession;
         int bgGen = 0;
         volatile boolean bgCancel = false;
@@ -410,7 +409,6 @@ public class RecManager {
             recJobs.put(job.id, job);
             saveLiveRec(job);
             acquireWake();
-            startBgPlayer(job);
             startBgSession(job);
             startWatchdog(job);  // 续录重启看门狗，大小才会刷新
             return;
@@ -431,7 +429,6 @@ public class RecManager {
         RecJob live = recJobs.get(jid);
         if (live != null && live.file != null && live.file.isDirectory()) {
             stopBgSession(live);
-            stopBgPlayer(live);
             live.active = false;
             if (live.startTs > 0) {  // 结束时固化已录时长
                 live.secs += (System.currentTimeMillis() - live.startTs) / 1000;
@@ -580,7 +577,6 @@ public class RecManager {
                     }
                 }
             }
-            startBgPlayer(job);
             startBgSession(job);
             startWatchdog(job);
             } catch (Throwable e) {
@@ -630,12 +626,10 @@ public class RecManager {
                         }
                         job.state = "无流量，重试抓流 " + retry + "/2…";
                         stopBgSession(job);
-                        stopBgPlayer(job);
                         try { Thread.sleep(3000); } catch (Throwable e) { break; }
                         if (!job.active) break;
                         grace = System.currentTimeMillis() + 10000;   // 重启后重新宽限
                         job.state = null;
-                        startBgPlayer(job);
                         startBgSession(job);
                     }
                 } else { idle = 0; retry = 0; }
@@ -704,27 +698,6 @@ public class RecManager {
             null);  // 录制阶段大小走目录求和(看门狗1s采样): ffmpeg getSize 对分段封装返回0, 不可靠
     }
 
-    static void startBgPlayer(final RecJob job) {
-        stopBgPlayer(job);
-        try {
-            tv.danmaku.ijk.media.player.IjkMediaPlayer m = new tv.danmaku.ijk.media.player.IjkMediaPlayer();
-            java.util.Map<String, String> h = new java.util.HashMap<String, String>();
-            h.put("Referer", "https://live.douyin.com/");
-            h.put("User-Agent", BG_UA);
-            m.setDataSource(job.url, h);
-            m.setVolume(0f, 0f);
-            m.prepareAsync();
-            m.start();
-            job.bgPlayer = m;
-        } catch (Throwable e) { stopBgPlayer(job); }
-    }
-
-    static void stopBgPlayer(RecJob job) {
-        try { if (job.bgPlayer != null) job.bgPlayer.stop(); } catch (Throwable ignored) {}
-        try { if (job.bgPlayer != null) job.bgPlayer.release(); } catch (Throwable ignored) {}
-        job.bgPlayer = null;
-    }
-
     static void stopBgSession(RecJob job) {
         job.bgCancel = true;
         try { if (job.bgSession != null) com.arthenica.ffmpegkit.FFmpegKit.cancel(job.bgSession.getSessionId()); } catch (Throwable ignored) {}
@@ -733,7 +706,6 @@ public class RecManager {
 
     static void pauseBg(RecJob job, String why) {
         stopBgSession(job);
-        stopBgPlayer(job);
         job.active = false;
         job.paused = true;
         if (job.startTs > 0) {
