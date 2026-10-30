@@ -1639,7 +1639,11 @@ public class SniffActivity extends Activity {
             label = (ext.isEmpty() ? "嗅探" : ext) + (t2.isEmpty() ? "" : "·" + t2);
         }
         tv.setText(label);
-        tv.setSingleLine(true);
+        // 单行但截断：setSingleLine 会开启 horizontallyScrolling, 在水平 LinearLayout(weight=1) 下
+        // 会忽略宽度约束、按全文宽度测量, 长标题(尤其 m3u8 标注" · N分片 · 约MM:SS")会把右侧 ⋮ 按钮挤到屏外导致点不动。
+        // 改用 maxLines+ellipsize, 在约束宽度内省略号截断, ⋮ 始终留在屏内可点击。
+        tv.setMaxLines(1);
+        tv.setEllipsize(android.text.TextUtils.TruncateAt.END);
 
         TextView menuBtn = new TextView(this);
         menuBtn.setText("\u22EE");
@@ -1665,7 +1669,8 @@ public class SniffActivity extends Activity {
         tvUrl.setTextColor(0xFF8AB4F8);
         tvUrl.setTextSize(11);
         tvUrl.setText(url);
-        tvUrl.setSingleLine(true);
+        tvUrl.setMaxLines(1);
+        tvUrl.setEllipsize(android.text.TextUtils.TruncateAt.MIDDLE);
         row.addView(tvUrl);
         row.setTag(url);  // 画质升级后菜单/复制取最新地址
 
