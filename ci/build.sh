@@ -64,9 +64,7 @@ java -jar $V/tools/ecj.jar -source 1.8 -target 1.8 -encoding UTF-8 -proc:none -n
     app/src/main/java/com/ziyuan/Assistant/xhs/*.java \
     app/src/main/java/xyz/doikki/videoplayer/*/*.java \
     app/src/main/java/xyz/doikki/videocontroller/*.java \
-    app/src/main/java/xyz/doikki/videocontroller/component/*.java \
-    app/src/main/java/tv/danmaku/ijk/media/player/*.java \
-    app/src/main/java/tv/danmaku/ijk/media/player/*/*.java
+    app/src/main/java/xyz/doikki/videocontroller/component/*.java
 
 echo "[4/6] d8 dex..."
 find build_out/classes -name "*.class" > build_out/classlist.txt
