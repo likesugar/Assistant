@@ -55,6 +55,10 @@ public class RecordActivity extends Activity {
     private int dp2(int v) { return Math.round(v * getResources().getDisplayMetrics().density); }
 
     private static String dlInfo(DlManager.DlJob j) {
+        if (j.m3u8) {
+            // total 是分片数(非字节), 进度已在 state 里以 "下载中 12/120" 呈现
+            return "下载大小: " + fmtSize(j.doneBytes) + "\n状态: " + j.state;
+        }
         String sz = fmtSize(j.doneBytes) + (j.total > 0 && j.total > j.doneBytes ? " / " + fmtSize(j.total) : "");
         return "下载大小: " + sz + "\n状态: " + j.state;
     }
@@ -449,7 +453,7 @@ public class RecordActivity extends Activity {
 
     private void showDlMenu(View anchor, final DlManager.DlJob j) {
         PopupMenu pm = new PopupMenu(this, anchor);
-        if (j.hls) {
+        if (j.hls && !j.m3u8) {
             if (j.active) {
                 pm.getMenu().add("暂停");
                 pm.getMenu().add("结束(合并MP4)");
