@@ -16,11 +16,11 @@ import android.widget.Toast;
 import java.util.HashMap;
 import java.util.Map;
 
-import xyz.doikki.videoplayer.ijk.IjkPlayerFactory;
+import xyz.doikki.videoplayer.player.AndroidMediaPlayerFactory;
 import xyz.doikki.videoplayer.player.VideoView;
 import xyz.doikki.videocontroller.StandardVideoController;
 
-/** 单内核播放器：统一使用 IjkPlayer（FFmpeg 内核），普通 MP4 / m3u8 / flv / 抖音直播均走 Ijk */
+/** 单内核播放器：统一使用系统 MediaPlayer（AndroidMediaPlayer），零 .so 依赖，播放走系统解码器 */
 public class NativePlayerActivity extends Activity {
 
     private VideoView videoView;
@@ -67,8 +67,8 @@ public class NativePlayerActivity extends Activity {
         root.setBackgroundColor(0xFF000000);
 
         videoView = new VideoView(this);
-        // 统一使用 IjkPlayer 内核（FFmpeg），所有地址都走 Ijk，不再回退系统 MediaPlayer
-        videoView.setPlayerFactory(IjkPlayerFactory.create());
+        // 统一使用系统 MediaPlayer（AndroidMediaPlayer），不再依赖 Ijk/FFmpeg 内核
+        videoView.setPlayerFactory(AndroidMediaPlayerFactory.create());
         controller = new StandardVideoController(this);
         controller.addDefaultControlComponent(title != null ? title : "资源嗅探", url != null && url.contains(".m3u8"));
         videoView.setVideoController(controller);
