@@ -4,6 +4,7 @@ package xyz.doikki.videoplayer.player;
 
 import xyz.doikki.videoplayer.render.RenderViewFactory;
 import xyz.doikki.videoplayer.render.TextureRenderViewFactory;
+import xyz.doikki.videoplayer.ijk.IjkPlayerFactory;
 
 /**
  * 播放器全局配置
@@ -40,8 +41,8 @@ public class VideoViewConfig {
         mProgressManager = builder.mProgressManager;
         mScreenScaleType = builder.mScreenScaleType;
         if (builder.mPlayerFactory == null) {
-            //默认为AndroidMediaPlayer
-            mPlayerFactory = AndroidMediaPlayerFactory.create();
+            //默认使用 IjkPlayer（与 NativePlayerActivity 一致）
+            mPlayerFactory = IjkPlayerFactory.create();
         } else {
             mPlayerFactory = builder.mPlayerFactory;
         }
