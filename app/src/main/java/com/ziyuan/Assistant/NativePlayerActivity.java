@@ -20,17 +20,13 @@ import xyz.doikki.videoplayer.ijk.IjkPlayerFactory;
 import xyz.doikki.videoplayer.player.VideoView;
 import xyz.doikki.videocontroller.StandardVideoController;
 
-/** 双内核播放器：MediaPlayer ↔ IjkPlayer（FireflyVideo 同款内核），DK 控制层，↹ 切换 */
+/** 单内核播放器：统一使用 IjkPlayer（FFmpeg 内核），普通 MP4 / m3u8 / flv / 抖音直播均走 Ijk */
 public class NativePlayerActivity extends Activity {
-
-    private static final int KERNEL_MEDIA = 0;
-    private static final int KERNEL_IJK = 1;
 
     private VideoView videoView;
     private StandardVideoController controller;
     private String url;
     private String title;
-    private int kernel = KERNEL_MEDIA;
     private boolean backgroundPlay = false;
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -66,14 +62,13 @@ public class NativePlayerActivity extends Activity {
     void initPlayerPage(Bundle savedInstanceState) {
         url = getIntent().getStringExtra("url");
         title = getIntent().getStringExtra("title");
-        // DK 对抖音直播用 Ijk（firefly）内核：MediaPlayer 播 m3u8/flv 会报"出了点小问题"
-        kernel = (url != null && (url.contains("douyin") || url.contains(".m3u8") || url.contains(".flv")))
-                ? KERNEL_IJK : KERNEL_MEDIA;
 
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(0xFF000000);
 
         videoView = new VideoView(this);
+        // 统一使用 IjkPlayer 内核（FFmpeg），所有地址都走 Ijk，不再回退系统 MediaPlayer
+        videoView.setPlayerFactory(IjkPlayerFactory.create());
         controller = new StandardVideoController(this);
         controller.addDefaultControlComponent(title != null ? title : "资源嗅探", url != null && url.contains(".m3u8"));
         videoView.setVideoController(controller);
@@ -94,19 +89,10 @@ public class NativePlayerActivity extends Activity {
             finish();
             return;
         }
-        applyKernel();
         videoView.setUrl(url, douyinHeaders());
         videoView.start();
         showPlayNote();
 
-    }
-
-    void applyKernel() {
-        if (kernel == KERNEL_IJK) {
-            videoView.setPlayerFactory(IjkPlayerFactory.create());
-        } else {
-            videoView.setPlayerFactory(xyz.doikki.videoplayer.player.AndroidMediaPlayerFactory.create());
-        }
     }
 
     // ---------- 播放通知 ----------
@@ -121,7 +107,7 @@ public class NativePlayerActivity extends Activity {
                     ? new android.app.Notification.Builder(this, "xgj_player")
                     : new android.app.Notification.Builder(this);
             Intent back = new Intent(this, NativePlayerActivity.class)
-                    .putExtra("url", url).putExtra("title", title).putExtra("kernel", kernel);
+                    .putExtra("url", url).putExtra("title", title);
             b.setSmallIcon(android.R.drawable.ic_media_play)
              .setContentTitle(title != null && !title.isEmpty() ? title : "正在播放")
              .setOngoing(true).setOnlyAlertOnce(true).setShowWhen(false)
@@ -139,16 +125,6 @@ public class NativePlayerActivity extends Activity {
     void toggleBackgroundPlay() {
         backgroundPlay = !backgroundPlay;
         if (controller != null) controller.setBackgroundPlaySelected(backgroundPlay);
-    }
-
-    void toggleKernel() {
-        try { videoView.release(); } catch (Throwable e) { }
-        kernel = (kernel == KERNEL_MEDIA) ? KERNEL_IJK : KERNEL_MEDIA;
-        applyKernel();
-        videoView.setUrl(url, douyinHeaders());
-        videoView.start();
-        showPlayNote();
-        Toast.makeText(this, kernel == KERNEL_IJK ? "已切换：IjkPlayer 内核" : "已切换：MediaPlayer 内核", Toast.LENGTH_SHORT).show();
     }
 
     Map<String, String> douyinHeaders() {
