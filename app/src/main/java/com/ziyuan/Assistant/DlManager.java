@@ -17,6 +17,7 @@ public class DlManager {
         public volatile boolean done = false;
         public volatile boolean failed = false;
         public volatile boolean hls = false;   // HLS 分段下载模式
+        public volatile boolean m3u8 = false;  // M3U8Manger 纯 HTTP 下载方式(解析+并行ts+合并)
         public volatile long total = -1;
         public volatile long doneBytes = 0;
         public volatile String state = "连接中…";
@@ -27,6 +28,8 @@ public class DlManager {
     private static final ConcurrentHashMap<Integer, DlJob> JOBS = new ConcurrentHashMap<Integer, DlJob>();
     private static final ConcurrentHashMap<Integer, com.arthenica.ffmpegkit.FFmpegSession> HLS_SESS =
         new java.util.concurrent.ConcurrentHashMap<Integer, com.arthenica.ffmpegkit.FFmpegSession>();
+    private static final ConcurrentHashMap<Integer, M3u8Util.CancelToken> M3U8_TOKENS =
+        new java.util.concurrent.ConcurrentHashMap<Integer, M3u8Util.CancelToken>();
     private static final AtomicInteger SEQ = new AtomicInteger(0);
     private static Context sCtx;
 
@@ -36,7 +39,8 @@ public class DlManager {
 
     public static void start(String url) {
         String lu = url.toLowerCase();
-        if (lu.contains("127.0.0.1:8123/relay") || lu.contains(".m3u8") || lu.contains("playlist")) startHls(url);
+        if (lu.contains("127.0.0.1:8123/relay")) startHls(url);
+        else if (lu.contains(".m3u8") || lu.contains("playlist")) startM3u8(url);  // M3U8Manger 方式: 解析+并行ts+合并
         else startDirect(url);
     }
 
@@ -70,6 +74,71 @@ public class DlManager {
         try { DownloadService.start(sCtx); } catch (Throwable ignored) {}
         DlKeepService.ensure(sCtx);
         launchSegmentFfmpeg(j);
+    }
+
+    /** M3U8Manger 下载方式: 纯 HTTP 解析 m3u8(识别分片) + 并行下载全部 ts + 合并, 无需 ffmpeg */
+    public static void startM3u8(String url) {
+        final DlJob j = new DlJob();
+        j.id = SEQ.incrementAndGet();
+        j.url = url;
+        j.title = "M3U8_" + System.currentTimeMillis() / 1000;
+        j.hls = true;
+        j.m3u8 = true;
+        j.file = new java.io.File(sCtx.getExternalFilesDir(null), "下载/m3u8_" + j.id + ".ts");
+        try { j.file.getParentFile().mkdirs(); } catch (Throwable ignored) {}
+        final M3u8Util.CancelToken token = new M3u8Util.CancelToken();
+        M3U8_TOKENS.put(j.id, token);
+        JOBS.put(j.id, j);
+        try { DownloadService.start(sCtx); } catch (Throwable ignored) {}
+        DlKeepService.ensure(sCtx);
+        j.active = true;
+        j.state = "解析中…";
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+                    M3u8Util.M3U8 m = M3u8Util.parseIndex(url);  // 识别
+                    if (token.cancelled) { cleanupM3u8(j); return; }
+                    j.total = m.tsList.size();
+                    M3u8Util.download(m, j.file, new M3u8Util.Listener() {
+                        public void onStart() { j.active = true; j.state = "下载中"; }
+                        public void onProgress(int done, int total, long db, long tb) {
+                            if (token.cancelled) return;
+                            j.doneBytes = db; j.total = total; j.active = true;
+                            j.state = "下载中 " + done + "/" + total;
+                        }
+                        public void onCompleted(java.io.File o) {
+                            boolean ok = insertGallery(j);
+                            HistoryStore.add(sCtx, "视频", j.title, "file://" + o.getAbsolutePath());
+                            j.doneBytes = o.length();
+                            j.done = true; j.active = false; j.paused = false;
+                            j.state = ok ? "已完成(视频栏)" : "完成(未入相册)";
+                            M3U8_TOKENS.remove(j.id);
+                        }
+                        public void onError(Throwable e) {
+                            if (token.cancelled) { cleanupM3u8(j); return; }
+                            j.failed = true; j.active = false;
+                            j.state = "下载失败: " + e.getClass().getSimpleName();
+                            M3U8_TOKENS.remove(j.id);
+                        }
+                    }, token);
+                } catch (Throwable e) {
+                    if (token.cancelled) { cleanupM3u8(j); return; }
+                    j.failed = true; j.active = false;
+                    j.state = "解析失败: " + e.getClass().getSimpleName();
+                    M3U8_TOKENS.remove(j.id);
+                }
+            }
+        }).start();
+    }
+
+    private static void cleanupM3u8(DlJob j) {
+        try {
+            java.io.File tmp = new java.io.File(j.file.getAbsolutePath() + ".parts");
+            if (tmp.isDirectory()) { java.io.File[] fs = tmp.listFiles(); if (fs != null) for (java.io.File f : fs) f.delete(); }
+            tmp.delete();
+        } catch (Throwable ignored) {}
+        j.active = false;
+        M3U8_TOKENS.remove(j.id);
     }
 
     private static void launchSegmentFfmpeg(final DlJob j) {
@@ -263,6 +332,8 @@ public class DlManager {
         JOBS.remove(id);
         com.arthenica.ffmpegkit.FFmpegSession hs = HLS_SESS.remove(id);
         if (hs != null) { try { com.arthenica.ffmpegkit.FFmpegKit.cancel(hs.getSessionId()); } catch (Throwable ignored) {} }
+        M3u8Util.CancelToken mt = M3U8_TOKENS.remove(id);
+        if (mt != null) mt.cancelled = true;   // 中止 M3U8Manger 方式的并行下载
         try { if (j.file != null) {
             if (j.file.isDirectory()) { for (java.io.File f : j.file.listFiles()) f.delete(); }
             j.file.delete();
