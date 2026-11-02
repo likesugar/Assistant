@@ -107,6 +107,8 @@ public class NativePlayerActivity extends Activity {
             finish();
             return;
         }
+        // 旧地址过期(403)时热替换为同一路直播的最新地址
+        try { String f = Or4Helper.freshFor(url); if (f != null) url = f; } catch (Throwable ignored) {}
         videoView.setUrl(url, douyinHeaders());
         videoView.start();
         // 倍速在准备完成后才真正生效（BaseVideoView.setSpeed 仅在播放态生效）

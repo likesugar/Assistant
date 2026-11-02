@@ -989,6 +989,8 @@ public class SniffActivity extends Activity {
         // 只有抖音系域名才走抖音候选；任意站的 m3u8 不再截胡（走通用嗅探，标签带 m3u8 前缀）
         boolean dyHost = l.contains("douyin") || l.contains("amemv") || l.contains("douyincdn");
         if (dyHost && (bareLive || anyM3u8)) {
+            // 登记新鲜地址：录制重试/播放启动时 freshFor 热替换过期地址(防403)
+            try { Or4Helper.handle(url); } catch (Throwable ignored) {}
             if (anyM3u8 && l.contains("_sd.")) return; // 标清不进记录
             final String f = base;
             boolean added = false;
