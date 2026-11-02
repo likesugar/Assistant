@@ -704,8 +704,23 @@ public class RecManager {
                     } catch (Throwable ignored) {}
                     if (gen != job.bgGen || job.bgCancel) return;  // 旧会话/已暂停：直接作废
                     if (job.active) {
-                        try { Thread.sleep(1000); } catch (Throwable e) { }
-                        if (job.active && gen == job.bgGen) startBgSession(job);  // 断流自动重连续录
+                        // 旧地址必已过期(sign 几分钟时效)：盲目重试只会每秒 403。
+                        // 等待嗅探页面登记的新鲜地址(每2s查一次)，等到才续录；最多等3分钟。
+                        String nu = null;
+                        for (int i = 0; i < 90 && job.active && gen == job.bgGen && !job.bgCancel; i++) {
+                            nu = Or4Helper.freshFor(job.url);
+                            if (nu != null) break;
+                            try { job.state = "等待新流地址 · " + (i * 2) + "s（回到直播间页面可加快）"; } catch (Throwable ignored) {}
+                            try { Thread.sleep(2000L); } catch (Throwable e) { return; }
+                        }
+                        if (!job.active || gen != job.bgGen || job.bgCancel) return;
+                        if (nu != null) {
+                            job.url = nu;
+                            job.state = null;
+                            startBgSession(job);   // 用新鲜地址续录
+                        } else {
+                            pauseBg(job, "3分钟未等到新流地址，已暂停(可回直播间后点继续)");
+                        }
                     }
                 }
             },
