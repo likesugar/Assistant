@@ -53,13 +53,11 @@ public class RecKeepService extends Service {
             }
             NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             if (busy) {
-                Notification b = buildNote("录制中 · " + n + " 路 · " + sizeStr(total));
+                Notification.Builder nb = noteBuilder("录制中 · " + n + " 路 · " + sizeStr(total));
                 try {
-                    android.app.Notification.BigTextStyle bs = new android.app.Notification.BigTextStyle(b);
-                    bs.bigText(sb.toString().trim());
-                    b = bs.build();
+                    nb.setStyle(new android.app.Notification.BigTextStyle().bigText(sb.toString().trim()));
                 } catch (Throwable ignored) {}
-                nm.notify(21001, b);
+                nm.notify(21001, nb.build());
             }
         } catch (Throwable ignored) {}
         if (busy) {
@@ -88,6 +86,10 @@ public class RecKeepService extends Service {
     }
 
     private Notification buildNote(String s) {
+        return noteBuilder(s).build();
+    }
+
+    private Notification.Builder noteBuilder(String s) {
         Notification.Builder b = android.os.Build.VERSION.SDK_INT >= 26
                 ? new Notification.Builder(this, CH_P)
                 : new Notification.Builder(this);
@@ -98,7 +100,7 @@ public class RecKeepService extends Service {
          .setContentIntent(android.app.PendingIntent.getActivity(this, 0,
              new Intent(this, HomeActivity.class),
              android.app.PendingIntent.FLAG_UPDATE_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE));
-        return b.build();
+        return b;
     }
 
     @Override
