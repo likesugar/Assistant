@@ -439,6 +439,7 @@ public class RecManager {
     /** 结束录制：合并转封装成 mp4（后台执行），完成后从列表移除 */
     public static void recFinish(int jid) {
         RecJob live = recJobs.get(jid);
+        if (live != null && "合并视频".equals(live.state)) return;  // 合并中: 防 apply/看门狗重复触发
         if (live != null && live.file != null && live.file.isDirectory()) {
             stopBgSession(live);
             stopBgPlayer(live);
@@ -714,22 +715,32 @@ public class RecManager {
                     } catch (Throwable ignored) {}
                     if (gen != job.bgGen || job.bgCancel) return;  // 旧会话/已暂停：直接作废
                     if (job.active) {
-                        // 旧地址必已过期(sign 几分钟时效)：盲目重试只会每秒 403。
-                        // 等待嗅探页面登记的新鲜地址(每2s查一次)，等到才续录；最多等3分钟。
-                        String nu = null;
-                        for (int i = 0; i < 90 && job.active && gen == job.bgGen && !job.bgCancel; i++) {
-                            nu = Or4Helper.freshFor(job.url);
-                            if (nu != null) break;
-                            try { job.state = "等待新流地址 · " + (i * 2) + "s（回到直播间页面可加快）"; } catch (Throwable ignored) {}
-                            try { Thread.sleep(2000L); } catch (Throwable e) { return; }
+                        // 流已断开：用嗅探页面登记的新鲜地址续录，最多尝试 2 次。
+                        // 每次最多等约 6s 查新鲜地址；2 次都抓不到 → 把已录片段合并成视频并结束。
+                        boolean resumed = false;
+                        for (int attempt = 1; attempt <= 2 && job.active && gen == job.bgGen && !job.bgCancel; attempt++) {
+                            String nu = null;
+                            for (int i = 0; i < 3 && job.active && gen == job.bgGen && !job.bgCancel; i++) {
+                                nu = Or4Helper.freshFor(job.url);
+                                if (nu != null) break;
+                                try { job.state = "流已断开，重连 " + attempt + "/2…"; } catch (Throwable ignored) {}
+                                try { Thread.sleep(2000L); } catch (Throwable e) { return; }
+                            }
+                            if (nu != null) {
+                                job.url = nu;
+                                job.state = null;
+                                startBgSession(job);   // 用新鲜地址续录
+                                resumed = true;
+                                break;
+                            }
                         }
-                        if (!job.active || gen != job.bgGen || job.bgCancel) return;
-                        if (nu != null) {
-                            job.url = nu;
-                            job.state = null;
-                            startBgSession(job);   // 用新鲜地址续录
+                        if (resumed || !job.active || gen != job.bgGen || job.bgCancel) return;
+                        // 2 次重连都抓不到新流：已录片段合并成视频（out.mp4），不再无限等待
+                        if (dirTotal(job) > 0) {
+                            job.state = "重试2次未抓到，合并已录片段";
+                            recFinish(job.id);
                         } else {
-                            pauseBg(job, "3分钟未等到新流地址，已暂停(可回直播间后点继续)");
+                            pauseBg(job, "重试2次未抓到新流地址，且无已录数据（可回直播间后点继续）");
                         }
                     }
                 }
