@@ -40,6 +40,7 @@
             <meta-data android:name="android.accessibilityservice" android:resource="@xml/tapper_config"/>
         </service>
         <service android:name=".DownloadService" android:exported="false" android:foregroundServiceType="dataSync"/>
+        <service android:name=".RecKeepService" android:exported="false" android:foregroundServiceType="dataSync"/>
         <service android:name=".DynaService" android:exported="false" android:foregroundServiceType="dataSync"/>
         <activity android:name=".CalendarActivity" android:exported="false"/>
         <activity android:name=".RecordActivity" android:exported="false"/>
