@@ -115,7 +115,12 @@ public class RecManager {
     public static volatile String lastStreamUrl = null;
 
     private static void acquireWake() {
-        try { DownloadService.start(sCtx); } catch (Throwable ignored) {}
+        // 仅在有活跃下载任务时启动下载前台服务，避免录制时多出一条重复通知
+        try {
+            for (DlManager.DlJob dj : DlManager.jobs()) {
+                if (dj != null && !dj.done && !dj.failed && dj.active) { DownloadService.start(sCtx); break; }
+            }
+        } catch (Throwable ignored) {}
         // 录制通知栏/状态栏前台服务（服务内空闲自停）
         try {
             android.content.Intent ni = new android.content.Intent(sCtx, RecKeepService.class);
