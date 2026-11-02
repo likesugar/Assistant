@@ -23,16 +23,15 @@
            .replace(/\\u003F/gi, '?')
            .replace(/\\\//g, '/')
            .replace(/&amp;/g, '&');
-      var re = /https?:\/\/[^"'\\\s<>]+?\.(?:flv|m3u8)[^"'\\\s<>]*/g, m, n = 0, or4 = 0;
+      var re = /https?:\/\/[^"'\\\s<>]+?\.(?:flv|m3u8)[^"'\\\s<>]*/g, m, n = 0;
       while ((m = re.exec(h)) !== null && n < 40) {
         var u = m[0];
         if (u.indexOf('_sd') >= 0 || u.indexOf('_ld') >= 0) continue;
-        if (u.indexOf('_or4') >= 0) or4++;
         push(u);
         n++;
       }
-      // 已拿到原画就停扫，避免长跑占 CPU
-      if (or4 > 0 && timer) { clearInterval(timer); timer = null; }
+      // 不停扫：页面播放器会不断续期流地址(sign 几分钟过期)，
+      // 持续上报让 Or4Helper 一直持有最新地址，录制/播放热替换才有效
     } catch (e) {}
   }
 
