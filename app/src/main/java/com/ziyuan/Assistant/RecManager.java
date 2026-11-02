@@ -272,7 +272,7 @@ public class RecManager {
                                 String pick = null;
                                 for (String v : variants) if (v.contains("_or4")) { pick = v; break; }
                                 if (pick == null) {
-                                    job.state = "兜底画质, 等待原画(2s刷新)…";
+                                    job.state = "等待原画(2s刷新)…";
                                     if (job.finishNow) break;
                                     Thread.sleep(2000);
                                     continue;
@@ -568,7 +568,7 @@ public class RecManager {
                             job.state = null;
                             break;
                         }
-                        job.state = "兜底画质, 等待原画(2s刷新)…";
+                        job.state = "等待原画(2s刷新)…";
                         if (job.finishNow) break;
                         Thread.sleep(2000);
                         waits++;
