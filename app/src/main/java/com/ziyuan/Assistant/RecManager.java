@@ -667,6 +667,8 @@ public class RecManager {
     }
 
     static void startBgSession(final RecJob job) {
+        // 旧地址过期(403)时热替换为同一路直播的最新地址
+        try { String f = Or4Helper.freshFor(job.url); if (f != null) job.url = f; } catch (Throwable ignored) {}
         final int gen = ++job.bgGen;
         job.bgCancel = false;
         // 续录：分段号接着已有 seg 继续编，避免覆盖旧分段
@@ -705,6 +707,8 @@ public class RecManager {
     }
 
     static void startBgPlayer(final RecJob job) {
+        // 旧地址过期(403)时热替换为同一路直播的最新地址
+        try { String f = Or4Helper.freshFor(job.url); if (f != null) job.url = f; } catch (Throwable ignored) {}
         stopBgPlayer(job);
         try {
             tv.danmaku.ijk.media.player.IjkMediaPlayer m = new tv.danmaku.ijk.media.player.IjkMediaPlayer();
