@@ -65,7 +65,6 @@ public class DownloadService extends Service {
         int n = 0;
         long done = 0, total = 0;
         String first = null;
-        String recState = null;
         try {
             for (DlManager.DlJob j : DlManager.jobs()) {
                 if (j.done || j.failed || !j.active) continue;
@@ -73,12 +72,7 @@ public class DownloadService extends Service {
                 if (first == null) first = j.title != null ? j.title : ("下载#" + j.id);
                 if (j.total > 0) { total += j.total; done += Math.min(j.doneBytes, j.total); }
             }
-            for (RecManager.RecJob j : RecManager.recJobs.values()) {
-                if (!j.active) continue;
-                n++;
-                if (j.state != null) recState = j.state;
-                if (first == null) first = (j.name != null ? j.name : ("录制#" + j.id));
-            }
+            // 录制通知统一由 RecKeepService 负责，这里只统计下载任务，避免两条重复通知
         } catch (Throwable ignored) {}
         if (n == 0) return false;
         NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -95,11 +89,11 @@ public class DownloadService extends Service {
              .setProgress(100, pc, false);
         } else if (n == 1) {
             b.setContentTitle(first)
-             .setContentText(recState != null ? recState : "进行中…")
-             .setProgress(0, 0, recState == null);
+             .setContentText("进行中…")
+             .setProgress(0, 0, true);
         } else {
             b.setContentTitle("下载 " + n + " 个任务")
-             .setContentText(recState != null ? recState : "进行中…")
+             .setContentText("进行中…")
              .setProgress(0, 0, true);
         }
         try { nm.notify(47001, b.build()); } catch (Throwable ignored) {}
