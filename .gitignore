@@ -1,2 +1,6 @@
 build_out/
 Assistant.apk
+
+*.idsig
+*.apk
+*.apk.idsig
