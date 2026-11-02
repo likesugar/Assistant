@@ -157,6 +157,16 @@ public class SniffActivity extends Activity {
             }
 
             @android.webkit.JavascriptInterface
+            public void onDyUrl(String u) {
+                // dygrab.js 在页面上下文扫到的抖音直播流地址（可能是转义过的）
+                if (u == null || u.length() < 12) return;
+                String url = u.replace("\\u002F", "/").replace("\\/", "/")
+                        .replace("\\u0026", "&").replace("\\u003D", "=").replace("\\u003d", "=");
+                final String fu = url;
+                main.post(new Runnable() { public void run() { dyAccept(fu); } });
+            }
+
+            @android.webkit.JavascriptInterface
             public void onHlsJson(String data) {
                 if (data == null || !data.contains("url")) return;
                 String best = null; int bestMode = -1;
@@ -541,6 +551,9 @@ public class SniffActivity extends Activity {
                         }
                         douyinLiveUrl = fu;
                         douyinParsing = true;
+                        // 主路径：页面内扫 DOM（抖音 PC 页走 WebSocket 传流，请求拦截抓不到）
+                        main.postDelayed(new Runnable() { public void run() { injectDyGrabber(); } }, 800);
+                        // 低频兜底：直接拉 HTML 解析 stream_url（可能被验证页拦，仅作补充）
                         main.postDelayed(new Runnable() { public void run() {
                             douyinLiveExtract(fu, CookieManager.getInstance().getCookie("https://live.douyin.com"));
                         }}, 3000);
@@ -1033,6 +1046,7 @@ public class SniffActivity extends Activity {
                 for (String u : douyinCands) if (u.contains("_or4") || u.contains("_uhd") || u.contains("_hd")) { hasQuality = true; break; }
             }
             if (!hasQuality && douyinLiveUrl != null) {
+                injectDyGrabber();  // 主路径重注入：页面可能已换流/被验证页拦过
                 douyinLiveExtract(douyinLiveUrl, CookieManager.getInstance().getCookie("https://live.douyin.com"));
             }
             if (hasQuality && douyinPickScheduled) return;  // 已拿到画质流，停止看门狗
@@ -1256,6 +1270,28 @@ public class SniffActivity extends Activity {
                     if (!douyinCands.contains(best)) douyinCands.add(best);
                 }
             }
+        } catch (Throwable ignored) {}
+    }
+
+    /** 页面内注入 dygrab.js：直接扫抖音真实 DOM 拿直播流地址（不经 HttpURLConnection，避免验证页） */
+    void injectDyGrabber() {
+        try {
+            String js = readAsset("dygrab.js");
+            if (js == null || js.length() < 50) return;
+            try { webView.evaluateJavascript("(function(){window.__dyGrab=0;})();", null); } catch (Throwable ignored) {}
+            webView.evaluateJavascript(js, null);
+        } catch (Throwable ignored) {}
+    }
+
+    /** 收下 dygrab.js 上报的流地址（带画质兜底，谁先到谁进记录） */
+    void dyAccept(String u) {
+        try {
+            if (u == null || u.length() < 12) return;
+            if (recordKeys.add("dy#" + u)) {
+                addRecord(u, "抖音·" + douyinQuality(u));
+                if (!isRecordsVisible) toggleRecords();
+            }
+            douyinParsing = false;
         } catch (Throwable ignored) {}
     }
 
