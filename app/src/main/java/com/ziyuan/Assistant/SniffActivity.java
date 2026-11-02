@@ -1287,6 +1287,7 @@ public class SniffActivity extends Activity {
     void dyAccept(String u) {
         try {
             if (u == null || u.length() < 12) return;
+            try { Or4Helper.handle(u); } catch (Throwable ignored) {}  // 登记新鲜地址供 403 热替换
             if (recordKeys.add("dy#" + u)) {
                 addRecord(u, "抖音·" + douyinQuality(u));
                 if (!isRecordsVisible) toggleRecords();
