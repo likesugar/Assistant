@@ -116,6 +116,11 @@ public class RecManager {
 
     private static void acquireWake() {
         try { DownloadService.start(sCtx); } catch (Throwable ignored) {}
+        // 录制通知栏/状态栏前台服务（服务内空闲自停）
+        try {
+            android.content.Intent ni = new android.content.Intent(sCtx, RecKeepService.class);
+            if (android.os.Build.VERSION.SDK_INT >= 26) sCtx.startForegroundService(ni); else sCtx.startService(ni);
+        } catch (Throwable ignored) {}
         try {
             if (recWake == null && sCtx != null) {
                 android.os.PowerManager pm = (android.os.PowerManager) sCtx.getSystemService(Context.POWER_SERVICE);
