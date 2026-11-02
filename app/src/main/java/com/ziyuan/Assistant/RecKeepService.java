@@ -38,13 +38,9 @@ public class RecKeepService extends Service {
         boolean busy = false;
         try {
             StringBuilder sb = new StringBuilder();
-            int n = 0;
-            long total = 0;
             for (RecManager.RecJob j : RecManager.recJobs.values()) {
                 if (j == null) continue;
                 busy = true;
-                n++;
-                total += j.bytes;
                 String st = j.state != null ? j.state : "录制中";
                 sb.append("• ").append(j.name != null ? j.name : "录制任务")
                   .append("  ").append(fmtDur(curSecs(j)))
@@ -53,7 +49,7 @@ public class RecKeepService extends Service {
             }
             NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             if (busy) {
-                Notification.Builder nb = noteBuilder("录制中 · " + n + " 路 · " + sizeStr(total));
+                Notification.Builder nb = noteBuilder("录制进行中");
                 try {
                     nb.setStyle(new android.app.Notification.BigTextStyle().bigText(sb.toString().trim()));
                 } catch (Throwable ignored) {}
