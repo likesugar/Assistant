@@ -1615,6 +1615,8 @@ public class SniffActivity extends Activity {
     void addRecord(final String url, String title) {
         // 流畅/极速不显示
         if (title != null && title.contains("抖音") && (url.contains("_ld.") || url.contains("_md."))) return;
+        // 抖音直播只显示原画(_or4)：蓝光/高清/标清等一律不进记录（所有路径统一在此过滤）
+        if (url != null && url.contains("douyincdn") && url.contains("/stage/") && !url.contains("_or4")) return;
         try {
             String real = url;
             if (real.startsWith("http://127.0.0.1:8123/relay?u=")) {
