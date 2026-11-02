@@ -1028,7 +1028,7 @@ public class SniffActivity extends Activity {
             if (!douyinParsing) return;
             boolean hasQuality = false;
             synchronized (douyinCands) {
-                for (String u : douyinCands) if (u.contains("_or4")) { hasQuality = true; break; }
+                for (String u : douyinCands) if (u.contains("_or4") || u.contains("_uhd") || u.contains("_hd")) { hasQuality = true; break; }
             }
             if (!hasQuality && douyinLiveUrl != null) {
                 douyinLiveExtract(douyinLiveUrl, CookieManager.getInstance().getCookie("https://live.douyin.com"));
@@ -1171,7 +1171,7 @@ public class SniffActivity extends Activity {
         main.postDelayed(douyinWatchdog, 1000);
     }
 
-    /** 候选只收原画(_or4)入记录：蓝光/高清/兜底画质一律不收 */
+    /** 候选全部入记录（带画质标签），不再只挑一条 */
     void finishDouyinPick() {
         java.util.List<String> snapshot;
         synchronized (douyinCands) { snapshot = new java.util.ArrayList<String>(douyinCands); }
@@ -1192,7 +1192,6 @@ public class SniffActivity extends Activity {
         String pgTitle = "";
         try { pgTitle = webView.getTitle(); } catch (Throwable e) { }
         for (final String u : snapshot) {
-            if (!u.contains("_or4")) continue;   // 直播只留原画
             if (recordKeys.add("dy#" + u)) {
                 added = true;
                 final String q = douyinQuality(u);
@@ -1302,8 +1301,28 @@ public class SniffActivity extends Activity {
                 }
                 // 统一解码转义后再匹配
                 html = html.replace("\\u0026", "&").replace("\\u002F", "/").replace("\\/", "/").replace("\\u003D", "=");
-                // 直播兜底已移除：只认原画(_or4)，蓝光/高清/通用直链不再入记录
-                failDouyin("未取到原画(_or4)地址 html=" + html.length());
+                // 兜底：页面里任意 m3u8/flv 直链
+                String[] gens = {
+                    "https?:[^\\s\"'<>]*?\\.m3u8[^\\s\"'<>]*",
+                    "https?:[^\\s\"'<>]*?\\.flv[^\\s\"'<>]*"
+                };
+                for (String gp : gens) {
+                    java.util.regex.Matcher gm = java.util.regex.Pattern.compile(gp).matcher(html);
+                    if (gm.find()) {
+                        String u = gm.group(0).replace("\\u002F", "/").replace("\\/", "/");
+                        u = u.replaceAll("^[\"'\\[<]+", "").replaceAll("[\"'\\]>.,;)]+$", "");
+                        final String fu = u;
+                        main.post(new Runnable() { public void run() {
+                            if (recordKeys.add("dy#" + fu)) {
+                                addRecord(fu, "抖音·直播(兜底)");
+                                if (!isRecordsVisible) toggleRecords();
+                            }
+                            douyinParsing = false;
+                        }});
+                        return;
+                    }
+                }
+                failDouyin("各清晰度都没取到流地址 html=" + html.length());
             } catch (Throwable e) {
                 failDouyin("解析异常:" + e.getMessage());
             }
@@ -1590,8 +1609,12 @@ public class SniffActivity extends Activity {
             return;
         }
         boolean isDy = (title != null && title.contains("抖音")) || url.contains("douyin");
-        // 直播只保留原画(_or4)：蓝光/高清/通用直链等兜底画质一律丢弃
-        if (isDy && rank < 3) { dumpFc2Debug("ADD SKIP non-or4 dy rank=" + rank); return; }
+        // 兜底直链（无画质后缀）与带后缀的流并存时，只留带后缀的
+        if (isDy && rank == 0 && hasHigherRank()) return;
+        if (isDy && rank == 0 && genericBase != null) return;  // 兜底只留一条(兜底/直播不重复)
+        if (isDy && rank > 0 && genericBase != null && recByBase.containsKey(genericBase)) {
+            dropRecord(genericBase);  // 高画质到了，删掉兜底那条
+        }
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.VERTICAL);
         row.setPadding(16, 12, 16, 12);
@@ -1663,6 +1686,7 @@ public class SniffActivity extends Activity {
         });
 
         recByBase.put(bk, new Object[]{rank, url, tv, tvUrl});
+        if (isDy && rank == 0) genericBase = bk;  // 记住兜底那条，便于高画质到达时移除
         layoutRecords.addView(row, 0);
         dumpFc2Debug("ADD-ROW ok bk=" + bk + " rank=" + rank);
         // M3U8Manger 识别: 嗅探到 m3u8 时解析分片数与时长, 标注到记录(他的"识别记录")
@@ -1679,6 +1703,8 @@ public class SniffActivity extends Activity {
             }}).start();
         }
     }
+
+    private String genericBase = null;
 
     // ↻ 连续刷新：1秒一次，直到刷出带画质后缀(原画/蓝光/高清)的流；按钮变"停"，再点停止
     private boolean autoRefreshing = false;
@@ -1701,6 +1727,16 @@ public class SniffActivity extends Activity {
     private boolean hasHigherRank() {
         for (Object[] v : recByBase.values()) if ((Integer) v[0] > 0) return true;
         return false;
+    }
+
+    private void dropRecord(String bk) {
+        Object[] v = recByBase.remove(bk);
+        if (v != null && v[3] != null) {
+            TextView tvU = (TextView) v[3];
+            Object p = tvU.getParent();
+            if (p instanceof ViewGroup) ((ViewGroup) p).removeView(tvU); // tvUrl的父即整行
+        }
+        genericBase = null;
     }
 
     void showRecordMenu(final View anchor, final String url, final LinearLayout row) {
