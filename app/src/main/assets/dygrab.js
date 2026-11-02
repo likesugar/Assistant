@@ -15,6 +15,14 @@
     try {
       var h = document.documentElement ? document.documentElement.innerHTML : '';
       if (!h || h.length < 200) return;
+      // 归一化：先还原 JSON/HTML 转义，否则正则在 \u0026(&) 处截断，
+      // sign 等签名参数全丢，地址必然 403
+      h = h.replace(/\\u002F/gi, '/')
+           .replace(/\\u0026/gi, '&')
+           .replace(/\\u003D/gi, '=')
+           .replace(/\\u003F/gi, '?')
+           .replace(/\\\//g, '/')
+           .replace(/&amp;/g, '&');
       var re = /https?:\/\/[^"'\\\s<>]+?\.(?:flv|m3u8)[^"'\\\s<>]*/g, m, n = 0, or4 = 0;
       while ((m = re.exec(h)) !== null && n < 40) {
         var u = m[0];
