@@ -33,7 +33,7 @@ public final class Or4Helper {
             String f = sFreshUrl;
             if (old == null || f == null || f.length() < 20) return null;
             long age = System.currentTimeMillis() - sFreshMs;
-            if (age < 0 || age > 20000L) return null;
+            if (age < 0 || age > 120000L) return null;  // 2分钟内登记的地址都可信(sign 几分钟时效)
             String a = streamId(old);
             if (a == null || !a.equals(streamId(f))) return null;
             if (f.equals(old)) return null;

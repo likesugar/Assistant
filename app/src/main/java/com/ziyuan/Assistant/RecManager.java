@@ -694,6 +694,13 @@ public class RecManager {
                         String logs = st.getAllLogsAsString();
                         dump("BG sess rc=" + st.getReturnCode() + " state=" + st.getState()
                             + " tail=" + (logs.length() > 600 ? logs.substring(logs.length() - 600) : logs));
+                        if (st.getReturnCode() != null && st.getReturnCode().getValue() != 0) {
+                            // 失败原因直接亮到任务状态上(如 HTTP 403)，不再只闷在诊断文件里
+                            String[] ls = logs.trim().split("\n");
+                            String last = ls.length > 0 ? ls[ls.length - 1].trim() : "";
+                            if (last.length() > 80) last = last.substring(0, 80);
+                            job.state = "拉流失败自动重连 · " + last;
+                        }
                     } catch (Throwable ignored) {}
                     if (gen != job.bgGen || job.bgCancel) return;  // 旧会话/已暂停：直接作废
                     if (job.active) {
