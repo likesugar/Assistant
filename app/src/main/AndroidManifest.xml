@@ -87,7 +87,8 @@
         <activity android:name=".ActivityListActivity" android:exported="false"/>
         <activity android:name=".NativePlayerActivity"
             android:exported="false"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"/>
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize"
+            android:supportsPictureInPicture="true"/>
 
         <activity android:name=".BiliLoginActivity" android:exported="false"/>
         <activity android:name=".SniffActivity"
