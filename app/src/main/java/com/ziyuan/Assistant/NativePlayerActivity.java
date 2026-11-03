@@ -131,6 +131,10 @@ public class NativePlayerActivity extends Activity {
         controller = new StandardVideoController(this);
         controller.addDefaultControlComponent(title != null ? title : "资源嗅探", url != null && url.contains(".m3u8"));
         videoView.setVideoController(controller);
+        // 双击播放/暂停统一由 Activity 层手势处理（先于子 View 触发，最可靠）。
+        // 必须禁用 GestureVideoController 默认双击，否则 Activity 先 pause、控制器随后 togglePlay
+        // 立即 resume，两次切换相互抵消，表现为“双击失效”。
+        try { controller.setDoubleTapTogglePlayEnabled(false); } catch (Throwable ignored) { }
         controller.setOnKernelSwitchListener(new StandardVideoController.OnKernelSwitchListener() {
             @Override
             public void onKernelSwitch() { toggleBackgroundPlay(); }
