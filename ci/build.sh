@@ -81,7 +81,7 @@ java -Xmx3g -cp "$BT/lib/d8.jar" com.android.tools.r8.R8 --release \
 echo "[4.5/6] dx 编 Media3 ExoPlayer 内核 (min-sdk 26)..."
 mkdir -p build_out/m3
 /opt/android-sdk/build-tools/30.0.3/dx --dex --min-sdk-version=26 --output build_out/m3/classes.dex \
-    $(ls $V/media3/*/classes.jar) $V/media3/concurrent-futures.jar
+    $(ls $V/media3/*/classes.jar) $V/media3/concurrent-futures.jar $V/media3/lib/guava.jar
 cp build_out/m3/classes.dex build_out/dex/classes99.dex
 
 echo "[5/6] pack + zipalign..."
