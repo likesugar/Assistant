@@ -56,6 +56,7 @@ public class TopRightButtonsComponent implements IControlComponent {
             lp.topMargin = dp(44);
             lp.rightMargin = dp(12);
             box.setLayoutParams(lp);
+            box.setVisibility(View.GONE);   // 初始与控制条一致：隐藏，只在控制条出现时显示
         }
         return box;
     }
