@@ -136,6 +136,9 @@ public class Media3Player extends AbstractPlayer {
             source = new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(item);
         }
         mPlayer.setMediaSource(source);
+        // 显式自动开播：Ijk 内核依赖 IjkMediaPlayer 默认 start-on-prepared=1 自动播放，
+        // Media3 必须显式置 playWhenReady=true，否则个别 ROM/状态下进页面不自动播放
+        mPlayer.setPlayWhenReady(true);
         mPlayer.prepare();
     }
 
