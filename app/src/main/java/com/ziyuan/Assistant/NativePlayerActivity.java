@@ -6,11 +6,15 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.PictureInPictureParams;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -21,6 +25,8 @@ import android.widget.Toast;
 import java.util.HashMap;
 import java.util.Map;
 
+import tv.danmaku.ijk.media.player.IjkMediaPlayer;
+import xyz.doikki.videoplayer.ijk.IjkPlayer;
 import xyz.doikki.videoplayer.ijk.IjkPlayerFactory;
 import xyz.doikki.videoplayer.player.BaseVideoView;
 import xyz.doikki.videoplayer.player.VideoView;
@@ -33,6 +39,17 @@ public class NativePlayerActivity extends Activity {
     @Override
     public boolean dispatchTouchEvent(android.view.MotionEvent ev) {
         try { if (ZoomHelper.handle(this, ev)) return true; } catch (Throwable ignored) { }
+        // 双击暂停 / 长按倍速：同样在 Activity 层监听（子 View 会消费触摸，root 的 OnTouchListener 收不到）
+        try {
+            if (gd != null) {
+                gd.onTouchEvent(ev);
+                if ((ev.getAction() == MotionEvent.ACTION_UP || ev.getAction() == MotionEvent.ACTION_CANCEL)
+                        && longPressSpeed) {
+                    longPressSpeed = false;
+                    try { videoView.setSpeed(playSpeed); } catch (Throwable ignored) {}  // 松开恢复设定倍速
+                }
+            }
+        } catch (Throwable ignored) { }
         return super.dispatchTouchEvent(ev);
     }
 
@@ -41,10 +58,12 @@ public class NativePlayerActivity extends Activity {
     private String url;
     private String title;
     private boolean backgroundPlay = false;
+    private GestureDetector gd;
 
     private TextView speedBtn;
     private float playSpeed = 1.0f;
     private static final float[] SPEEDS = {0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f, 3.0f};
+    private boolean longPressSpeed = false;   // 长按临时倍速中
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -84,8 +103,25 @@ public class NativePlayerActivity extends Activity {
         root.setBackgroundColor(0xFF000000);
 
         videoView = new VideoView(this);
-        // 统一使用 IjkPlayer 内核（FFmpeg），所有地址都走 Ijk，不再回退系统 MediaPlayer
-        videoView.setPlayerFactory(IjkPlayerFactory.create());
+        // 统一使用 IjkPlayer 内核（FFmpeg）；子类 setOptions 里开启 MediaCodec 硬件解码，省电不发热
+        videoView.setPlayerFactory(new IjkPlayerFactory() {
+            @Override
+            public IjkPlayer createPlayer(android.content.Context context) {
+                return new IjkPlayer(context) {
+                    @Override
+                    public void setOptions() {
+                        super.setOptions();
+                        try {
+                            if (mMediaPlayer != null) {
+                                mMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec", 1);
+                                mMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-auto-rotate", 1);
+                                mMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-handle-resolution-change", 1);
+                            }
+                        } catch (Throwable ignored) {}
+                    }
+                };
+            }
+        });
         controller = new StandardVideoController(this);
         controller.addDefaultControlComponent(title != null ? title : "资源嗅探", url != null && url.contains(".m3u8"));
         videoView.setVideoController(controller);
@@ -99,6 +135,8 @@ public class NativePlayerActivity extends Activity {
         root.addView(videoView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         addSpeedButton(root);
+        addPipButton(root);    // 画中画小窗按钮
+        setupGestures();       // 双击暂停 / 长按倍速
 
         setContentView(root);
         Immersive.hide(this);
@@ -211,6 +249,26 @@ public class NativePlayerActivity extends Activity {
         try { videoView.setSpeed(s); } catch (Throwable ignored) { }
     }
 
+    // ---------- 手势：双击暂停 / 长按倍速 ----------
+    private void setupGestures() {
+        gd = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDoubleTap(MotionEvent e) {
+                try {
+                    if (videoView.isPlaying()) videoView.pause();
+                    else videoView.resume();
+                } catch (Throwable ignored) {}
+                return true;
+            }
+            @Override
+            public void onLongPress(MotionEvent e) {
+                try { longPressSpeed = true; videoView.setSpeed(2.0f);
+                      Toast.makeText(NativePlayerActivity.this, "2x 快进中，松开恢复", Toast.LENGTH_SHORT).show();
+                } catch (Throwable ignored) {}
+            }
+        });
+    }
+
     private static String speedLabel(float s) {
         if (s == (int) s) return ((int) s) + "x";
         return s + "x";
@@ -220,9 +278,65 @@ public class NativePlayerActivity extends Activity {
         return Math.round(v * getResources().getDisplayMetrics().density);
     }
 
+    // ---------- 画中画 ----------
+    /** 画中画小窗按钮（倍速按钮下方，常驻浮动；不支持画中画的设备不显示） */
+    private void addPipButton(FrameLayout root) {
+        if (Build.VERSION.SDK_INT < 26
+                || !getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) return;
+        pipBtn = new TextView(this);
+        pipBtn.setText("小窗");
+        pipBtn.setTextColor(0xFFFFFFFF);
+        pipBtn.setTextSize(13);
+        pipBtn.setPadding(dp(10), dp(6), dp(10), dp(6));
+        pipBtn.setBackgroundColor(0x66000000);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.gravity = Gravity.TOP | Gravity.END;
+        lp.topMargin = dp(92);
+        lp.rightMargin = dp(12);
+        root.addView(pipBtn, lp);
+        pipBtn.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) { enterPip(); }
+        });
+    }
+
+    private void enterPip() {
+        if (Build.VERSION.SDK_INT >= 26
+                && getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) {
+            try {
+                enterPictureInPictureMode(new PictureInPictureParams.Builder().build());
+            } catch (Throwable e) {
+                Toast.makeText(this, "画中画不可用（可能在系统设置中被关闭）", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(this, "此设备不支持画中画", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private TextView pipBtn;
+
+    @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        // 切到别的 App / 按 Home：自动进入画中画小窗，边看边干别的
+        if (isFinishing()) return;
+        enterPip();
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPiP) {
+        super.onPictureInPictureModeChanged(isInPiP);
+        // 小窗内隐藏浮动按钮，避免 UI 错位
+        int vis = isInPiP ? View.INVISIBLE : View.VISIBLE;
+        if (speedBtn != null) speedBtn.setVisibility(vis);
+        if (pipBtn != null) pipBtn.setVisibility(vis);
+    }
+
     @Override
     protected void onPause() {
         super.onPause();
+        // 画中画模式下不暂停（小窗继续播）
+        if (Build.VERSION.SDK_INT >= 26 && isInPictureInPictureMode()) return;
         if (!backgroundPlay) { videoView.pause(); cancelPlayNote(); }
     }
 
