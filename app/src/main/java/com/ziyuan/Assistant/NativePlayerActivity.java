@@ -60,10 +60,10 @@ public class NativePlayerActivity extends Activity {
     private boolean backgroundPlay = false;
     private GestureDetector gd;
 
-    private TextView speedBtn;
     private float playSpeed = 1.0f;
     private static final float[] SPEEDS = {0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f, 3.0f};
     private boolean longPressSpeed = false;   // 长按临时倍速中
+    private TopRightButtonsComponent floatBtns;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -131,11 +131,21 @@ public class NativePlayerActivity extends Activity {
         });
         // 控制层左上角：width: height:（随控制条显隐）
         controller.addControlComponent(new SizeComponent(videoView));
+        // 控制层右上角：小窗 + 倍速 横排一行（随控制条显隐）
+        floatBtns = new TopRightButtonsComponent(this);
+        floatBtns.onSpeed = new View.OnClickListener() {
+            @Override public void onClick(View v) { showSpeedMenu(); }
+        };
+        if (Build.VERSION.SDK_INT >= 26
+                && getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) {
+            floatBtns.onPip = new View.OnClickListener() {
+                @Override public void onClick(View v) { enterPip(); }
+            };
+        }
+        controller.addControlComponent(floatBtns);
 
         root.addView(videoView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        addSpeedButton(root);
-        addPipButton(root);    // 画中画小窗按钮
         setupGestures();       // 双击暂停 / 长按倍速
 
         setContentView(root);
@@ -210,27 +220,8 @@ public class NativePlayerActivity extends Activity {
     }
 
     // ---------- 倍速 ----------
-    /** 右上角浮动倍速按钮（常驻，不受控制条显隐影响） */
-    private void addSpeedButton(FrameLayout root) {
-        speedBtn = new TextView(this);
-        speedBtn.setText(speedLabel(playSpeed));
-        speedBtn.setTextColor(0xFFFFFFFF);
-        speedBtn.setTextSize(13);
-        speedBtn.setPadding(dp(10), dp(6), dp(10), dp(6));
-        speedBtn.setBackgroundColor(0x66000000);
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.gravity = Gravity.TOP | Gravity.END;
-        lp.topMargin = dp(44);
-        lp.rightMargin = dp(12);
-        root.addView(speedBtn, lp);
-        speedBtn.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) { showSpeedMenu(); }
-        });
-    }
-
     private void showSpeedMenu() {
-        PopupMenu pm = new PopupMenu(this, speedBtn);
+        PopupMenu pm = new PopupMenu(this, floatBtns != null ? floatBtns.speedBtn : null);
         for (int i = 0; i < SPEEDS.length; i++) {
             pm.getMenu().add(0, i, i, speedLabel(SPEEDS[i]));
         }
@@ -245,7 +236,7 @@ public class NativePlayerActivity extends Activity {
 
     private void setPlaySpeed(float s) {
         playSpeed = s;
-        if (speedBtn != null) speedBtn.setText(speedLabel(s));
+        if (floatBtns != null && floatBtns.speedBtn != null) floatBtns.speedBtn.setText(speedLabel(s));
         try { videoView.setSpeed(s); } catch (Throwable ignored) { }
     }
 
@@ -279,27 +270,6 @@ public class NativePlayerActivity extends Activity {
     }
 
     // ---------- 画中画 ----------
-    /** 画中画小窗按钮（倍速按钮下方，常驻浮动；不支持画中画的设备不显示） */
-    private void addPipButton(FrameLayout root) {
-        if (Build.VERSION.SDK_INT < 26
-                || !getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) return;
-        pipBtn = new TextView(this);
-        pipBtn.setText("小窗");
-        pipBtn.setTextColor(0xFFFFFFFF);
-        pipBtn.setTextSize(13);
-        pipBtn.setPadding(dp(10), dp(6), dp(10), dp(6));
-        pipBtn.setBackgroundColor(0x66000000);
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.gravity = Gravity.TOP | Gravity.END;
-        lp.topMargin = dp(92);
-        lp.rightMargin = dp(12);
-        root.addView(pipBtn, lp);
-        pipBtn.setOnClickListener(new View.OnClickListener() {
-            @Override public void onClick(View v) { enterPip(); }
-        });
-    }
-
     private void enterPip() {
         if (Build.VERSION.SDK_INT >= 26
                 && getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) {
@@ -313,8 +283,6 @@ public class NativePlayerActivity extends Activity {
         }
     }
 
-    private TextView pipBtn;
-
     @Override
     protected void onUserLeaveHint() {
         super.onUserLeaveHint();
@@ -327,9 +295,12 @@ public class NativePlayerActivity extends Activity {
     public void onPictureInPictureModeChanged(boolean isInPiP) {
         super.onPictureInPictureModeChanged(isInPiP);
         // 小窗内隐藏浮动按钮，避免 UI 错位
-        int vis = isInPiP ? View.INVISIBLE : View.VISIBLE;
-        if (speedBtn != null) speedBtn.setVisibility(vis);
-        if (pipBtn != null) pipBtn.setVisibility(vis);
+        if (floatBtns != null && floatBtns.getView() != null) {
+            int vis = isInPiP ? View.INVISIBLE : View.VISIBLE;
+            floatBtns.getView().setVisibility(vis);
+            floatBtns.speedBtn.setVisibility(vis);
+            if (floatBtns.pipBtn != null) floatBtns.pipBtn.setVisibility(vis);
+        }
     }
 
     @Override
