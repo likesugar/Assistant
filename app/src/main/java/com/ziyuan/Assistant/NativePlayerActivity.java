@@ -103,25 +103,31 @@ public class NativePlayerActivity extends Activity {
         root.setBackgroundColor(0xFF000000);
 
         videoView = new VideoView(this);
-        // 统一使用 IjkPlayer 内核（FFmpeg）；子类 setOptions 里开启 MediaCodec 硬件解码，省电不发热
-        videoView.setPlayerFactory(new IjkPlayerFactory() {
-            @Override
-            public IjkPlayer createPlayer(android.content.Context context) {
-                return new IjkPlayer(context) {
-                    @Override
-                    public void setOptions() {
-                        super.setOptions();
-                        try {
-                            if (mMediaPlayer != null) {
-                                mMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec", 1);
-                                mMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-auto-rotate", 1);
-                                mMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-handle-resolution-change", 1);
-                            }
-                        } catch (Throwable ignored) {}
-                    }
-                };
-            }
-        });
+        // 播放内核：设置页可切换 IjkPlayer / Media3 ExoPlayer
+        String playerKernel = getSharedPreferences("settings", MODE_PRIVATE).getString("playerKernel", "ijk");
+        if ("media3".equals(playerKernel)) {
+            videoView.setPlayerFactory(new Media3PlayerFactory());
+        } else {
+            // IjkPlayer 内核（FFmpeg）；子类 setOptions 里开启 MediaCodec 硬件解码，省电不发热
+            videoView.setPlayerFactory(new IjkPlayerFactory() {
+                @Override
+                public IjkPlayer createPlayer(android.content.Context context) {
+                    return new IjkPlayer(context) {
+                        @Override
+                        public void setOptions() {
+                            super.setOptions();
+                            try {
+                                if (mMediaPlayer != null) {
+                                    mMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec", 1);
+                                    mMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-auto-rotate", 1);
+                                    mMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec-handle-resolution-change", 1);
+                                }
+                            } catch (Throwable ignored) {}
+                        }
+                    };
+                }
+            });
+        }
         controller = new StandardVideoController(this);
         controller.addDefaultControlComponent(title != null ? title : "资源嗅探", url != null && url.contains(".m3u8"));
         videoView.setVideoController(controller);

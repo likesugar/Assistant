@@ -2,6 +2,7 @@
 # Assistant CI 构建: aapt2 + ecj + d8(R8) + zipalign + apksigner
 set -e
 cd "$(dirname "$0")/.."
+export ANDROID_HOME=${ANDROID_HOME:-/opt/android-sdk}
 ROOT=$(pwd)
 VC=${VC:-1}
 VN=${VN:-1.0}
@@ -23,7 +24,7 @@ echo "[2/6] aapt2 link..."
     -I "$SDK" --manifest app/src/main/AndroidManifest.xml \
     -R build_out/res.zip $(ls $V/mdc_res/*.zip | sed 's/^/-R /' | tr "\n" " ") \
     --java build_out/gen --auto-add-overlay --emit-ids build_out/ids.txt \
-    --min-sdk-version 24 --target-sdk-version 36 \
+    --min-sdk-version 26 --target-sdk-version 36 \
     -c zh-rCN --preferred-density xxhdpi \
     -A app/src/main/assets \
     --version-code "$VC" --version-name "$VN"
@@ -57,7 +58,7 @@ echo "[3/6] ecj compile..."
 RJ=$(find build_out/gen -name R.java)
 mkdir -p build_out/classes
 java -jar $V/tools/ecj.jar -source 1.8 -target 1.8 -encoding UTF-8 -proc:none -nowarn \
-    -cp "$SDK:$V/mdc_all_classes.jar:$V/ffk_classes.jar:$(ls $V/ffk_sex/*.jar | tr '\n' ':')$(ls $V/ydl/*.jar | tr '\n' ':')app/libs/sora-editor-classes.jar:app/libs/collection-jvm.jar:app/libs/annotation-jvm.jar:app/libs/xz-1.9.jar:app/libs/apksig.jar:app/libs/pinyin4j-2.5.0.jar" \
+    -cp "$SDK:$V/mdc_all_classes.jar:$V/ffk_classes.jar:$(ls $V/media3/*/classes.jar | tr '\n' ':')$V/media3/exifinterface/classes.jar:$V/media3/concurrent-futures.jar:$(ls $V/ffk_sex/*.jar | tr '\n' ':')$(ls $V/ydl/*.jar | tr '\n' ':')app/libs/sora-editor-classes.jar:app/libs/collection-jvm.jar:app/libs/annotation-jvm.jar:app/libs/xz-1.9.jar:app/libs/apksig.jar:app/libs/pinyin4j-2.5.0.jar" \
     -d build_out/classes "$RJ" $(find build_out/gen_stub -name R.java) \
     app/src/main/java/com/ziyuan/Assistant/*.java \
     app/src/main/java/com/ziyuan/Assistant/cal/*.java \
@@ -71,11 +72,17 @@ java -jar $V/tools/ecj.jar -source 1.8 -target 1.8 -encoding UTF-8 -proc:none -n
 echo "[4/6] d8 dex..."
 find build_out/classes -name "*.class" > build_out/classlist.txt
 java -Xmx3g -cp "$BT/lib/d8.jar" com.android.tools.r8.R8 --release \
-    --lib "$SDK" --min-api 24 --pg-conf ci/r8-rules.pro \
+    --lib "$SDK" --lib $(ls $V/media3/*/classes.jar | tr '\n' ' ') --lib $V/media3/exifinterface/classes.jar --lib $V/media3/concurrent-futures.jar --lib $V/media3/annotation_stub.jar --lib $V/media3/lib/guava.jar --lib $V/media3/lib/errorprone.jar --lib $V/media3/lib/jsr305.jar --lib $V/media3/lib/checker-qual.jar --lib $V/media3/lib/kotlin-annotations.jar --min-api 26 --pg-conf ci/r8-rules.pro \
     --output build_out/dex @build_out/classlist.txt \
     $V/ydl/*.jar app/libs/apksig.jar app/libs/pinyin4j-2.5.0.jar \
     app/libs/sora-editor-classes.jar app/libs/collection-jvm.jar app/libs/annotation-jvm.jar app/libs/xz-1.9.jar \
     $V/mdc_all_classes.jar $V/ffk_classes.jar $V/ffk_sex/*.jar
+
+echo "[4.5/6] dx 编 Media3 ExoPlayer 内核 (min-sdk 26)..."
+mkdir -p build_out/m3
+/opt/android-sdk/build-tools/30.0.3/dx --dex --min-sdk-version=26 --output build_out/m3/classes.dex \
+    $(ls $V/media3/*/classes.jar) $V/media3/concurrent-futures.jar
+cp build_out/m3/classes.dex build_out/dex/classes99.dex
 
 echo "[5/6] pack + zipalign..."
 cd build_out/dex && zip ../app-unsigned.apk classes*.dex && cd ../..

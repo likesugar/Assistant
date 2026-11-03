@@ -112,6 +112,19 @@ public class SettingsPageView extends android.widget.FrameLayout {
                 Toast.makeText(host, on ? "已开启自动检测剪贴板" : "已关闭自动检测剪贴板", Toast.LENGTH_SHORT).show();
             }
         });
+        // 播放内核切换：IjkPlayer / Media3 ExoPlayer
+        android.widget.RadioGroup rgKernel = (android.widget.RadioGroup) findViewById(R.id.rgPlayerKernel);
+        if (rgKernel != null) {
+            String kernel = host.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE).getString("playerKernel", "ijk");
+            rgKernel.check("media3".equals(kernel) ? R.id.rbMedia3 : R.id.rbIjk);
+            rgKernel.setOnCheckedChangeListener(new android.widget.RadioGroup.OnCheckedChangeListener() {
+                public void onCheckedChanged(android.widget.RadioGroup g, int id) {
+                    String k = (id == R.id.rbMedia3) ? "media3" : "ijk";
+                    host.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE).edit().putString("playerKernel", k).apply();
+                    Toast.makeText(host, "播放内核已设为 " + ("media3".equals(k) ? "Media3 ExoPlayer" : "IjkPlayer") + "，下次播放生效", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
         findViewById(R.id.cardNotify).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 try {
