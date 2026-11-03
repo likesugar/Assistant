@@ -195,27 +195,6 @@
                     android:text="→" android:textSize="20sp" android:id="@+id/arrow"/>
             </LinearLayout>
 
-            <LinearLayout android:id="@+id/cardKernel"
-                android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/bg_card_md3"
-                android:padding="20dp"
-                android:layout_marginTop="18dp">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="播放内核" android:textSize="18sp" android:textStyle="bold"/>
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:text="Media3(ExoPlayer) 对抖音 HLS 直播兼容性更好；IjkPlayer 为默认内核。"
-                    android:textSize="14sp" android:paddingTop="6dp" android:paddingBottom="12dp"/>
-                <RadioGroup android:id="@+id/rgPlayerKernel"
-                    android:layout_width="match_parent" android:layout_height="wrap_content"
-                    android:orientation="vertical">
-                    <RadioButton android:id="@+id/rbIjk" android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:text="IjkPlayer（默认 · FFmpeg 软/硬解）" android:textSize="15sp"/>
-                    <RadioButton android:id="@+id/rbMedia3" android:layout_width="match_parent" android:layout_height="wrap_content"
-                        android:text="Media3 ExoPlayer（抖音直播推荐）" android:textSize="15sp"/>
-                </RadioGroup>
-            </LinearLayout>
-
             <LinearLayout android:id="@+id/cardAbout2"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:orientation="vertical"

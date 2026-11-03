@@ -103,11 +103,9 @@ public class NativePlayerActivity extends Activity {
         root.setBackgroundColor(0xFF000000);
 
         videoView = new VideoView(this);
-        // 播放内核：设置页可切换 IjkPlayer / Media3 ExoPlayer
-        String playerKernel = getSharedPreferences("settings", MODE_PRIVATE).getString("playerKernel", "ijk");
-        if ("media3".equals(playerKernel)) {
-            videoView.setPlayerFactory(new Media3PlayerFactory());
-        } else {
+        // 播放内核自动选择：Media3 ExoPlayer 优先（默认硬解省电、HLS 兼容好）；
+        // 仅 RTMP/RTSP 拉流与冷门老格式(MPEG-2/WMV/RMVB 等)自动切 Ijk（FFmpeg 全能软解兜底）
+        if (needsIjkKernel(url)) {
             // IjkPlayer 内核（FFmpeg）；子类 setOptions 里开启 MediaCodec 硬件解码，省电不发热
             videoView.setPlayerFactory(new IjkPlayerFactory() {
                 @Override
@@ -212,6 +210,25 @@ public class NativePlayerActivity extends Activity {
     void toggleBackgroundPlay() {
         backgroundPlay = !backgroundPlay;
         if (controller != null) controller.setBackgroundPlaySelected(backgroundPlay);
+    }
+
+    /**
+     * 是否需要 Ijk 内核（FFmpeg 全能软解）：
+     * 1) RTMP/RTSP 拉流 —— Media3 未集成对应模块，只有 Ijk 支持；
+     * 2) 冷门老格式（MPEG-2/WMV/RMVB/AVI/ASF/VOB 等）—— 系统硬解不支持，Ijk 软解兜底。
+     * 其余一律使用 Media3 ExoPlayer（默认硬解，省电低发热）。
+     */
+    static boolean needsIjkKernel(String url) {
+        if (url == null || url.length() == 0) return false;
+        String u = url.toLowerCase();
+        if (u.startsWith("rtmp://") || u.startsWith("rtmps://") || u.startsWith("rtsp://")) return true;
+        int q = u.indexOf('?');
+        String path = q >= 0 ? u.substring(0, q) : u;
+        String[] coldExts = {".wmv", ".rmvb", ".rm", ".mpg", ".mpeg", ".mpe", ".vob", ".asf", ".avi", ".swf", ".3gp", ".m2ts"};
+        for (String ext : coldExts) {
+            if (path.endsWith(ext)) return true;
+        }
+        return false;
     }
 
     Map<String, String> douyinHeaders() {
