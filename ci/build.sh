@@ -72,17 +72,41 @@ java -jar $V/tools/ecj.jar -source 1.8 -target 1.8 -encoding UTF-8 -proc:none -n
 echo "[4/6] d8 dex..."
 find build_out/classes -name "*.class" > build_out/classlist.txt
 java -Xmx3g -cp "$BT/lib/d8.jar" com.android.tools.r8.R8 --release \
-    --lib "$SDK" --lib $(ls $V/media3/*/classes.jar | tr '\n' ' ') --lib $V/media3/exifinterface/classes.jar --lib $V/media3/concurrent-futures.jar --lib $V/media3/annotation_stub.jar --lib $V/media3/lib/guava.jar --lib $V/media3/lib/errorprone.jar --lib $V/media3/lib/jsr305.jar --lib $V/media3/lib/checker-qual.jar --lib $V/media3/lib/kotlin-annotations.jar --min-api 26 --pg-conf ci/r8-rules.pro \
+    --lib "$SDK" --lib $(ls $V/media3/*/classes.jar | tr '\n' ' ') --lib $V/media3/exifinterface/classes.jar --lib $V/media3/concurrent-futures.jar --lib $V/media3/annotation_stub.jar --lib $V/media3/lib/guava.jar --lib $V/media3/lib/errorprone.jar --lib $V/media3/lib/jsr305.jar --lib $V/media3/lib/checker-qual.jar --lib $V/media3/lib/kotlin-annotations.jar --lib $V/media3/lib/kotlin-stdlib-1.9.24.jar --lib $V/media3/lib/versionedparcelable.jar --lib $V/media3/lib/commons-compress-1.26.1.jar --lib $V/media3/lib/commons-io-2.16.1.jar --lib $V/media3/lib/commons-codec-1.16.1.jar --lib $V/media3/lib/commons-lang3-3.14.0.jar --lib $V/media3/lib/xz-1.9.jar --lib $V/media3/lib/collection-jvm-1.5.0.jar --lib $V/media3/lib/zstd-jni-1.5.5-11.jar --lib $V/media3/lib/brotli-dec-0.1.2.jar --lib $V/media3/lib/asm-9.7.jar --lib $V/media3/lib/jetbrains-annotations-24.1.0.jar --lib $V/media3/lib/collection-annotations.jar --min-api 26 --pg-conf ci/r8-rules.pro \
     --output build_out/dex @build_out/classlist.txt \
     $V/ydl/*.jar app/libs/apksig.jar app/libs/pinyin4j-2.5.0.jar \
     app/libs/sora-editor-classes.jar app/libs/collection-jvm.jar app/libs/annotation-jvm.jar app/libs/xz-1.9.jar \
     $V/mdc_all_classes.jar $V/ffk_classes.jar $V/ffk_sex/*.jar
 
-echo "[4.5/6] dx 编 Media3 ExoPlayer 内核 (min-sdk 26)..."
-mkdir -p build_out/m3
-/opt/android-sdk/build-tools/30.0.3/dx --dex --min-sdk-version=26 --output build_out/m3/classes.dex \
-    $(ls $V/media3/*/classes.jar) $V/media3/concurrent-futures.jar $V/media3/lib/guava.jar
-cp build_out/m3/classes.dex build_out/dex/classes99.dex
+echo "[4.5/6] dx 编 Media3 ExoPlayer 内核 + 运行期依赖 (min-sdk 26, --multi-dex)..."
+mkdir -p build_out/m3 build_out/dex
+rm -f build_out/m3/*.dex build_out/dex/classes99.dex build_out/dex/classes2*.dex
+/opt/android-sdk/build-tools/30.0.3/dx --dex --multi-dex --min-sdk-version=26 --output build_out/m3 \
+    $(ls $V/media3/*/classes.jar) \
+    $V/media3/concurrent-futures.jar \
+    $V/media3/annotation_stub.jar \
+    $V/media3/lib/guava.jar \
+    $V/media3/lib/kotlin-stdlib-1.9.24.jar \
+    $V/media3/lib/versionedparcelable.jar \
+    $V/media3/lib/commons-compress-1.26.1.jar \
+    $V/media3/lib/commons-io-2.16.1.jar \
+    $V/media3/lib/commons-codec-1.16.1.jar \
+    $V/media3/lib/commons-lang3-3.14.0.jar \
+    $V/media3/lib/xz-1.9.jar \
+    $V/media3/lib/collection-jvm-1.5.0.jar \
+    $V/media3/lib/zstd-jni-1.5.5-11.jar \
+    $V/media3/lib/brotli-dec-0.1.2.jar \
+    $V/media3/lib/asm-9.7.jar \
+    $V/media3/lib/jetbrains-annotations-24.1.0.jar \
+    $V/media3/lib/collection-annotations.jar
+# dx --multi-dex 产出 classes.dex/classes2.dex/...，重命名为连续的 classes2.dex/classes3.dex/...
+# 避免与 App 主 dex classes.dex 冲突；ART 按 classes.dex→classes2→classes3 顺序加载，缺失编号即停止
+i=2
+for f in $(ls build_out/m3/classes*.dex | sort); do
+    mv "$f" "build_out/dex/classes$i.dex"
+    i=$((i+1))
+done
+echo "Media3 二级 dex 数量: $((i-2))"
 
 echo "[5/6] pack + zipalign..."
 cd build_out/dex && zip ../app-unsigned.apk classes*.dex && cd ../..
