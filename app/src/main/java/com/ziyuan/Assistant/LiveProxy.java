@@ -387,10 +387,14 @@ public class LiveProxy {
                         int n = fetched.size();
                         window.clear();
                     if (n > 0) {
-                        int win = Math.min(10, n);  // 滑动窗口 10 片 ≈ 20s 积压：吸收录制节奏抖动，播放不饿死
-                            int skip = n - win;
+                        // 落后直播边缘 2 片(~4s)：Media3 直播默认从列表最末分片开播，
+                        // 若把最新片顶在最前，播放器贴着录制端出片节奏走，抖动即断粮转圈；
+                        // 留 2 片余量后播放器永远有充足积压可缓冲
+                        int trim = Math.min(2, Math.max(0, n - 3));
+                        int win = Math.min(10, n - trim);  // 滑动窗口 10 片 ≈ 20s 积压
+                            int skip = n - trim - win;
                             int k = 0;
-                            for (String u : fetched) { if (k++ >= skip) window.add(u); }
+                            for (String u : fetched) { if (k >= skip && k < skip + win) window.add(u); k++; }
                             seq = totalFetched - win;
                         }
                     }
