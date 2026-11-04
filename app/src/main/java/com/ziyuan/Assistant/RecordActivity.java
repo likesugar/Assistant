@@ -55,13 +55,13 @@ public class RecordActivity extends Activity {
 
     private int dp2(int v) { return Math.round(v * getResources().getDisplayMetrics().density); }
 
+    private static String dlSizeStr(DlManager.DlJob j) {
+        if (j.m3u8) return fmtSize(j.doneBytes);   // total 是分片数(非字节), 进度已在 state 里以 "下载中 12/120" 呈现
+        return fmtSize(j.doneBytes) + (j.total > 0 && j.total > j.doneBytes ? " / " + fmtSize(j.total) : "");
+    }
+
     private static String dlInfo(DlManager.DlJob j) {
-        if (j.m3u8) {
-            // total 是分片数(非字节), 进度已在 state 里以 "下载中 12/120" 呈现
-            return "下载大小: " + fmtSize(j.doneBytes) + "\n状态: " + j.state;
-        }
-        String sz = fmtSize(j.doneBytes) + (j.total > 0 && j.total > j.doneBytes ? " / " + fmtSize(j.total) : "");
-        return "下载大小: " + sz + "\n状态: " + j.state;
+        return "下载大小: " + dlSizeStr(j) + "\n状态: " + j.state;
     }
 
     @Override
@@ -319,35 +319,42 @@ public class RecordActivity extends Activity {
             addRow(list, j, (Boolean) m[2], infoRef);
             row = list.getChildAt(list.getChildCount() - 1);
             final RecManager.RecJob fj = j;
-            final TextView info = infoRef.get();
             final TextView nameTv = row.findViewWithTag("rowName");
+            final TextView durTv = row.findViewWithTag("rowDur");
+            final TextView sizeTv = row.findViewWithTag("rowSize");
+            final TextView stateTv = row.findViewWithTag("rowState");
             rowUpdaters.put(key, new Runnable() { public void run() {
-                String t = buildInfo(fj, fj.active);
-                if (info != null && !t.equals(info.getText().toString())) info.setText(t);
-                String n = qualify(fj);
-                if (nameTv != null && !n.equals(nameTv.getText().toString())) nameTv.setText(n);
+                boolean lv = fj.active;   // 行复用后实时读状态, 不用创建时的快照
+                setIfDiff(nameTv, qualify(fj));
+                setIfDiff(durTv, "录制时长: " + durStr(fj, lv));
+                setIfDiff(sizeTv, "录制大小: " + sizeStr(fj, lv));
+                setIfDiff(stateTv, "录制状态: " + stateStr(fj, lv));
             } });
         } else if ((Integer) m[0] == 1) {
             final DlManager.DlJob j = (DlManager.DlJob) m[1];
             addDlRow(list, j, infoRef);
             row = list.getChildAt(list.getChildCount() - 1);
-            final TextView infoDl = infoRef.get();
+            final TextView sizeTv = row.findViewWithTag("rowSize");
+            final TextView stateTv = row.findViewWithTag("rowState");
             rowUpdaters.put(key, new Runnable() { public void run() {
-                if (infoDl != null) { String t = dlInfo(j); if (!t.equals(infoDl.getText().toString())) infoDl.setText(t); }
+                setIfDiff(sizeTv, "下载大小: " + dlSizeStr(j));
+                setIfDiff(stateTv, "状态: " + j.state);
             } });
         } else {
             final HistoryStore.Item it = (HistoryStore.Item) m[1];
             final int hidx = Integer.parseInt(key.substring(1));
             addHistRow(list, it, hidx, infoRef);
             row = list.getChildAt(list.getChildCount() - 1);
-            final TextView infoH = infoRef.get();
+            final TextView typeTv = row.findViewWithTag("rowType");
+            final TextView stateTv = row.findViewWithTag("rowState");
             final TextView nameH = row.findViewWithTag("rowName");
             rowUpdaters.put(key, new Runnable() { public void run() {
                 // 行复用时按当前索引重取历史条目, 避免删除后错位显示旧内容
                 if (hist == null || hidx >= hist.size()) return;
                 HistoryStore.Item cur = hist.get(hidx);
-                if (nameH != null && !cur.title.equals(nameH.getText().toString())) nameH.setText(cur.title);
-                if (infoH != null && !("类型: " + cur.type + "\n状态: 已完成").equals(infoH.getText().toString())) infoH.setText("类型: " + cur.type + "\n状态: 已完成");
+                setIfDiff(nameH, cur.title);
+                setIfDiff(typeTv, "类型: " + cur.type);
+                setIfDiff(stateTv, "状态: 已完成");
             } });
         }
         row.setTag(key);
@@ -390,12 +397,8 @@ public class RecordActivity extends Activity {
         tvName.setSingleLine(true);
         tvName.setTag("rowName");
         mid.addView(tvName);
-        TextView tvInfo = new TextView(this);
-        tvInfo.setText(dlInfo(j));
-        tvInfo.setTextColor(Theme.sub(this));
-        tvInfo.setTextSize(13);
-        tvInfo.setLineSpacing(4, 1);
-        mid.addView(tvInfo);
+        mid.addView(infoLine("下载大小: " + dlSizeStr(j), "rowSize"));
+        mid.addView(infoLine("状态: " + j.state, "rowState"));
         row.addView(mid);
         TextView more = new TextView(this);
         more.setText("⋮");
@@ -409,7 +412,6 @@ public class RecordActivity extends Activity {
         });
         row.addView(more);
         parent.addView(row);
-        infoRef.set(tvInfo);
     }
 
     private void addHistRow(LinearLayout parent, final HistoryStore.Item it, final int idx, final java.util.concurrent.atomic.AtomicReference<TextView> infoRef) {
@@ -446,12 +448,8 @@ public class RecordActivity extends Activity {
         tvName.setSingleLine(true);
         tvName.setTag("rowName");
         mid.addView(tvName);
-        TextView tvInfo = new TextView(this);
-        tvInfo.setText("类型: " + it.type + "\n状态: 已完成");
-        tvInfo.setTextColor(Theme.sub(this));
-        tvInfo.setTextSize(13);
-        tvInfo.setLineSpacing(4, 1);
-        mid.addView(tvInfo);
+        mid.addView(infoLine("类型: " + it.type, "rowType"));
+        mid.addView(infoLine("状态: 已完成", "rowState"));
         row.addView(mid);
         TextView more = new TextView(this);
         more.setText("⋮");
@@ -486,7 +484,6 @@ public class RecordActivity extends Activity {
         });
         row.addView(more);
         parent.addView(row);
-        infoRef.set(tvInfo);
     }
 
     private void playInApp(String path, String title) {
@@ -555,17 +552,45 @@ public class RecordActivity extends Activity {
         return String.valueOf(b);
     }
 
-    private String buildInfo(RecManager.RecJob j, boolean live) {
+    private static String durStr(RecManager.RecJob j, boolean live) {
         long secs = j.secs + (live && j.startTs > 0 ? (System.currentTimeMillis() - j.startTs) / 1000 : 0);
+        return fmtDur(secs);
+    }
+
+    private static String sizeStr(RecManager.RecJob j, boolean live) {
         String size = fmtCompact(j.bytes);
         if (live && j.bps > 0) size += "  ↓" + fmtCompact(j.bps) + "/s";   // 实时写入速率
+        return size;
+    }
+
+    private static String stateStr(RecManager.RecJob j, boolean live) {
         String state = live ? "录制中" : (j.state != null ? j.state : "暂停录制");
         if (!live && j.state != null && j.state.startsWith("合并视频")) {   // 合并阶段: 0-100% 由 ffmpeg 输出时间推进
             state = "合并视频 " + j.mergePct + "%";
         }
-        return "录制时长: " + fmtDur(secs)
-            + "\n录制大小: " + size
-            + "\n录制状态: " + state;
+        return state;
+    }
+
+    private String buildInfo(RecManager.RecJob j, boolean live) {
+        return "录制时长: " + durStr(j, live)
+            + "\n录制大小: " + sizeStr(j, live)
+            + "\n录制状态: " + stateStr(j, live);
+    }
+
+    /** 信息行 TextView 工厂 */
+    private TextView infoLine(String text, String tag) {
+        TextView tv = new TextView(this);
+        tv.setText(text);
+        tv.setTag(tag);
+        tv.setTextColor(Theme.sub(this));
+        tv.setTextSize(13);
+        tv.setLineSpacing(4, 1);
+        return tv;
+    }
+
+    /** 值变化才 setText, 避免无效重绘 */
+    private static void setIfDiff(TextView v, String t) {
+        if (v != null && !t.equals(v.getText().toString())) v.setText(t);
     }
 
     private void addRow(LinearLayout parent, final RecManager.RecJob j, final boolean live, final java.util.concurrent.atomic.AtomicReference<TextView> infoRef) {
@@ -608,13 +633,10 @@ public class RecordActivity extends Activity {
         tvName.setTag("rowName");
         mid.addView(tvName);
 
-        TextView tvInfo = new TextView(this);
-        tvInfo.setText(buildInfo(j, live));
-        if (infoRef != null) infoRef.set(tvInfo);
-        tvInfo.setTextColor(Theme.sub(this));
-        tvInfo.setTextSize(13);
-        tvInfo.setLineSpacing(4, 1);
-        mid.addView(tvInfo);
+        // 时长/大小/状态三行独立 TextView, 各自 diff 才刷新
+        mid.addView(infoLine("录制时长: " + durStr(j, live), "rowDur"));
+        mid.addView(infoLine("录制大小: " + sizeStr(j, live), "rowSize"));
+        mid.addView(infoLine("录制状态: " + stateStr(j, live), "rowState"));
         row.addView(mid);
 
         // 右侧 ⋮ 菜单
