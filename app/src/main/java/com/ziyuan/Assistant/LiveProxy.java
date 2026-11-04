@@ -32,7 +32,7 @@ public class LiveProxy {
     public static void putSeg(String url, byte[] body) {
         synchronized (segCache) {
             segCache.put(url, body);
-            while (segCache.size() > 12) {  // 12 片×~1MB，够播放器追上录制进度
+            while (segCache.size() > 20) {  // 20 片×~1MB：给播放器更充足的追赶余量
                 String k = segCache.keySet().iterator().next();
                 segCache.remove(k);
             }
@@ -352,8 +352,8 @@ public class LiveProxy {
                 // 之前直接转发上游原始列表，最新分片往往还没抓完，播放器被迫自己去上游下载（实测反而慢 3.5s）。
                 java.util.ArrayList<String> window = new java.util.ArrayList<>();
                 long seq = 0;
-                // 录制刚启动缓存还是空时，短暂等待首个分片落地（最多 4 秒），避免播放器拿到空列表报错
-                for (int i = 0; i < 9; i++) {
+                // 录制刚启动/录制器还在等原画时缓存可能是空的：等待首片落地（最多 8 秒），避免播放器拿到空列表报错
+                for (int i = 0; i < 16; i++) {
                     synchronized (LiveProxy.class) {
                         int n = fetched.size();
                         window.clear();
