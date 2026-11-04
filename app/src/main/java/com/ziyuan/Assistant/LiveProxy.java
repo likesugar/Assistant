@@ -134,7 +134,7 @@ public class LiveProxy {
             byte[] b = new byte[8192]; int n;
             while ((n = in.read(b)) > 0) bo.write(b, 0, n);
             in.close();
-            c.disconnect();
+            // 不调用 disconnect：让连接回到平台 keep-alive 池复用，后续请求省去 TLS 握手
             return bo.toByteArray();
         } catch (Throwable e) {
             return null;
@@ -347,7 +347,7 @@ public class LiveProxy {
                     int rn;
                     while ((rn = in.read(rb)) > 0) { os.write(rb, 0, rn); os.flush(); }
                     in.close();
-                    oc.disconnect();
+                    // 不 disconnect，保留 keep-alive 连接复用
                 } catch (Throwable ignored) {}
                 return;
             }

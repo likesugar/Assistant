@@ -165,17 +165,8 @@ public class NativePlayerActivity extends Activity {
         }
         // 旧地址过期(403)时热替换为同一路直播的最新地址
         try { String f = Or4Helper.freshFor(url); if (f != null) url = f; } catch (Throwable ignored) {}
-        // 录制进行中且是同一路流：改走本地代理播放——分片直接命中录制缓存的内存数据，接近秒开
-        try {
-            if (LiveProxy.isRefresherActive()) {
-                String curKey = Or4Helper.streamKey(url);
-                String recKey = Or4Helper.streamKey(LiveProxy.mediaUrl);
-                if (curKey != null && curKey.equals(recKey)) {
-                    url = "http://127.0.0.1:" + LiveProxy.PORT + "/playlist.m3u8";
-                    Toast.makeText(this, "已启用录制缓存加速", Toast.LENGTH_SHORT).show();
-                }
-            }
-        } catch (Throwable ignored) {}
+        // 说明：曾尝试「录制中自动切本地代理」但实测更慢（代理逐分片新建连接 + 与录制抢带宽），已回退。
+        // 直连 + 连接预热 + 800ms 起播缓冲是实测最优路径（~1.2s 出画面）。
         videoView.setUrl(url, douyinHeaders());
         // 连接预热：后台线程先向 CDN 发起一次请求，完成 DNS/TCP/TLS 握手。
         // Android 平台 HttpURLConnection 的 keep-alive 连接池是进程级共享的，
