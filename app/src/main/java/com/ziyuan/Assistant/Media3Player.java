@@ -12,6 +12,7 @@ import androidx.media3.datasource.DataSource;
 import androidx.media3.datasource.DefaultDataSource;
 import androidx.media3.datasource.DefaultHttpDataSource;
 import androidx.media3.datasource.HttpDataSource;
+import androidx.media3.exoplayer.DefaultLoadControl;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.hls.HlsMediaSource;
 import androidx.media3.exoplayer.source.MediaSource;
@@ -41,7 +42,14 @@ public class Media3Player extends AbstractPlayer {
 
     @Override
     public void initPlayer() {
-        mPlayer = new ExoPlayer.Builder(mAppContext).build();
+        // 快速起播：默认 LoadControl 首播要缓冲 2500ms/重缓冲 5000ms，直播体感偏慢。
+        // 收紧为首播 800ms/重缓冲 1500ms（min/max 缓冲保持 10s/30s，避免频繁卡顿）
+        DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
+                .setBufferDurationsMs(10000, 30000, 800, 1500)
+                .build();
+        mPlayer = new ExoPlayer.Builder(mAppContext)
+                .setLoadControl(loadControl)
+                .build();
         mPlayer.setPlaybackSpeed(mSpeed);
         mPlayer.addListener(new Player.Listener() {
             @Override
@@ -131,7 +139,10 @@ public class Media3Player extends AbstractPlayer {
         MediaItem item = MediaItem.fromUri(mPendingPath);
         MediaSource source;
         if (mPendingPath != null && mPendingPath.contains(".m3u8")) {
-            source = new HlsMediaSource.Factory(dataSourceFactory).createMediaSource(item);
+            // chunkless preparation：准备阶段不再额外下载变体播放列表/初始化分片，直播起播更快
+            source = new HlsMediaSource.Factory(dataSourceFactory)
+                    .setAllowChunklessPreparation(true)
+                    .createMediaSource(item);
         } else {
             source = new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(item);
         }
