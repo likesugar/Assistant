@@ -167,12 +167,20 @@ public class NativePlayerActivity extends Activity {
         try { String f = Or4Helper.freshFor(url); if (f != null) url = f; } catch (Throwable ignored) {}
         // 录制进行中且是同一路流：改走本地代理，播放列表只由录制已抓取的内存分片组成
         // （秒进；播放器零上游请求，与录制完全不抢带宽。静默切换，不弹提示）
+        // 匹配两级：① 文件名 key 精确匹配；② key 失配(录制中刷新变名/换CDN)时比对 stream-<id> 数字段
         try {
-            if (LiveProxy.isRefresherActive()) {
+            if (!url.contains("127.0.0.1")) {
+                java.util.ArrayList<String> cands = new java.util.ArrayList<>();
+                if (LiveProxy.isRefresherActive() && LiveProxy.mediaUrl != null) cands.add(LiveProxy.mediaUrl);
+                for (RecManager.RecJob j : RecManager.recJobs.values()) {
+                    if (j.active && j.url != null && j.url.contains(".m3u8")) cands.add(j.url);
+                }
                 String curKey = Or4Helper.streamKey(url);
-                String recKey = Or4Helper.streamKey(LiveProxy.mediaUrl);
-                if (curKey != null && curKey.equals(recKey)) {
-                    url = "http://127.0.0.1:" + LiveProxy.PORT + "/playlist.m3u8";
+                String curId = streamId(url);
+                for (String ru : cands) {
+                    boolean match = curKey != null && curKey.equals(Or4Helper.streamKey(ru));
+                    if (!match && curId != null) match = curId.equals(streamId(ru));
+                    if (match) { url = "http://127.0.0.1:" + LiveProxy.PORT + "/playlist.m3u8"; break; }
                 }
             }
         } catch (Throwable ignored) {}
@@ -244,6 +252,14 @@ public class NativePlayerActivity extends Activity {
             if (path.endsWith(ext)) return true;
         }
         return false;
+    }
+
+    /** 从 URL 提取 stream-<数字> 标识（跨 CDN/变名匹配同一路直播） */
+    private static String streamId(String u) {
+        try {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("stream-[0-9]+").matcher(u);
+            return m.find() ? m.group() : null;
+        } catch (Throwable t) { return null; }
     }
 
     /** 连接预热：提前完成 DNS/TCP/TLS 握手，连接存入平台进程级 keep-alive 池供播放器复用 */
