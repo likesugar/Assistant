@@ -116,6 +116,11 @@ public class LiveProxy {
         fetched.clear();
     }
 
+    /** 录制刷新器是否在跑（同一路流播放可改走本代理，分片命中内存缓存） */
+    public static boolean isRefresherActive() {
+        return refreshing && mediaUrl != null;
+    }
+
     private static byte[] httpGet(String url) {
         try {
             HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();

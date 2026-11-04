@@ -142,12 +142,13 @@ public class KbRecordService extends Service {
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         NotificationChannel ch = new NotificationChannel(CHANNEL, "直播录制", NotificationManager.IMPORTANCE_DEFAULT);
         nm.createNotificationChannel(ch);
-        // 点通知本体 = 进入解析页查看
+        // 点通知本体 = 直接进入播放器（本地代理地址，分片命中录制缓存，接近秒开）
         android.app.PendingIntent openPi = android.app.PendingIntent.getActivity(this, 2,
             new Intent(this, NativePlayerActivity.class)
-                .putExtra("autoUrl", "http://127.0.0.1:" + LiveProxy.PORT + "/playlist.m3u8")
+                .putExtra("url", "http://127.0.0.1:" + LiveProxy.PORT + "/playlist.m3u8")
+                .putExtra("title", "直播录制")
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP),
-            android.app.PendingIntent.FLAG_IMMUTABLE);
+            Intent.FLAG_IMMUTABLE);
         Notification.Builder b = new Notification.Builder(this, CHANNEL)
             .setSmallIcon(android.R.drawable.ic_media_play)
             .setContentTitle("小工具 · 录制中")
