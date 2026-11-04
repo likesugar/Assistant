@@ -32,7 +32,7 @@ public class LiveProxy {
     public static void putSeg(String url, byte[] body) {
         synchronized (segCache) {
             segCache.put(url, body);
-            while (segCache.size() > 40) {
+            while (segCache.size() > 12) {  // 12 片×~1MB，够播放器追上录制进度
                 String k = segCache.keySet().iterator().next();
                 segCache.remove(k);
             }
@@ -90,6 +90,8 @@ public class LiveProxy {
                                 byte[] seg = httpGet(t);
                                 if (seg != null) {
                                     fetched.add(t);
+                                    // 同步放入分片缓存：录制中播放 /ts?u= 直接命中，零网络等待
+                                    putSeg(t, seg);
                                     FileOutputStream fo = kbOut;
                                     if (fo != null) {
                                         fo.write(seg);
@@ -321,9 +323,27 @@ public class LiveProxy {
 
             if (path.startsWith("/ts?u=")) {
                 String raw = URLDecoder.decode(queryParam(path, "u"), "UTF-8");
-                byte[] body = httpGet(raw);
-                if (body == null) { writeResp(s, "404 Not Found", "text/plain", "seg err".getBytes()); return; }
-                writeResp(s, "200 OK", "video/mp2t", body);
+                // 1) 命中录制刷新器已抓取的分片缓存：直接回内存数据，播放器零等待
+                byte[] cached = getSeg(raw);
+                if (cached != null) { writeResp(s, "200 OK", "video/mp2t", cached); return; }
+                // 2) 未命中：流式转发（边下边发），播放器不必等整个分片下载完
+                OutputStream os = s.getOutputStream();
+                try {
+                    HttpURLConnection oc = (HttpURLConnection) new URL(raw).openConnection();
+                    oc.setConnectTimeout(6000);
+                    oc.setReadTimeout(6000);
+                    oc.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) Chrome/120 Mobile");
+                    oc.setRequestProperty("Referer", "https://guangdongvideo.com/");
+                    if (oc.getResponseCode() != 200) { oc.disconnect(); return; }
+                    os.write("HTTP/1.1 200 OK\r\nContent-Type: video/mp2t\r\nConnection: close\r\n\r\n".getBytes());
+                    os.flush();
+                    InputStream in = oc.getInputStream();
+                    byte[] rb = new byte[16384];
+                    int rn;
+                    while ((rn = in.read(rb)) > 0) { os.write(rb, 0, rn); os.flush(); }
+                    in.close();
+                    oc.disconnect();
+                } catch (Throwable ignored) {}
                 return;
             }
 
