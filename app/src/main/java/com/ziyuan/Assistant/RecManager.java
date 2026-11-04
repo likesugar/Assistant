@@ -234,6 +234,8 @@ public class RecManager {
                 public void run() {
                     java.io.FileOutputStream fo = null;
                     try {
+                        // 通知本地代理：录制开始喂数据，播放同一路流时可走内存缓存秒进
+                        LiveProxy.beginCacheFeed(job.url);
                         fo = new java.io.FileOutputStream(job.file, true);
                         java.util.LinkedHashSet<String> seen = new java.util.LinkedHashSet<>();
                         byte[] buf = new byte[65536];
@@ -302,11 +304,14 @@ public class RecManager {
                                     sc.setRequestProperty("Referer", "https://live.douyin.com/");
                                     if (sc.getResponseCode() == 200 && fo != null) {
                                         java.io.InputStream in = sc.getInputStream();
+                                        java.io.ByteArrayOutputStream cab = new java.io.ByteArrayOutputStream();
                                         int n;
-                                        while (job.active && (n = in.read(buf)) > 0) { fo.write(buf, 0, n); job.bytes += n; }
+                                        while (job.active && (n = in.read(buf)) > 0) { fo.write(buf, 0, n); job.bytes += n; cab.write(buf, 0, n); }
                                         fo.flush();
                                         in.close();
                                         failStreak = 0;
+                                        // 完整分片进内存缓存：录制中播放同一路流直接命中（秒进）
+                                        LiveProxy.noteSegment(seg, cab.toByteArray());
                                     } else failStreak++;
                                 } catch (Throwable se) {
                                     failStreak++;
@@ -321,6 +326,7 @@ public class RecManager {
                     } catch (Throwable t) {
                         job.state = "中断: " + t.getClass().getSimpleName();
                     } finally {
+                        LiveProxy.endCacheFeed();   // 录制结束，释放分片缓存
                         try { if (fo != null) fo.close(); } catch (Exception ignored) {}
                         if (job.startTs > 0) job.secs += (System.currentTimeMillis() - job.startTs) / 1000;
                         job.startTs = 0;
