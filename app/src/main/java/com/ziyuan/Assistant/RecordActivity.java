@@ -643,7 +643,7 @@ public class RecordActivity extends Activity {
         try {
             android.content.ClipboardManager cm = (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
             cm.setPrimaryClip(android.content.ClipData.newPlainText("dl", addr));
-            Toast.makeText(this, "下载地址已复制", Toast.LENGTH_SHORT).show();
+            // 静默复制，不再弹 Toast
         } catch (Throwable ignored) {}
         playInApp(addr, j != null && j.name != null ? j.name : "播放");
     }
