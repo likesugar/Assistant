@@ -165,8 +165,17 @@ public class NativePlayerActivity extends Activity {
         }
         // 旧地址过期(403)时热替换为同一路直播的最新地址
         try { String f = Or4Helper.freshFor(url); if (f != null) url = f; } catch (Throwable ignored) {}
-        // 说明：曾尝试「录制中自动切本地代理」但实测更慢（代理逐分片新建连接 + 与录制抢带宽），已回退。
-        // 直连 + 连接预热 + 800ms 起播缓冲是实测最优路径（~1.2s 出画面）。
+        // 录制进行中且是同一路流：改走本地代理，播放列表只由录制已抓取的内存分片组成
+        // （秒进；播放器零上游请求，与录制完全不抢带宽。静默切换，不弹提示）
+        try {
+            if (LiveProxy.isRefresherActive()) {
+                String curKey = Or4Helper.streamKey(url);
+                String recKey = Or4Helper.streamKey(LiveProxy.mediaUrl);
+                if (curKey != null && curKey.equals(recKey)) {
+                    url = "http://127.0.0.1:" + LiveProxy.PORT + "/playlist.m3u8";
+                }
+            }
+        } catch (Throwable ignored) {}
         videoView.setUrl(url, douyinHeaders());
         // 连接预热：后台线程先向 CDN 发起一次请求，完成 DNS/TCP/TLS 握手。
         // Android 平台 HttpURLConnection 的 keep-alive 连接池是进程级共享的，
@@ -240,6 +249,7 @@ public class NativePlayerActivity extends Activity {
     /** 连接预热：提前完成 DNS/TCP/TLS 握手，连接存入平台进程级 keep-alive 池供播放器复用 */
     private void prewarmConnection(String u) {
         if (u == null || !u.toLowerCase().startsWith("http")) return;
+        if (u.contains("127.0.0.1")) return;   // 本地代理无需预热
         new Thread(new Runnable() {
             @Override public void run() {
                 try {

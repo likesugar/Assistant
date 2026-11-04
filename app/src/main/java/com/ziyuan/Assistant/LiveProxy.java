@@ -44,6 +44,7 @@ public class LiveProxy {
     private static volatile boolean running = false;
     private static volatile boolean refreshing = false;
     private static final LinkedHashSet<String> fetched = new LinkedHashSet<>();
+    private static long totalFetched = 0;   // 成功抓取的分片总数（用于 MEDIA-SEQUENCE 单调递增）
 
     public static void start() {
         if (running) return;
@@ -89,10 +90,12 @@ public class LiveProxy {
                         // 解析分片，抓新的写录制
                         for (String ln : new String(body, "UTF-8").split("\n")) {
                             String t = ln.trim();
-                            if (t.startsWith("http") && t.contains(".ts") && !fetched.contains(t)) {
+                            boolean isNew;
+                            synchronized (LiveProxy.class) { isNew = !fetched.contains(t); }
+                            if (t.startsWith("http") && t.contains(".ts") && isNew) {
                                 byte[] seg = httpGet(t);
                                 if (seg != null) {
-                                    fetched.add(t);
+                                    synchronized (LiveProxy.class) { fetched.add(t); totalFetched++; }
                                     // 同步放入分片缓存：录制中播放 /ts?u= 直接命中，零网络等待
                                     putSeg(t, seg);
                                     FileOutputStream fo = kbOut;
@@ -116,7 +119,8 @@ public class LiveProxy {
     public static void stopRefresher() {
         refreshing = false;
         mediaUrl = null;
-        fetched.clear();
+        synchronized (LiveProxy.class) { fetched.clear(); totalFetched = 0; }
+        synchronized (segCache) { segCache.clear(); }
     }
 
     /** 录制刷新器是否在跑（同一路流播放可改走本代理，分片命中内存缓存） */
@@ -316,14 +320,30 @@ public class LiveProxy {
             }
 
             if (path.startsWith("/playlist.m3u8")) {
-                byte[] body = latestBody;
-                if (body == null) { writeResp(s, "404 Not Found", "text/plain", "no stream".getBytes()); return; }
+                // 秒进关键：播放列表只由「录制已完整抓取且仍在内存缓存」的分片组成，
+                // 播放器全程只读本地内存、零上游请求，不与录制抢带宽。
+                // 之前直接转发上游原始列表，最新分片往往还没抓完，播放器被迫自己去上游下载（实测反而慢 3.5s）。
+                java.util.ArrayList<String> window = new java.util.ArrayList<>();
+                long seq;
+                synchronized (LiveProxy.class) {
+                    int n = fetched.size();
+                    seq = totalFetched;
+                    if (n > 0) {
+                        int win = Math.min(6, n);   // 滑动窗口 6 片 ≈ 12s，全在缓存内
+                        int skip = n - win;
+                        int i = 0;
+                        for (String u : fetched) { if (i++ >= skip) window.add(u); }
+                        seq = totalFetched - win;
+                    }
+                }
+                if (window.isEmpty()) { writeResp(s, "404 Not Found", "text/plain", "no stream".getBytes()); return; }
                 StringBuilder sb = new StringBuilder();
-                for (String line : new String(body, "UTF-8").split("\n")) {
-                    line = line.trim();
-                    if (line.startsWith("#") || line.isEmpty()) { sb.append(line).append("\n"); continue; }
-                    String enc = java.net.URLEncoder.encode(line, "UTF-8");
-                    sb.append("http://127.0.0.1:").append(PORT).append("/ts?u=").append(enc).append("\n");
+                sb.append("#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:2\n")
+                  .append("#EXT-X-MEDIA-SEQUENCE:").append(seq).append("\n");
+                for (String u : window) {
+                    sb.append("#EXTINF:2.0,\n")
+                      .append("http://127.0.0.1:").append(PORT).append("/ts?u=")
+                      .append(java.net.URLEncoder.encode(u, "UTF-8")).append("\n");
                 }
                 writeResp(s, "200 OK", "application/vnd.apple.mpegurl", sb.toString().getBytes());
                 return;
