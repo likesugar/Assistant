@@ -51,5 +51,9 @@ public class Theme {
     public static int rowRes(Context c) {
         return dark(c) ? R.drawable.bg_row_md3_dark : R.drawable.bg_row_md3;
     }
+    /** 首页卡片同款: 透明底+描边+涟漪(资源自带) */
+    public static int cardRes(Context c) {
+        return dark(c) ? R.drawable.bg_card_md3_dark : R.drawable.bg_card_md3;
+    }
     public static int segBarRes(Context c) { return dark(c) ? R.drawable.bg_seg_bar_dark : R.drawable.bg_seg_bar; }
 }

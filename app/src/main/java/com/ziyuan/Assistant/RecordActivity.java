@@ -387,7 +387,7 @@ public class RecordActivity extends Activity {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setBackgroundResource(Theme.rowRes(this));
+        row.setBackgroundResource(Theme.cardRes(this));
         row.setPadding(dp2(12), dp2(14), dp2(12), dp2(14));
         LinearLayout.LayoutParams rowLp0 = (LinearLayout.LayoutParams) row.getLayoutParams();
         LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(-1, -2);
@@ -440,7 +440,7 @@ public class RecordActivity extends Activity {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setBackgroundResource(Theme.rowRes(this));
+        row.setBackgroundResource(Theme.cardRes(this));
         row.setPadding(dp2(12), dp2(14), dp2(12), dp2(14));
         LinearLayout.LayoutParams rowLp0 = (LinearLayout.LayoutParams) row.getLayoutParams();
         LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(-1, -2);
@@ -1270,7 +1270,7 @@ public class RecordActivity extends Activity {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
-        row.setBackgroundResource(Theme.rowRes(this));
+        row.setBackgroundResource(Theme.cardRes(this));
         row.setPadding(dp2(12), dp2(14), dp2(12), dp2(14));
         LinearLayout.LayoutParams rowLp0 = (LinearLayout.LayoutParams) row.getLayoutParams();
         LinearLayout.LayoutParams rowLp = new LinearLayout.LayoutParams(-1, -2);

@@ -191,7 +191,8 @@ public class ShortcutActivity extends Activity {
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setGravity(Gravity.CENTER);
-        card.setBackground(pressable(roundBg(Color0.card(this), dp(18))));
+        // 卡片与首页同款: 透明底+描边+涟漪(资源自带), 只随明暗切换
+        card.setBackgroundResource(Theme.dark(this) ? R.drawable.bg_card_md3_dark : R.drawable.bg_card_md3);
         int pad = dp(16);
         card.setPadding(pad, dp(18), pad, dp(18));
         // 图标底座: 56dp 圆角方块, 图标居中
