@@ -43,9 +43,9 @@ public class Media3Player extends AbstractPlayer {
     @Override
     public void initPlayer() {
         // 极速起播（对齐 Ijk「解码出首帧即播」的体感）：
-        // 首播缓冲 150ms，重缓冲 800ms；min/max 缓冲 10s/30s 保证后续流畅。
+        // 首播缓冲 150ms，重缓冲 500ms；min/max 缓冲 10s/30s 保证后续流畅。
         DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
-                .setBufferDurationsMs(10000, 30000, 150, 800)
+                .setBufferDurationsMs(10000, 30000, 150, 500)
                 .build();
         mPlayer = new ExoPlayer.Builder(mAppContext)
                 .setLoadControl(loadControl)
