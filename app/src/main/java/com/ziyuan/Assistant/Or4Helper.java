@@ -70,7 +70,7 @@ public final class Or4Helper {
     }
 
     /** 流文件名作为 key：取路径最后一段并去掉 query，如 stream-408...63_or4.m3u8 */
-    private static String streamKey(String u) {
+    public static String streamKey(String u) {
         try {
             int q = u.indexOf('?');
             String p = q > 0 ? u.substring(0, q) : u;
