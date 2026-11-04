@@ -488,9 +488,14 @@ public class RecordActivity extends Activity {
                 pm.getMenu().add("删除");
                 pm.getMenu().add("打开为");
                 pm.getMenu().add("重命名");
-                pm.getMenu().add("重新下载");
-                pm.getMenu().add("打开下载页");
-                pm.getMenu().add("复制下载地址");
+                // 菜单按记录自适应：v1.2.16 之前完成的老记录没有保存来源地址；
+                // 录制记录的"来源"是直播流直链(m3u8/flv)，浏览器也打不开。
+                // 这类记录不再显示点了必然失败的项，改为显示能实际打开文件的动作。
+                boolean web = isWebSource(cur.url);
+                boolean hasUrl = cur.url != null && !cur.url.isEmpty();
+                if (hasUrl) pm.getMenu().add("重新下载");
+                pm.getMenu().add(web ? "打开下载页" : "查看文件位置");
+                pm.getMenu().add(hasUrl ? "复制下载地址" : "复制文件路径");
                 pm.getMenu().add("打开所在目录");
                 pm.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     public boolean onMenuItemClick(android.view.MenuItem m2) {
@@ -506,7 +511,8 @@ public class RecordActivity extends Activity {
                         else if (t.equals("重命名")) renameItem(cur, idx);
                         else if (t.equals("重新下载")) reDownload(cur);
                         else if (t.equals("打开下载页")) openSourcePage(cur);
-                        else if (t.equals("复制下载地址")) copySourceUrl(cur);
+                        else if (t.equals("查看文件位置")) openFileList(cur.path, false);
+                        else if (t.equals("复制下载地址") || t.equals("复制文件路径")) copySourceUrl(cur);
                         else if (t.equals("打开所在目录")) openFileList(cur.path, false);
                         return true;
                     }
@@ -515,6 +521,16 @@ public class RecordActivity extends Activity {
             }
         });
         row.addView(more);
+        // 已完成卡片整行可点 = 直接打开成品文件（之前只有 ⋮ 菜单能操作，点卡片没反应）
+        TapGuard.guard(row);
+        row.setClickable(true);
+        row.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                // 行复用时按当前索引重取条目，避免删除后错位打开别的文件
+                HistoryStore.Item cur = (hist != null && idx < hist.size()) ? hist.get(idx) : it;
+                try { playInApp(cur.path, cur.title); } catch (Throwable e) { toast("打不开"); }
+            }
+        });
         parent.addView(row);
     }
 
@@ -625,7 +641,8 @@ public class RecordActivity extends Activity {
                 } catch (Throwable ignored) {}
                 finally { try { mm.release(); } catch (Throwable ignored) {} }
             }
-            if (it.url != null) sb.append("来源地址：").append(it.url).append("\n");
+            if (it.url != null && !it.url.isEmpty()) sb.append("来源地址：").append(it.url).append("\n");
+            else sb.append("来源地址：未保存（老版本记录，可用「打开」直接播放成品）\n");
             runOnUiThread(new Runnable() { public void run() {
                 try {
                     new android.app.AlertDialog.Builder(RecordActivity.this)
@@ -648,22 +665,40 @@ public class RecordActivity extends Activity {
         } catch (Throwable ignored) {}
     }
 
+    /**
+     * 是否为能用浏览器打开的"来源网页"。
+     * 录制/嗅探地址多为直播流直链(m3u8/flv/ts/mp4/mpd)或本地中转代理，
+     * 这类交给 ACTION_VIEW 只会拉起播放器/下载器甚至报错，不算可打开的下载页。
+     */
+    private static boolean isWebSource(String u) {
+        if (u == null || u.isEmpty()) return false;
+        String low = u.toLowerCase(java.util.Locale.ROOT);
+        if (!low.startsWith("http://") && !low.startsWith("https://")) return false;
+        String path = low;
+        int q = path.indexOf('?');
+        if (q > 0) path = path.substring(0, q);
+        return !(path.endsWith(".m3u8") || path.endsWith(".flv") || path.endsWith(".ts")
+                || path.endsWith(".mp4") || path.endsWith(".mpd") || path.endsWith(".m4s")
+                || path.endsWith(".key") || path.contains("127.0.0.1") || path.contains("/relay"));
+    }
+
+    /** 有来源地址则复制来源；老记录没有则降级复制本地文件路径，静默不弹 Toast */
     private void copySourceUrl(HistoryStore.Item it) {
-        if (it.url == null || it.url.isEmpty()) { toast("该记录没有来源地址"); return; }
-        copyText(it.url);   // 静默复制，不弹 Toast
+        if (it.url != null && !it.url.isEmpty()) copyText(it.url);
+        else if (it.path != null) copyText(it.path);
     }
 
     private void openSourcePage(HistoryStore.Item it) {
-        if (it.url == null || it.url.isEmpty()) { toast("该记录没有来源地址"); return; }
+        if (!isWebSource(it.url)) { openFileList(it.path, false); return; }
         try {
             Intent i = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(it.url));
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(i);
-        } catch (Throwable e) { toast("打不开来源页面"); }
+        } catch (Throwable e) { openFileList(it.path, false); }
     }
 
     private void reDownload(HistoryStore.Item it) {
-        if (it.url == null || it.url.isEmpty()) { toast("该记录没有来源地址，无法重新下载"); return; }
+        if (it.url == null || it.url.isEmpty()) { openFileList(it.path, false); return; }
         try { DlManager.start(it.url); rebuild(); }
         catch (Throwable e) { toast("无法开始下载"); }
     }
