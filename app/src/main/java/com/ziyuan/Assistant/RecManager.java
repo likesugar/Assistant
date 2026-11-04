@@ -658,12 +658,14 @@ public class RecManager {
                     if (d > 0 && "连接直播…".equals(job.state)) job.state = null;   // 首片落地, 进入正常录制显示
                 }
                 long now = System.currentTimeMillis();
-                // 速率: 固定 ~1s 窗口算, 避开 getSize 0.5s 上报周期错位导致的翻倍, dv>0 才记
+                // 速率: 3s 平均窗口. 源流(HLS分片)约2-3s一片突发到达, 1s短窗口会让速率时有时无;
+                // 3s窗口内几乎必含一次分片到达, 速率得以常驻显示. 连续3个窗口无流量才清零(真断流)
                 if (job.statTs == 0) { job.statTs = now; job.rateBytes = job.bytes; }
-                else if (now - job.statTs >= 900) {
+                else if (now - job.statTs >= 3000) {
                     long dv = job.bytes - job.rateBytes;
                     long dt = now - job.statTs;
-                    job.bps = dv > 0 ? dv * 1000 / dt : 0;
+                    if (dv > 0) job.bps = dv * 1000 / dt;
+                    else if (now - job.statTs >= 9000) job.bps = 0;
                     job.statTs = now;
                     job.rateBytes = job.bytes;
                 }
