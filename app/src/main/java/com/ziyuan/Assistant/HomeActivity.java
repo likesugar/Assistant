@@ -1327,8 +1327,10 @@ public class HomeActivity extends Activity {
         android.view.Window w = d.getWindow();
         if (w != null) {
             w.setBackgroundDrawableResource(android.R.color.transparent);
-            w.setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            int screenW = getResources().getDisplayMetrics().widthPixels;
+            int maxW = (int) (320 * getResources().getDisplayMetrics().density);
+            int dlgW = Math.min((int) (screenW * 0.85), maxW);
+            w.setLayout(dlgW, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
             w.setWindowAnimations(R.style.DialogPopAnim);
             w.setDimAmount(0.4f);
         }
@@ -1438,8 +1440,10 @@ public class HomeActivity extends Activity {
         android.view.Window w = d.getWindow();
         if (w != null) {
             w.setBackgroundDrawableResource(android.R.color.transparent);
-            w.setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            int screenW = getResources().getDisplayMetrics().widthPixels;
+            int maxW = (int) (320 * getResources().getDisplayMetrics().density);
+            int dlgW = Math.min((int) (screenW * 0.85), maxW);
+            w.setLayout(dlgW, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
             w.setWindowAnimations(R.style.DialogPopAnim);
             w.setDimAmount(0.4f);
         }

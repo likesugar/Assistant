@@ -4,7 +4,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:id="@+id/dialogRoot" android:background="@drawable/bg_dialog_light"
-    android:padding="22dp">
+    android:padding="18dp">
 
     <TextView
         android:id="@+id/tv_dialog_title"
