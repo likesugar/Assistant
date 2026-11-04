@@ -221,6 +221,9 @@ public class RecordActivity extends Activity {
     @Override
     protected void onPause() { super.onPause(); handler.removeCallbacks(tick); }
 
+    @Override
+    protected void onDestroy() { super.onDestroy(); THUMB_REQ.clear(); }
+
     private static String fmtDur(long s) {
         return String.format(java.util.Locale.US, "%02d:%02d:%02d", s / 3600, s / 60 % 60, s % 60);
     }
@@ -389,6 +392,7 @@ public class RecordActivity extends Activity {
         play.setGravity(Gravity.CENTER);
         thumb.addView(play, new FrameLayout.LayoutParams(-1, -1));
         row.addView(thumb);
+        setThumb(thumb, videoPathIn(j.file));   // 首帧截图, 失败保持⇣占位
         LinearLayout mid = new LinearLayout(this);
         mid.setOrientation(LinearLayout.VERTICAL);
         LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(0, -2);
@@ -440,6 +444,7 @@ public class RecordActivity extends Activity {
         play.setGravity(Gravity.CENTER);
         thumb.addView(play, new FrameLayout.LayoutParams(-1, -1));
         row.addView(thumb);
+        setThumb(thumb, it.path);   // 首帧截图, 失败保持▶占位
         LinearLayout mid = new LinearLayout(this);
         mid.setOrientation(LinearLayout.VERTICAL);
         LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(0, -2);
@@ -598,6 +603,78 @@ public class RecordActivity extends Activity {
         if (v != null && !t.equals(v.getText().toString())) v.setText(t);
     }
 
+    // ---- 首帧缩略图: MediaMetadataRetriever 后台解码 + 内存缓存 ----
+    private static final java.util.HashMap<String, android.graphics.Bitmap> THUMB_CACHE = new java.util.HashMap<String, android.graphics.Bitmap>();
+    private static final java.util.HashMap<android.widget.ImageView, String> THUMB_REQ = new java.util.HashMap<android.widget.ImageView, String>();
+    private static final java.util.concurrent.ExecutorService THUMB_POOL = java.util.concurrent.Executors.newSingleThreadExecutor();
+
+    /** 从录制/下载目录里挑一个可解码的视频文件: 优先成品 mp4, 否则最早的分片 */
+    private static String videoPathIn(java.io.File dir) {
+        try {
+            if (dir == null) return null;
+            if (dir.isFile()) return dir.getAbsolutePath();
+            if (!dir.isDirectory()) return null;
+            java.io.File mp4 = null, seg = null;
+            for (java.io.File f : dir.listFiles()) {
+                if (f.length() <= 0) continue;
+                String n = f.getName().toLowerCase();
+                if (n.endsWith(".mp4") && (mp4 == null || f.lastModified() > mp4.lastModified())) mp4 = f;
+                if (n.startsWith("seg") && n.endsWith(".ts") && (seg == null || RecManager.segIndex(f) < RecManager.segIndex(seg))) seg = f;
+            }
+            return mp4 != null ? mp4.getAbsolutePath() : (seg != null ? seg.getAbsolutePath() : null);
+        } catch (Throwable e) { return null; }
+    }
+
+    /** 缩略块显示视频首帧; 解码失败或未就绪时保持原 ▶/⇣ 占位图标 */
+    private void setThumb(final FrameLayout thumb, final String path) {
+        if (path == null || path.isEmpty()) return;
+        android.widget.ImageView iv = (android.widget.ImageView) thumb.findViewWithTag("thumbIv");
+        if (iv == null) {
+            iv = new android.widget.ImageView(this);
+            iv.setTag("thumbIv");
+            iv.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+            thumb.addView(iv, 0, new FrameLayout.LayoutParams(-1, -1));   // 压在占位图标下层
+        }
+        final android.widget.ImageView fiv = iv;
+        synchronized (THUMB_CACHE) {
+            android.graphics.Bitmap bm = THUMB_CACHE.get(path);
+            if (bm != null) { fiv.setImageBitmap(bm); fiv.setVisibility(View.VISIBLE); return; }
+        }
+        fiv.setVisibility(View.INVISIBLE);
+        THUMB_REQ.put(fiv, path);
+        THUMB_POOL.execute(new Runnable() { public void run() {
+            android.graphics.Bitmap bm = decodeThumb(path);
+            if (bm != null) synchronized (THUMB_CACHE) {
+                if (THUMB_CACHE.size() > 96) THUMB_CACHE.clear();   // 简单上限, 防长列表撑爆内存
+                THUMB_CACHE.put(path, bm);
+            }
+            runOnUiThread(new Runnable() { public void run() {
+                if (!path.equals(THUMB_REQ.get(fiv))) return;   // 行已复用到别的条目, 丢弃过期结果
+                android.graphics.Bitmap b2;
+                synchronized (THUMB_CACHE) { b2 = THUMB_CACHE.get(path); }
+                if (b2 != null) { fiv.setImageBitmap(b2); fiv.setVisibility(View.VISIBLE); }
+            } });
+        } });
+    }
+
+    /** 取视频 0ms 处关键帧并居中裁剪到缩略块尺寸(140x90 px), 失败返回 null */
+    private static android.graphics.Bitmap decodeThumb(String path) {
+        android.media.MediaMetadataRetriever mm = new android.media.MediaMetadataRetriever();
+        try {
+            String p = path.startsWith("file://") ? path.substring(7) : path;
+            mm.setDataSource(p);
+            android.graphics.Bitmap f = mm.getFrameAtTime(0, android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
+            if (f == null) return null;
+            int W = 140, H = 90;
+            float sc = Math.max(W / (float) f.getWidth(), H / (float) f.getHeight());
+            android.graphics.Bitmap scaled = android.graphics.Bitmap.createScaledBitmap(f,
+                Math.max(1, Math.round(f.getWidth() * sc)), Math.max(1, Math.round(f.getHeight() * sc)), true);
+            int x = Math.max(0, (scaled.getWidth() - W) / 2), y = Math.max(0, (scaled.getHeight() - H) / 2);
+            return android.graphics.Bitmap.createBitmap(scaled, x, y, Math.min(W, scaled.getWidth()), Math.min(H, scaled.getHeight()));
+        } catch (Throwable e) { return null; }
+        finally { try { mm.release(); } catch (Throwable ignored) {} }
+    }
+
     private void addRow(LinearLayout parent, final RecManager.RecJob j, final boolean live, final java.util.concurrent.atomic.AtomicReference<TextView> infoRef) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
@@ -621,6 +698,7 @@ public class RecordActivity extends Activity {
         play.setGravity(Gravity.CENTER);
         thumb.addView(play, new FrameLayout.LayoutParams(-1, -1));
         row.addView(thumb);
+        setThumb(thumb, videoPathIn(j.file));   // 首帧截图, 失败保持▶占位
 
         // 中间信息
         LinearLayout mid = new LinearLayout(this);
