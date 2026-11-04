@@ -856,13 +856,22 @@ public class RecManager {
                 // 1) 等 ffmpeg 完全停止（结束时的 cancel 是异步的），避免读到一个还在写的半截分片
                 waitForSessionStop(job);
                 // 2) 数值排序收集全部分片（暂停/重连产生的多段 seg 一并收入）
-                java.io.File[] segs = job.file.listFiles();
                 java.util.List<java.io.File> list = new java.util.ArrayList<java.io.File>();
-                if (segs != null) {
-                    for (java.io.File f : segs) if (f.getName().startsWith("seg") && f.length() > 0) list.add(f);
-                    java.util.Collections.sort(list, new java.util.Comparator<java.io.File>() {
-                        public int compare(java.io.File a, java.io.File b) { return segIndex(a) - segIndex(b); }
-                    });
+                for (int attempt = 0; attempt < 2; attempt++) {   // 首扫无分片时等5s再试1次（结束瞬间可能尚未落盘）
+                    list.clear();
+                    java.io.File[] segs = job.file.listFiles();
+                    if (segs != null) {
+                        for (java.io.File f : segs) if (f.getName().startsWith("seg") && f.length() > 0) list.add(f);
+                        java.util.Collections.sort(list, new java.util.Comparator<java.io.File>() {
+                            public int compare(java.io.File a, java.io.File b) { return segIndex(a) - segIndex(b); }
+                        });
+                    }
+                    if (!list.isEmpty()) break;
+                    if (attempt == 0) {
+                        job.state = "等待分片写入...";
+                        try { Thread.sleep(5000); } catch (Throwable e) { }
+                        waitForSessionStop(job);   // 再确认会话已停止
+                    }
                 }
                 if (list.isEmpty()) { job.state = "无数据"; stoppedJobs.put(job.id, job); return; }
                 // 3) 字节级拼接成整段 TS——TS 是流式封装，可首尾相接，纯拷贝零转码，
