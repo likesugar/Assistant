@@ -70,6 +70,9 @@ public class LiveProxy {
         refreshing = true;
         new Thread(new Runnable() {
             public void run() {
+                // 与播放分开：录制降为后台优先级，带宽/CPU 调度让位给前台播放，
+                // 避免录制持续拉流拖慢播放起播与卡顿
+                try { android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND); } catch (Throwable ignored) {}
                 int fails = 0;
                 while (refreshing) {
                     try {
