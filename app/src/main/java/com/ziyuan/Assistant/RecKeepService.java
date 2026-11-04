@@ -48,10 +48,8 @@ public class RecKeepService extends Service {
             if (busy && first != null) {
                 String st = first.state != null ? first.state : "录制中";
                 String name = first.name != null ? first.name : "录制任务";
-                // 第一条任务的实时数据：时长 · 大小(含每秒速率) · 状态
-                String line = fmtDur(curSecs(first)) + "  " + sizeStr(first.bytes);
-                if (first.bps > 0) line += "(↓" + sizeStr(first.bps) + "/s)";
-                line += "  " + st;
+                // 第一条任务的实时数据：时长 · 大小 · 状态
+                String line = fmtDur(curSecs(first)) + "  " + sizeStr(first.bytes) + "  " + st;
                 nm.notify(21001, noteBuilder(name, line, playUrl(first)).build());
             }
         } catch (Throwable ignored) {}

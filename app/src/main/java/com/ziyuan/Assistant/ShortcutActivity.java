@@ -159,25 +159,31 @@ public class ShortcutActivity extends Activity {
             }));
         }
         LinearLayout row = null;
+        final int gap = dp(12);   // 卡片间距(横向+纵向)
         for (int i = 0; i < cells.size(); i++) {
             if (i % 2 == 0) {
                 row = new LinearLayout(this);
                 row.setOrientation(LinearLayout.HORIZONTAL);
-                grid.addView(row, new LinearLayout.LayoutParams(-1, -2));
+                LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(-1, -2);
+                if (i > 0) rlp.topMargin = gap;   // 行间距
+                grid.addView(row, rlp);
             }
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, -2, 1f);
-            if (i % 2 == 1) lp.leftMargin = dp(12);
+            if (i % 2 == 1) lp.leftMargin = gap;
             row.addView(cells.get(i), lp);
+            // 奇数收尾: 补等宽占位, 末行单卡片保持半宽, 不撑满整行
+            if (i % 2 == 0 && i == cells.size() - 1) {
+                row.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1f));
+            }
         }
     }
 
     private View smallCard(String icon, String name, View.OnClickListener click, View.OnLongClickListener longClick) {
         TextView ic = new TextView(this);
         ic.setText(icon);
-        ic.setTextSize(20);
+        ic.setTextSize(24);
         ic.setGravity(Gravity.CENTER);
         ic.setTextColor(Color0.text(this));
-        ic.setBackgroundColor(Color0.btnBg(this));
         return smallCardEx(ic, name, click, longClick);
     }
 
@@ -185,10 +191,16 @@ public class ShortcutActivity extends Activity {
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setGravity(Gravity.CENTER);
-        card.setBackgroundColor(Color0.card(this));
-        int pad = dp(14);
-        card.setPadding(pad, pad, pad, pad);
-        card.addView(iconCell, new LinearLayout.LayoutParams(dp(40), dp(40)));
+        card.setBackground(pressable(roundBg(Color0.card(this), dp(18))));
+        int pad = dp(16);
+        card.setPadding(pad, dp(18), pad, dp(18));
+        // 图标底座: 56dp 圆角方块, 图标居中
+        LinearLayout tile = new LinearLayout(this);
+        tile.setOrientation(LinearLayout.VERTICAL);
+        tile.setGravity(Gravity.CENTER);
+        tile.setBackground(pressable(roundBg(Color0.btnBg(this), dp(16))));
+        tile.addView(iconCell, new LinearLayout.LayoutParams(-1, -2));
+        card.addView(tile, new LinearLayout.LayoutParams(dp(56), dp(56)));
         TextView tv = new TextView(this);
         tv.setText(name);
         tv.setTextSize(13);
@@ -196,20 +208,33 @@ public class ShortcutActivity extends Activity {
         tv.setGravity(Gravity.CENTER);
         tv.setMaxLines(1);
         LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(-1, -2);
-        tlp.topMargin = dp(8);
+        tlp.topMargin = dp(10);
         card.addView(tv, tlp);
         card.setOnClickListener(click);
         if (longClick != null) card.setOnLongClickListener(longClick);
         return card;
     }
 
+    /** 圆角纯色背景 */
+    private static android.graphics.drawable.GradientDrawable roundBg(int color, float radiusPx) {
+        android.graphics.drawable.GradientDrawable g = new android.graphics.drawable.GradientDrawable();
+        g.setColor(color);
+        g.setCornerRadius(radiusPx);
+        return g;
+    }
+
+    /** 给圆角背景叠加按下涟漪(内容/遮罩同一形状, 圆角不破) */
+    private static android.graphics.drawable.RippleDrawable pressable(android.graphics.drawable.GradientDrawable content) {
+        return new android.graphics.drawable.RippleDrawable(
+            android.content.res.ColorStateList.valueOf(0x338AB8FF), content, content);
+    }
+
     private View iconText(String t) {
         TextView tv = new TextView(this);
         tv.setText(t);
-        tv.setTextSize(20);
+        tv.setTextSize(24);
         tv.setGravity(Gravity.CENTER);
         tv.setTextColor(Color0.text(this));
-        tv.setBackgroundColor(Color0.btnBg(this));
         return tv;
     }
 

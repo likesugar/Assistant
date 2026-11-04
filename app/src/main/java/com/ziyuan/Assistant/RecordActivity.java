@@ -1117,9 +1117,7 @@ public class RecordActivity extends Activity {
     }
 
     private static String sizeStr(RecManager.RecJob j, boolean live) {
-        String size = fmtCompact(j.bytes);
-        if (live && j.bps > 0) size += "  ↓" + fmtCompact(j.bps) + "/s";   // 实时写入速率
-        return size;
+        return fmtCompact(j.bytes);
     }
 
     private static String stateStr(RecManager.RecJob j, boolean live) {
