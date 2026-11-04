@@ -2,9 +2,40 @@ package com.ziyuan.Assistant;
 
 import android.content.Context;
 
-/** 全局主题: 首页明暗开关控制所有页面; 深色=纯黑, 浅色=浅蓝 */
+/** 全局主题: 首次启动默认跟随系统明暗, 用户手动开关后固定; 深色=纯黑, 浅色=浅蓝 */
 public class Theme {
-    public static boolean dark(Context c) { return c.getSharedPreferences("settings", 0).getBoolean("dark", false); }
+    /** 系统当前是否深色 */
+    private static boolean sysDark(Context c) {
+        int m = c.getResources().getConfiguration().uiMode
+                & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+        return m == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+    }
+
+    /**
+     * 当前主题:
+     * - 用户手动开关过(darkUser=true) → 用用户选择的值;
+     * - 从未设置过 → 实时跟随系统明暗。
+     */
+    public static boolean dark(Context c) {
+        android.content.SharedPreferences p = c.getSharedPreferences("settings", 0);
+        if (p.getBoolean("darkUser", false)) return p.getBoolean("dark", false);
+        return sysDark(c);
+    }
+
+    /**
+     * 未手动设置过主题时, 把当前系统明暗同步写进 settings.dark ——
+     * 大量页面直接读该键, 同步后即获得"跟随系统"; 用户手动开关后不再覆盖。
+     * 返回同步后是否与之前不同(用于检测系统明暗变化刷新页面)。
+     */
+    public static boolean sync(Context c) {
+        android.content.SharedPreferences p = c.getSharedPreferences("settings", 0);
+        if (p.getBoolean("darkUser", false)) return false;
+        boolean sys = sysDark(c);
+        boolean changed = p.getBoolean("dark", sys) != sys;
+        p.edit().putBoolean("dark", sys).apply();
+        return changed;
+    }
+
     /** 兼容旧引用：纯黑模式已并入深色主题，oled 等价 dark */
     public static boolean oled(Context c) { return dark(c); }
 

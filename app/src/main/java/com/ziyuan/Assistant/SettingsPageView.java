@@ -126,7 +126,8 @@ public class SettingsPageView extends android.widget.FrameLayout {
         findViewById(R.id.cardDark).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 android.content.SharedPreferences esp = host.getSharedPreferences("settings", android.content.Context.MODE_PRIVATE);
-                esp.edit().putBoolean("dark", !esp.getBoolean("dark", false)).apply();
+                // 取反基于当前生效值(可能正在跟随系统), 并记录"用户手动设置过", 不再跟随系统
+                esp.edit().putBoolean("dark", !Theme.dark(host)).putBoolean("darkUser", true).apply();
                 dark = esp.getBoolean("dark", false);
                 applyTheme();
                 if (host instanceof HomeActivity) ((HomeActivity) host).refreshGlobalTheme();
@@ -419,7 +420,7 @@ public class SettingsPageView extends android.widget.FrameLayout {
                         } else ed.putString(k, cfg.getString(k));
                     }
                     if (cfg.has("favCards")) ed.putString("favCards", cfg.getString("favCards"));
-                    if (cfg.has("dark")) ed.putBoolean("dark", cfg.getBoolean("dark"));
+                    if (cfg.has("dark")) ed.putBoolean("dark", cfg.getBoolean("dark")).putBoolean("darkUser", true);   // 导入配置=显式设定, 不再跟随系统
                     for (String hk : new String[]{"hideHome","hideMedia","hidePan","hidePlayer"}) {
                         if (cfg.has(hk)) ed.putBoolean(hk, cfg.getBoolean(hk));
                     }

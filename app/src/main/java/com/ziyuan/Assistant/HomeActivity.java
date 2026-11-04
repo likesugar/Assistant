@@ -1014,6 +1014,7 @@ public class HomeActivity extends Activity {
     }
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Theme.sync(this);   // 首次启动无手动记录: 按系统明暗初始化 settings.dark, 全部页面跟随
         RecManager.init(getApplicationContext());
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
@@ -1140,6 +1141,8 @@ public class HomeActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        // 未手动设置过主题时持续跟随系统: 从系统切明暗回来, 首页自动按新明暗重建
+        if (Theme.sync(this)) { recreate(); return; }
         android.content.SharedPreferences spc = getSharedPreferences("settings", MODE_PRIVATE);
         String sig = spc.getBoolean("hideHome", false) + "|" + spc.getBoolean("hideMedia", false) + "|" + spc.getBoolean("hidePan", false) + "|" + spc.getBoolean("hidePlayer", false);
         if (!sig.equals(lastCapsule)) { applyTheme(); } // 下载配置/确认胶囊后回首页自动刷新

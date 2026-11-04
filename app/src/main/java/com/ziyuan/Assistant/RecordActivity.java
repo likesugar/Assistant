@@ -609,52 +609,343 @@ public class RecordActivity extends Activity {
         try { startActivity(i); } catch (Throwable e) { toast("打不开文件列表"); }
     }
 
-    /** 属性对话框：名称/路径/大小/类型/时长/分辨率/修改时间/来源地址 */
+    /** 视频详情：合并后成品的完整媒体信息（字段对齐参考软件），明暗主题跟随 Theme */
     private void showProperties(final HistoryStore.Item it) {
-        new Thread(new Runnable() { public void run() {
-            final StringBuilder sb = new StringBuilder();
-            sb.append("名称：").append(it.title == null ? "-" : it.title).append("\n");
-            sb.append("类型：").append(it.type == null ? "-" : it.type).append("\n");
-            sb.append("路径：").append(it.path == null ? "-" : it.path).append("\n");
-            java.io.File f = fileOf(it.path);
-            if (f != null && f.exists()) {
-                sb.append("大小：").append(fmtSize(f.length())).append("\n");
-                sb.append("修改时间：").append(android.text.format.DateFormat.format("yyyy-MM-dd HH:mm", f.lastModified())).append("\n");
-            }
-            String mime = mimeOfItem(it);
-            sb.append("MIME：").append(mime).append("\n");
-            if (mime.startsWith("video/") || mime.startsWith("audio/")) {
-                android.media.MediaMetadataRetriever mm = new android.media.MediaMetadataRetriever();
+        final java.io.File f = fileOf(it.path);
+        final boolean isContent = it.path != null && it.path.startsWith("content://");
+        final String name = (it.title != null && it.title.length() > 0)
+                ? it.title : (f != null ? f.getName() : "-");
+        final String loc = (f != null && f.getParent() != null)
+                ? f.getParent() : (isContent ? "相册 / 媒体库" : "-");
+        final int cardBg = Theme.card(this), txt = Theme.text(this), sub = Theme.sub(this);
+
+        final ScrollView scroll = new ScrollView(this);
+        final LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setBackgroundColor(cardBg);
+        box.setPadding(dp2(24), dp2(22), dp2(24), dp2(6));
+        scroll.addView(box, new ScrollView.LayoutParams(-1, -2));
+
+        TextView tvTitle = new TextView(this);
+        tvTitle.setText("视频详情");
+        tvTitle.setTextColor(txt);
+        tvTitle.setTextSize(20);
+        tvTitle.setTypeface(Typeface.DEFAULT_BOLD);
+        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(-1, -2);
+        tlp.bottomMargin = dp2(18);
+        box.addView(tvTitle, tlp);
+
+        final java.util.HashMap<String, TextView> vals = new java.util.HashMap<String, TextView>();
+        addDetail(box, vals, "文件名", name, txt, sub);
+        addDetail(box, vals, "位置", loc, txt, sub);
+        addDetail(box, vals, "MD5", "计算中…", txt, sub);
+        addDetail(box, vals, "大小", (f != null && f.isFile()) ? fmtSize(f.length()) : "-", txt, sub);
+        addDetail(box, vals, "日期", (f != null && f.isFile())
+                ? android.text.format.DateFormat.format("yyyy-MM-dd HH:mm:ss", f.lastModified()).toString() : "-", txt, sub);
+        addDetail(box, vals, "MIME", mimeOfItem(it), txt, sub);
+        addDetail(box, vals, "时长", "解析中…", txt, sub);
+        addDetail(box, vals, "视频分辨率", "-", txt, sub);
+        addDetail(box, vals, "显示比例", "-", txt, sub);
+        addDetail(box, vals, "视频码率", "-", txt, sub);
+        addDetail(box, vals, "视频帧率", "-", txt, sub);
+        addDetail(box, vals, "视频编码", "-", txt, sub);
+        addDetail(box, vals, "像素格式", "-", txt, sub);
+        addDetail(box, vals, "颜色空间", "-", txt, sub);
+        addDetail(box, vals, "音频编码", "-", txt, sub);
+        addDetail(box, vals, "音频码率", "-", txt, sub);
+
+        final android.app.AlertDialog dlg = new android.app.AlertDialog.Builder(this)
+                .setView(scroll)
+                .setNeutralButton("复制路径", new android.content.DialogInterface.OnClickListener() {
+                    public void onClick(android.content.DialogInterface d, int w) { copyText(it.path); }
+                })
+                .setNegativeButton("取消", null)
+                .create();
+        dlg.setOnShowListener(new android.content.DialogInterface.OnShowListener() {
+            public void onShow(android.content.DialogInterface di) {
                 try {
-                    if (it.path != null && it.path.startsWith("content://")) mm.setDataSource(RecordActivity.this, android.net.Uri.parse(it.path));
-                    else if (f != null) mm.setDataSource(f.getAbsolutePath());
-                    String dur = mm.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION);
-                    if (dur != null) {
-                        long ms = Long.parseLong(dur);
-                        sb.append("媒体时长：").append(fmtDur(ms / 1000)).append("\n");
+                    android.graphics.drawable.GradientDrawable gd = new android.graphics.drawable.GradientDrawable();
+                    gd.setColor(cardBg);                 // 跟随明暗: 深色=深卡片, 浅色=白卡片
+                    gd.setCornerRadius(dp2(16));
+                    dlg.getWindow().setBackgroundDrawable(gd);
+                    View v = scroll;                     // 清系统 custom frame 默认内边距
+                    for (int i = 0; i < 3; i++) {
+                        android.view.ViewParent pp = v.getParent();
+                        if (!(pp instanceof View)) break;
+                        v = (View) pp;
+                        v.setPadding(0, 0, 0, 0);
                     }
-                    String w = mm.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
-                    String h = mm.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
-                    if (w != null && h != null) sb.append("分辨率：").append(w).append(" × ").append(h).append("\n");
-                    String br = mm.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_BITRATE);
-                    if (br != null) sb.append("码率：").append(fmtCompact(Long.parseLong(br) / 8)).append("B/s\n");
+                    if (dlg.getButton(android.content.DialogInterface.BUTTON_NEUTRAL) != null)
+                        dlg.getButton(android.content.DialogInterface.BUTTON_NEUTRAL).setTextColor(Theme.accent());
+                    if (dlg.getButton(android.content.DialogInterface.BUTTON_NEGATIVE) != null)
+                        dlg.getButton(android.content.DialogInterface.BUTTON_NEGATIVE).setTextColor(Theme.accent());
                 } catch (Throwable ignored) {}
-                finally { try { mm.release(); } catch (Throwable ignored) {} }
             }
-            if (it.url != null && !it.url.isEmpty()) sb.append("来源地址：").append(it.url).append("\n");
-            else sb.append("来源地址：未保存（老版本记录，可用「打开」直接播放成品）\n");
+        });
+        try { dlg.show(); } catch (Throwable e) { return; }
+        try {
+            dlg.getWindow().setLayout(
+                    getResources().getDisplayMetrics().widthPixels - dp2(40),
+                    android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        } catch (Throwable ignored) {}
+
+        // 媒体探测 + MD5 都在后台线程: 大文件也不卡界面, 逐项回填
+        new Thread(new Runnable() { public void run() {
+            final String md5 = md5Of(RecordActivity.this, it.path, f);
+            runOnUiThread(new Runnable() { public void run() {
+                TextView v = vals.get("MD5");
+                if (v != null) v.setText(md5 == null ? "-" : md5);
+            } });
+            final java.util.HashMap<String, String> info =
+                    probeVideo(RecordActivity.this, it.path, f, mimeOfItem(it));
             runOnUiThread(new Runnable() { public void run() {
                 try {
-                    new android.app.AlertDialog.Builder(RecordActivity.this)
-                        .setTitle("属性")
-                        .setMessage(sb.toString().trim())
-                        .setPositiveButton("确定", null)
-                        .setNeutralButton("复制路径", new android.content.DialogInterface.OnClickListener() {
-                            public void onClick(android.content.DialogInterface d, int w) { copyText(it.path); }
-                        }).show();
+                    for (java.util.Map.Entry<String, String> e : info.entrySet()) {
+                        TextView v = vals.get(e.getKey());
+                        if (v != null) v.setText(e.getValue());
+                    }
                 } catch (Throwable ignored) {}
             } });
         } }).start();
+    }
+
+    /** 详情行: 左侧加粗标签 + 右侧值, 颜色由调用方按当前明暗主题传入 */
+    private void addDetail(LinearLayout box, java.util.HashMap<String, TextView> vals,
+                           String label, String value, int txt, int sub) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setPadding(0, dp2(7), 0, dp2(7));
+        TextView l = new TextView(this);
+        l.setText(label);
+        l.setTextColor(txt);
+        l.setTextSize(13);
+        l.setTypeface(Typeface.DEFAULT_BOLD);
+        row.addView(l, new LinearLayout.LayoutParams(dp2(88), -2));
+        TextView v = new TextView(this);
+        v.setText(value);
+        v.setTextColor(sub);
+        v.setTextSize(13);
+        v.setLineSpacing(dp2(2), 1);
+        LinearLayout.LayoutParams vp = new LinearLayout.LayoutParams(0, -2);
+        vp.weight = 1;
+        vp.leftMargin = dp2(12);
+        row.addView(v, vp);
+        box.addView(row);
+        vals.put(label, v);
+    }
+
+    /** 计算文件 MD5(支持相册 content://), 后台调用; 失败返回 null */
+    private static String md5Of(Context c, String path, java.io.File f) {
+        java.io.InputStream in = null;
+        try {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("MD5");
+            if (path != null && path.startsWith("content://"))
+                in = c.getContentResolver().openInputStream(android.net.Uri.parse(path));
+            else if (f != null && f.isFile()) in = new java.io.FileInputStream(f);
+            if (in == null) return null;
+            byte[] buf = new byte[65536]; int n;
+            while ((n = in.read(buf)) > 0) md.update(buf, 0, n);
+            byte[] d = md.digest();
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < d.length; i++) {
+                String h = Integer.toHexString(d[i] & 0xff);
+                if (h.length() == 1) sb.append('0');
+                sb.append(h.toUpperCase());
+            }
+            return sb.toString();
+        } catch (Throwable e) { return null; }
+        finally { try { if (in != null) in.close(); } catch (Throwable ignored) {} }
+    }
+
+    /** ffprobe 拿全部媒体字段; 路径不支持或探测失败则降级 Android 原生 API */
+    private static java.util.HashMap<String, String> probeVideo(Context c, String path,
+                                                                java.io.File f, String mime) {
+        java.util.HashMap<String, String> r = new java.util.HashMap<String, String>();
+        r.put("时长", "-"); r.put("视频分辨率", "-"); r.put("显示比例", "-");
+        r.put("视频码率", "-"); r.put("视频帧率", "-"); r.put("视频编码", "-");
+        r.put("像素格式", "-"); r.put("颜色空间", "-");
+        r.put("音频编码", "-"); r.put("音频码率", "-");
+
+        String local = null;
+        if (path != null && path.startsWith("file://")) local = path.substring(7);
+        else if (path != null && !path.startsWith("content://")) local = path;
+        boolean ok = false;
+        if (local != null && new java.io.File(local).isFile()) {
+            try {
+                com.arthenica.ffmpegkit.MediaInformationSession ses =
+                        com.arthenica.ffmpegkit.FFprobeKit.getMediaInformation(local);
+                com.arthenica.ffmpegkit.MediaInformation mi =
+                        (ses == null) ? null : ses.getMediaInformation();
+                if (mi != null) {
+                    String dur = mi.getDuration();
+                    if (dur != null) r.put("时长", fmtDurSec(parseD(dur)));
+                    String allBr = mi.getBitrate();
+                    java.util.List<com.arthenica.ffmpegkit.StreamInformation> streams = mi.getStreams();
+                    if (streams != null) {
+                        for (com.arthenica.ffmpegkit.StreamInformation si : streams) {
+                            String type = si.getType();
+                            if ("video".equals(type)) {
+                                String cn = siProp(si, "codec_name");
+                                r.put("视频编码", codecLabel(cn != null ? cn : si.getCodec()));
+                                Long w = si.getWidth(), h = si.getHeight();
+                                if (w != null && h != null && w > 0 && h > 0) {
+                                    r.put("视频分辨率", w + "x" + h);
+                                    r.put("显示比例", aspectOf(siProp(si, "display_aspect_ratio"), w, h));
+                                }
+                                String br = siProp(si, "bit_rate");
+                                if (br == null) br = allBr;
+                                if (br != null) r.put("视频码率", kbps(br));
+                                String fr = siProp(si, "avg_frame_rate");
+                                if (fr == null) fr = siProp(si, "r_frame_rate");
+                                if (fr != null) r.put("视频帧率", fpsLabel(fr));
+                                String pf = siProp(si, "pix_fmt");
+                                if (pf != null) r.put("像素格式", pf.toUpperCase());
+                                String cs = siProp(si, "color_space");
+                                if (cs == null) cs = siProp(si, "color_primaries");
+                                if (cs != null) r.put("颜色空间", colorLabel(cs));
+                            } else if ("audio".equals(type)) {
+                                String cn = siProp(si, "codec_name");
+                                r.put("音频编码", codecLabel(cn != null ? cn : si.getCodec()));
+                                String br = siProp(si, "bit_rate");
+                                if (br != null) r.put("音频码率", kbps(br));
+                            }
+                        }
+                    }
+                    ok = true;
+                }
+            } catch (Throwable ignored) {}
+        }
+        if (!ok) probeFallback(c, path, f, r);
+        return r;
+    }
+
+    /** 降级: Android MediaMetadataRetriever + MediaExtractor 拿尽可能多的字段(相册 content:// 走这里) */
+    private static void probeFallback(Context c, String path, java.io.File f,
+                                      java.util.HashMap<String, String> r) {
+        android.media.MediaMetadataRetriever mm = new android.media.MediaMetadataRetriever();
+        try {
+            boolean isContent = path != null && path.startsWith("content://");
+            if (isContent) mm.setDataSource(c, android.net.Uri.parse(path));
+            else if (f != null && f.isFile()) mm.setDataSource(f.getAbsolutePath());
+            else return;
+            String d = mm.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION);
+            if (d != null) r.put("时长", fmtDurSec(parseD(d) / 1000.0));
+            String w = mm.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+            String h = mm.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
+            if (w != null && h != null) {
+                r.put("视频分辨率", w + "x" + h);
+                r.put("显示比例", aspectOf(null, Long.parseLong(w), Long.parseLong(h)));
+            }
+            String br = mm.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_BITRATE);
+            if (br != null) r.put("视频码率", kbps(br));
+        } catch (Throwable ignored) {}
+        finally { try { mm.release(); } catch (Throwable ignored) {} }
+
+        // MediaExtractor 补编码/帧率/颜色等 retriever 拿不到的字段
+        android.media.MediaExtractor ex = new android.media.MediaExtractor();
+        try {
+            boolean isContent = path != null && path.startsWith("content://");
+            if (isContent) ex.setDataSource(c, android.net.Uri.parse(path), null);
+            else if (f != null && f.isFile()) ex.setDataSource(f.getAbsolutePath());
+            else return;
+            for (int i = 0; i < ex.getTrackCount(); i++) {
+                android.media.MediaFormat mf = ex.getTrackFormat(i);
+                String m = null;
+                try { m = mf.getString(android.media.MediaFormat.KEY_MIME); } catch (Throwable ignored) {}
+                if (m == null) continue;
+                if (m.startsWith("video/")) {
+                    if ("-".equals(r.get("视频编码"))) r.put("视频编码", codecLabel(m.substring(6)));
+                    if (mf.containsKey(android.media.MediaFormat.KEY_FRAME_RATE)) {
+                        try { r.put("视频帧率", mf.getInteger(android.media.MediaFormat.KEY_FRAME_RATE) + " fps"); } catch (Throwable ignored) {}
+                    }
+                    if (mf.containsKey(android.media.MediaFormat.KEY_COLOR_STANDARD)) {
+                        try { r.put("颜色空间", colorLabel(String.valueOf(mf.getInteger(android.media.MediaFormat.KEY_COLOR_STANDARD)))); } catch (Throwable ignored) {}
+                    }
+                } else if (m.startsWith("audio/")) {
+                    if ("-".equals(r.get("音频编码"))) r.put("音频编码", codecLabel(m.substring(6)));
+                }
+            }
+        } catch (Throwable ignored) {}
+        finally { try { ex.release(); } catch (Throwable ignored) {} }
+    }
+
+    private static String siProp(com.arthenica.ffmpegkit.StreamInformation si, String k) {
+        try {
+            String v = si.getStringProperty(k);
+            return (v == null || v.length() == 0 || "N/A".equals(v) || "-".equals(v)) ? null : v;
+        } catch (Throwable t) { return null; }
+    }
+
+    private static double parseD(String s) {
+        try { return Double.parseDouble(s.trim()); } catch (Throwable t) { return 0; }
+    }
+
+    private static String fmtDurSec(double sec) {
+        long t = (long) Math.max(0, sec);
+        long h = t / 3600, m = (t % 3600) / 60, ss = t % 60;
+        if (h > 0) return String.format(java.util.Locale.US, "%d:%02d:%02d", h, m, ss);
+        return String.format(java.util.Locale.US, "%02d:%02d", m, ss);
+    }
+
+    private static String kbps(String bitsPerSec) {
+        try {
+            double b = Double.parseDouble(bitsPerSec.trim());
+            if (b <= 0) return "-";
+            long k = Math.round(b / 1000.0);
+            return k + " kbits/sec";
+        } catch (Throwable t) { return "-"; }
+    }
+
+    private static String fpsLabel(String rate) {
+        try {
+            String[] p = rate.split("/");
+            double a = Double.parseDouble(p[0].trim());
+            double b = p.length > 1 ? Double.parseDouble(p[1].trim()) : 1;
+            if (a <= 0 || b <= 0) return "-";
+            double v = a / b;
+            String num = Math.abs(v - Math.round(v)) < 0.01
+                    ? String.valueOf(Math.round(v)) : String.format(java.util.Locale.US, "%.2f", v);
+            return num + " fps";
+        } catch (Throwable t) { return "-"; }
+    }
+
+    private static String aspectOf(String dar, long w, long h) {
+        try {
+            if (dar != null && dar.contains(":")) return dar;
+            long a = w, b = h;
+            while (b != 0) { long t = a % b; a = b; b = t; }   // gcd
+            if (a <= 0) return "-";
+            return (w / a) + ":" + (h / a);
+        } catch (Throwable t) { return "-"; }
+    }
+
+    private static String codecLabel(String s) {
+        if (s == null || s.length() == 0) return "-";
+        String l = s.toLowerCase();
+        if (l.contains("avc") || l.equals("h264")) return "H264";
+        if (l.equals("hevc") || l.equals("h265")) return "HEVC (H265)";
+        if (l.equals("av1")) return "AV1";
+        if (l.startsWith("vp8")) return "VP8";
+        if (l.startsWith("vp9")) return "VP9";
+        if (l.contains("mpeg4")) return "MPEG-4";
+        if (l.contains("mpeg2") || l.contains("mp2v")) return "MPEG-2";
+        if (l.contains("mp4a") || l.equals("aac")) return "AAC";
+        if (l.equals("mp3")) return "MP3";
+        if (l.contains("opus")) return "Opus";
+        if (l.contains("flac")) return "FLAC";
+        if (l.contains("ac3")) return "AC3";
+        return s.toUpperCase();
+    }
+
+    private static String colorLabel(String s) {
+        if (s == null || s.length() == 0) return "-";
+        String l = s.toLowerCase();
+        if (l.contains("bt709") || l.equals("1")) return "BT709";
+        if (l.contains("bt470bg") || l.contains("smpte170m") || l.contains("bt601") || l.contains("624")
+            || l.equals("2") || l.equals("3") || l.equals("5")) return "BT601";
+        if (l.contains("bt2020") || l.equals("6") || l.equals("7") || l.equals("8")) return "BT2020";
+        if (l.contains("smpte2084") || l.contains("arib-std-b67")) return "HDR";
+        return s.toUpperCase();
     }
 
     private void copyText(String s) {
