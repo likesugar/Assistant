@@ -32,7 +32,7 @@ public class LiveProxy {
     public static void putSeg(String url, byte[] body) {
         synchronized (segCache) {
             segCache.put(url, body);
-            while (segCache.size() > 20) {  // 20 片×~1MB：给播放器更充足的追赶余量
+            while (segCache.size() > 24) {  // 24 片×~1MB：播放窗口10片+充足追赶余量
                 String k = segCache.keySet().iterator().next();
                 segCache.remove(k);
             }
@@ -40,6 +40,10 @@ public class LiveProxy {
     }
     public static byte[] getSeg(String url) {
         synchronized (segCache) { return segCache.get(url); }
+    }
+    /** 当前缓存分片数（播放页路由判断用：缓存不足不切代理，避免空等） */
+    public static int cacheSegmentCount() {
+        synchronized (segCache) { return segCache.size(); }
     }
     private static volatile boolean running = false;
     private static volatile boolean refreshing = false;
@@ -357,8 +361,8 @@ public class LiveProxy {
                     synchronized (LiveProxy.class) {
                         int n = fetched.size();
                         window.clear();
-                        if (n > 0) {
-                            int win = Math.min(6, n);   // 滑动窗口 6 片 ≈ 12s，全在缓存内
+                    if (n > 0) {
+                        int win = Math.min(10, n);  // 滑动窗口 10 片 ≈ 20s 积压：吸收录制节奏抖动，播放不饿死
                             int skip = n - win;
                             int k = 0;
                             for (String u : fetched) { if (k++ >= skip) window.add(u); }
