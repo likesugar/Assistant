@@ -25,6 +25,7 @@ public class RecordActivity extends Activity {
     private LinearLayout list;
     private TextView tvEmpty;
     private FrameLayout root;
+    private ScrollView sv;
     private LinearLayout tabBar;
     private LinearLayout col;
     private TextView[] tabBtns;
@@ -72,11 +73,13 @@ public class RecordActivity extends Activity {
         root = new FrameLayout(this);
         root.setBackgroundColor(Theme.bg(this));
 
-        ScrollView sv = new ScrollView(this);
-        sv.setFillViewport(true);
+        ScrollView sv2 = new ScrollView(this);
+        sv2.setFillViewport(true);
+        sv = sv2;
         col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
-        col.setPadding(24, 40, 24, 24);
+        // 底部留出悬浮胶囊栏的高度(≈44dp)+边距, 最后一张卡片不再被挡
+        col.setPadding(24, 40, 24, dp2(80));
 
         LinearLayout head = new LinearLayout(this);
         head.setOrientation(LinearLayout.HORIZONTAL);
@@ -270,46 +273,85 @@ public class RecordActivity extends Activity {
         for (String k : order) if (want.equals("全部") || want.equals(cat.get(k))) shown.add(k);
         tvEmpty.setVisibility(shown.isEmpty() ? View.VISIBLE : View.GONE);
 
-        // 已显示行 == 当前应显示行 → 只刷文字
-        java.util.ArrayList<String> curRows = new java.util.ArrayList<String>();
+        // 已显示行 == 当前应显示行 → 只原地刷文字(无增删零开销)
+        java.util.ArrayList<String> curKeys = new java.util.ArrayList<String>();
         for (int i = 0; i < list.getChildCount(); i++) {
             Object t = list.getChildAt(i).getTag();
-            if (t instanceof String) curRows.add((String) t);
+            if (t instanceof String) curKeys.add((String) t);
         }
-        if (curRows.equals(shown)) {
+        if (curKeys.equals(shown)) {
             for (String key : shown) {
                 Runnable u = rowUpdaters.get(key);
                 if (u != null) u.run();
             }
             return;
         }
-        list.removeAllViews();
-        rowUpdaters.clear();
-        for (String key : shown) {
-            Object[] m = meta.get(key);
-            java.util.concurrent.atomic.AtomicReference<TextView> infoRef = new java.util.concurrent.atomic.AtomicReference<TextView>();
-            LinearLayout row;
-            if ((Integer) m[0] == 0) {
-                RecManager.RecJob j = (RecManager.RecJob) m[1];
-                final boolean live = (Boolean) m[2];
-                addRow(list, j, live, infoRef);
-                row = (LinearLayout) list.getChildAt(list.getChildCount() - 1);
-                final RecManager.RecJob fj = j;
-                rowUpdaters.put(key, new Runnable() { public void run() { android.widget.TextView v = infoRef.get(); if (v != null) { String t = buildInfo(fj, fj.active); if (!t.equals(v.getText().toString())) v.setText(t); } } });
-            } else if ((Integer) m[0] == 1) {
-                final DlManager.DlJob j = (DlManager.DlJob) m[1];
-                addDlRow(list, j, infoRef);
-                row = (LinearLayout) list.getChildAt(list.getChildCount() - 1);
-                final TextView infoDl = infoRef.get();
-                rowUpdaters.put(key, new Runnable() { public void run() { if (infoDl != null) { String t = dlInfo(j); if (!t.equals(infoDl.getText().toString())) infoDl.setText(t); } } });
-            } else {
-                final HistoryStore.Item it = (HistoryStore.Item) m[1];
-                final int hidx = Integer.parseInt(key.substring(1));
-                addHistRow(list, it, hidx, infoRef);
-                row = (LinearLayout) list.getChildAt(list.getChildCount() - 1);
-            }
-            row.setTag(key);
+        // 行集合变化 → 增量 diff: 复用已有行视图, 只删掉消失的、新建出现的、其余挪位。
+        // 不再整列 removeAllViews 重建——滚动位置不丢、无闪烁, LayoutTransition 平滑过渡
+        final int sy = sv.getScrollY();
+        java.util.HashMap<String, View> byKey = new java.util.HashMap<String, View>();
+        for (int i = 0; i < list.getChildCount(); i++) {
+            View v = list.getChildAt(i);
+            Object t = v.getTag();
+            if (t instanceof String) byKey.put((String) t, v);
         }
+        for (String k : curKeys) {
+            if (!shown.contains(k)) { list.removeView(byKey.get(k)); rowUpdaters.remove(k); }
+        }
+        for (int i = 0; i < shown.size(); i++) {
+            String key = shown.get(i);
+            View cur = list.getChildAt(i);
+            View v = byKey.get(key);
+            if (v == null) { v = makeRow(key, meta.get(key)); byKey.put(key, v); }
+            if (v != cur) list.addView(v, i);   // 挪到正确位置(自动从原位置移除)
+            Runnable u = rowUpdaters.get(key);
+            if (u != null) u.run();
+        }
+        if (sv.getScrollY() != sy) sv.post(new Runnable() { public void run() { sv.scrollTo(0, sy); } });
+    }
+
+    /** 创建一行并追加到列尾, 登记其原地刷新器(标题+信息都跟随任务状态更新); 返回该行 */
+    private View makeRow(String key, Object[] m) {
+        java.util.concurrent.atomic.AtomicReference<TextView> infoRef = new java.util.concurrent.atomic.AtomicReference<TextView>();
+        View row;
+        if ((Integer) m[0] == 0) {
+            RecManager.RecJob j = (RecManager.RecJob) m[1];
+            addRow(list, j, (Boolean) m[2], infoRef);
+            row = list.getChildAt(list.getChildCount() - 1);
+            final RecManager.RecJob fj = j;
+            final TextView info = infoRef.get();
+            final TextView nameTv = row.findViewWithTag("rowName");
+            rowUpdaters.put(key, new Runnable() { public void run() {
+                String t = buildInfo(fj, fj.active);
+                if (info != null && !t.equals(info.getText().toString())) info.setText(t);
+                String n = qualify(fj);
+                if (nameTv != null && !n.equals(nameTv.getText().toString())) nameTv.setText(n);
+            } });
+        } else if ((Integer) m[0] == 1) {
+            final DlManager.DlJob j = (DlManager.DlJob) m[1];
+            addDlRow(list, j, infoRef);
+            row = list.getChildAt(list.getChildCount() - 1);
+            final TextView infoDl = infoRef.get();
+            rowUpdaters.put(key, new Runnable() { public void run() {
+                if (infoDl != null) { String t = dlInfo(j); if (!t.equals(infoDl.getText().toString())) infoDl.setText(t); }
+            } });
+        } else {
+            final HistoryStore.Item it = (HistoryStore.Item) m[1];
+            final int hidx = Integer.parseInt(key.substring(1));
+            addHistRow(list, it, hidx, infoRef);
+            row = list.getChildAt(list.getChildCount() - 1);
+            final TextView infoH = infoRef.get();
+            final TextView nameH = row.findViewWithTag("rowName");
+            rowUpdaters.put(key, new Runnable() { public void run() {
+                // 行复用时按当前索引重取历史条目, 避免删除后错位显示旧内容
+                if (hist == null || hidx >= hist.size()) return;
+                HistoryStore.Item cur = hist.get(hidx);
+                if (nameH != null && !cur.title.equals(nameH.getText().toString())) nameH.setText(cur.title);
+                if (infoH != null && !("类型: " + cur.type + "\n状态: 已完成").equals(infoH.getText().toString())) infoH.setText("类型: " + cur.type + "\n状态: 已完成");
+            } });
+        }
+        row.setTag(key);
+        return row;
     }
 
     private final java.util.HashMap<String, Runnable> rowUpdaters = new java.util.HashMap<String, Runnable>();
@@ -346,6 +388,7 @@ public class RecordActivity extends Activity {
         tvName.setTextSize(16);
         tvName.setTypeface(Typeface.DEFAULT_BOLD);
         tvName.setSingleLine(true);
+        tvName.setTag("rowName");
         mid.addView(tvName);
         TextView tvInfo = new TextView(this);
         tvInfo.setText(dlInfo(j));
@@ -401,6 +444,7 @@ public class RecordActivity extends Activity {
         tvName.setTextSize(16);
         tvName.setTypeface(Typeface.DEFAULT_BOLD);
         tvName.setSingleLine(true);
+        tvName.setTag("rowName");
         mid.addView(tvName);
         TextView tvInfo = new TextView(this);
         tvInfo.setText("类型: " + it.type + "\n状态: 已完成");
@@ -418,14 +462,17 @@ public class RecordActivity extends Activity {
         TapGuard.guard(more);
         more.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                // 点击时按当前索引重取条目: 历史列表增删后行视图被复用, 闭包里的 it/idx 可能已过期
+                HistoryStore.Item cur = (hist != null && idx < hist.size()) ? hist.get(idx) : it;
                 PopupMenu pm = new PopupMenu(RecordActivity.this, v);
                 pm.getMenu().add("播放");
                 pm.getMenu().add("删除");
                 pm.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     public boolean onMenuItemClick(android.view.MenuItem m2) {
                         String t = m2.getTitle().toString();
+                        HistoryStore.Item cur = (hist != null && idx < hist.size()) ? hist.get(idx) : it;
                         if (t.equals("播放")) {
-                            try { playInApp(it.path, it.title); } catch (Throwable e) { Toast.makeText(RecordActivity.this, "打不开", Toast.LENGTH_SHORT).show(); }
+                            try { playInApp(cur.path, cur.title); } catch (Throwable e) { Toast.makeText(RecordActivity.this, "打不开", Toast.LENGTH_SHORT).show(); }
                         } else if (t.equals("删除")) {
                             HistoryStore.removeAt(RecordActivity.this, idx);
                             rowOrder.clear();
@@ -558,6 +605,7 @@ public class RecordActivity extends Activity {
         tvName.setTextSize(16);
         tvName.setTypeface(Typeface.DEFAULT_BOLD);
         tvName.setSingleLine(true);
+        tvName.setTag("rowName");
         mid.addView(tvName);
 
         TextView tvInfo = new TextView(this);
