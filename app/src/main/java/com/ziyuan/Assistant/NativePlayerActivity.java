@@ -166,6 +166,10 @@ public class NativePlayerActivity extends Activity {
         // 旧地址过期(403)时热替换为同一路直播的最新地址
         try { String f = Or4Helper.freshFor(url); if (f != null) url = f; } catch (Throwable ignored) {}
         videoView.setUrl(url, douyinHeaders());
+        // 连接预热：后台线程先向 CDN 发起一次请求，完成 DNS/TCP/TLS 握手。
+        // Android 平台 HttpURLConnection 的 keep-alive 连接池是进程级共享的，
+        // ExoPlayer(DefaultHttpDataSource) 发起首个请求时可直接复用该连接，省 300-700ms。
+        prewarmConnection(url);
         videoView.start();
         // 倍速在准备完成后才真正生效（BaseVideoView.setSpeed 仅在播放态生效）
         videoView.addOnStateChangeListener(new BaseVideoView.OnStateChangeListener() {
@@ -229,6 +233,27 @@ public class NativePlayerActivity extends Activity {
             if (path.endsWith(ext)) return true;
         }
         return false;
+    }
+
+    /** 连接预热：提前完成 DNS/TCP/TLS 握手，连接存入平台进程级 keep-alive 池供播放器复用 */
+    private void prewarmConnection(String u) {
+        if (u == null || !u.toLowerCase().startsWith("http")) return;
+        new Thread(new Runnable() {
+            @Override public void run() {
+                try {
+                    java.net.URL uu = new java.net.URL(u);
+                    javax.net.ssl.HttpsURLConnection c = (javax.net.ssl.HttpsURLConnection) uu.openConnection();
+                    c.setConnectTimeout(3000);
+                    c.setReadTimeout(3000);
+                    c.setRequestProperty("Connection", "keep-alive");
+                    java.io.InputStream is = c.getInputStream();
+                    byte[] buf = new byte[256];
+                    is.read(buf);   // 只读一小段即断开，目的仅是建立连接
+                    is.close();
+                    c.disconnect();
+                } catch (Throwable ignored) { }
+            }
+        }, "conn-prewarm").start();
     }
 
     Map<String, String> douyinHeaders() {
