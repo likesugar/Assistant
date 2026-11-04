@@ -148,7 +148,7 @@ public class KbRecordService extends Service {
                 .putExtra("url", "http://127.0.0.1:" + LiveProxy.PORT + "/playlist.m3u8")
                 .putExtra("title", "直播录制")
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP),
-            Intent.FLAG_IMMUTABLE);
+            android.app.PendingIntent.FLAG_IMMUTABLE);
         Notification.Builder b = new Notification.Builder(this, CHANNEL)
             .setSmallIcon(android.R.drawable.ic_media_play)
             .setContentTitle("小工具 · 录制中")
