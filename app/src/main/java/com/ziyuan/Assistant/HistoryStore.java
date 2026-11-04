@@ -12,6 +12,7 @@ public class HistoryStore {
         public String type;   // "视频" / "录制"
         public String title;
         public String path;   // 播放地址（file:// 或 content://）
+        public String url;    // 来源地址（重新下载/复制地址/打开下载页）；旧记录为 null
     }
 
     private static SharedPreferences sp(Context c) {
@@ -24,11 +25,17 @@ public class HistoryStore {
     }
 
     public static void add(Context c, String type, String title, String path) {
+        add(c, type, title, path, null);
+    }
+
+    /** 记录一条完成项, url 为可重新下载的来源地址(可空) */
+    public static void add(Context c, String type, String title, String path, String url) {
         try {
             SharedPreferences s = sp(c);
             int n = s.getInt("count", 0);
             SharedPreferences.Editor e = s.edit();
-            e.putString("t" + n, type + "\u0001" + title + "\u0001" + path);
+            e.putString("t" + n, type + "\u0001" + title + "\u0001" + path
+                    + "\u0001" + (url == null ? "" : url));
             e.putInt("count", n + 1);
             e.apply();
         } catch (Throwable ignored) {}
@@ -47,14 +54,31 @@ public class HistoryStore {
             for (int i = n - 1; i >= 0; i--) {
                 String raw = s.getString("t" + i, null);
                 if (raw == null) continue;
-                String[] p = raw.split("\u0001");
+                String[] p = raw.split("\u0001", -1);   // -1: 保留末尾空段(旧记录无 url)
                 if (p.length < 3) continue;
                 Item it = new Item();
                 it.type = p[0]; it.title = p[1]; it.path = p[2];
+                it.url = p.length > 3 && p[3].length() > 0 ? p[3] : null;
                 out.add(it);
             }
         } catch (Throwable ignored) {}
         return out;
+    }
+
+    /** 重命名后更新条目(保留来源 url)。index 为 load 顺序（新→旧） */
+    public static void updateAt(Context c, int index, String title, String path) {
+        try {
+            SharedPreferences s = sp(c);
+            int n = s.getInt("count", 0);
+            int real = n - 1 - index;
+            if (real < 0 || real >= n) return;
+            String raw = s.getString("t" + real, null);
+            if (raw == null) return;
+            String[] p = raw.split("\u0001", -1);
+            String type = p.length > 0 ? p[0] : "视频";
+            String url = p.length > 3 ? p[3] : "";
+            s.edit().putString("t" + real, type + "\u0001" + title + "\u0001" + path + "\u0001" + url).apply();
+        } catch (Throwable ignored) {}
     }
 
     public static void removeAt(Context c, int index) {  // index 为 load 顺序（新→旧）

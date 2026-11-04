@@ -108,7 +108,7 @@ public class DlManager {
                         }
                         public void onCompleted(java.io.File o) {
                             boolean ok = insertGallery(j);
-                            HistoryStore.add(sCtx, "视频", j.title, "file://" + o.getAbsolutePath());
+                            HistoryStore.add(sCtx, "视频", j.title, "file://" + o.getAbsolutePath(), j.url);
                             j.doneBytes = o.length();
                             j.done = true; j.active = false; j.paused = false;
                             j.state = ok ? "已完成(视频栏)" : "完成(未入相册)";
@@ -226,7 +226,7 @@ public class DlManager {
                             os.close(); in.close();
                         }
                     } catch (Throwable ignored) {}
-                    HistoryStore.add(sCtx, "视频", j.title, "file://" + mp4.getAbsolutePath());
+                    HistoryStore.add(sCtx, "视频", j.title, "file://" + mp4.getAbsolutePath(), j.url);
                     for (java.io.File f : j.file.listFiles()) f.delete();
                     j.file.delete();
                     mp4.delete();  // 相册已有副本
@@ -295,7 +295,7 @@ public class DlManager {
                 po.close(); pin.close(); part.delete();
             }
             j.state = insertGallery(j) ? "已完成" : "完成(未入相册)";
-            HistoryStore.add(sCtx, "视频", j.title, "file://" + j.file.getAbsolutePath());
+            HistoryStore.add(sCtx, "视频", j.title, "file://" + j.file.getAbsolutePath(), j.url);
             j.done = true;
             j.active = false;
         } catch (Throwable t) {

@@ -500,7 +500,7 @@ public class RecManager {
                     in.close(); os.close();
                     job.file.delete();
                     job.state = null;
-                    HistoryStore.add(sCtx, "视频", job.name, out.toString());
+                    HistoryStore.add(sCtx, "视频", job.name, out.toString(), job.url);
                     job.savedToHistory = true;
                 } else job.state = "转换失败";
                 tmp.delete();
@@ -954,7 +954,7 @@ public class RecManager {
                 job.state = mp4Ok
                     ? "已保存: files/录制合并/" + mp4Name.replace(".mp4", "") + "/" + mp4Name
                     : "MP4转换未完整，已保留完整TS: " + finalName;
-                HistoryStore.add(sCtx, "录制", finalName, "file://" + new java.io.File(job.file, finalName).getAbsolutePath());
+                HistoryStore.add(sCtx, "录制", finalName, "file://" + new java.io.File(job.file, finalName).getAbsolutePath(), job.url);
                 job.savedToHistory = true;
                 // 6) 成片已落相册，才允许清理中间文件（保留成片在 files/录制合并/<名>/）
                 for (java.io.File f : job.file.listFiles()) {

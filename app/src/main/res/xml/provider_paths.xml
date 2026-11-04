@@ -2,4 +2,5 @@
 <paths>
     <external-files-path name="dl" path="." />
     <cache-path name="cache" path="." />
+    <external-path name="ext" path="." />
 </paths>

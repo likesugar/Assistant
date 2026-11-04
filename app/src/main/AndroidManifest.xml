@@ -44,6 +44,7 @@
         <service android:name=".DynaService" android:exported="false" android:foregroundServiceType="dataSync"/>
         <activity android:name=".CalendarActivity" android:exported="false"/>
         <activity android:name=".RecordActivity" android:exported="false"/>
+        <activity android:name=".FileListActivity" android:exported="false" android:configChanges="orientation|screenSize"/>
         <activity android:name=".VideoDlActivity" android:exported="false" android:configChanges="orientation|screenSize"/>
         <activity android:name=".XhsActivity" android:exported="false" android:configChanges="orientation|screenSize"/>
         <activity android:name=".XhsSettingsActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>

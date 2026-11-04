@@ -222,7 +222,7 @@ public class RecordActivity extends Activity {
     protected void onPause() { super.onPause(); handler.removeCallbacks(tick); }
 
     @Override
-    protected void onDestroy() { super.onDestroy(); THUMB_REQ.clear(); }
+    protected void onDestroy() { super.onDestroy(); THUMB_REQ.clear(); THUMB_TRY.clear(); }
 
     private static String fmtDur(long s) {
         return String.format(java.util.Locale.US, "%02d:%02d:%02d", s / 3600, s / 60 % 60, s % 60);
@@ -331,12 +331,14 @@ public class RecordActivity extends Activity {
             final TextView durTv = row.findViewWithTag("rowDur");
             final TextView sizeTv = row.findViewWithTag("rowSize");
             final TextView stateTv = row.findViewWithTag("rowState");
+            final FrameLayout thumbBox = row.findViewWithTag("thumbBox");
             rowUpdaters.put(key, new Runnable() { public void run() {
                 boolean lv = fj.active;   // 行复用后实时读状态, 不用创建时的快照
                 setIfDiff(nameTv, qualify(fj));
                 setIfDiff(durTv, "录制时长: " + durStr(fj, lv));
                 setIfDiff(sizeTv, "录制大小: " + sizeStr(fj, lv));
                 setIfDiff(stateTv, "录制状态: " + stateStr(fj, lv));
+                refreshThumb(thumbBox, videoPathIn(fj.file));   // 首片落地/合并成MP4自动刷新
             } });
         } else if ((Integer) m[0] == 1) {
             final DlManager.DlJob j = (DlManager.DlJob) m[1];
@@ -344,9 +346,11 @@ public class RecordActivity extends Activity {
             row = list.getChildAt(list.getChildCount() - 1);
             final TextView sizeTv = row.findViewWithTag("rowSize");
             final TextView stateTv = row.findViewWithTag("rowState");
+            final FrameLayout thumbBox = row.findViewWithTag("thumbBox");
             rowUpdaters.put(key, new Runnable() { public void run() {
                 setIfDiff(sizeTv, "下载大小: " + dlSizeStr(j));
                 setIfDiff(stateTv, "状态: " + j.state);
+                refreshThumb(thumbBox, videoPathIn(j.file));
             } });
         } else {
             final HistoryStore.Item it = (HistoryStore.Item) m[1];
@@ -356,6 +360,7 @@ public class RecordActivity extends Activity {
             final TextView typeTv = row.findViewWithTag("rowType");
             final TextView stateTv = row.findViewWithTag("rowState");
             final TextView nameH = row.findViewWithTag("rowName");
+            final FrameLayout thumbBox = row.findViewWithTag("thumbBox");
             rowUpdaters.put(key, new Runnable() { public void run() {
                 // 行复用时按当前索引重取历史条目, 避免删除后错位显示旧内容
                 if (hist == null || hidx >= hist.size()) return;
@@ -363,6 +368,7 @@ public class RecordActivity extends Activity {
                 setIfDiff(nameH, cur.title);
                 setIfDiff(typeTv, "类型: " + cur.type);
                 setIfDiff(stateTv, "状态: 已完成");
+                refreshThumb(thumbBox, cur.path);
             } });
         }
         row.setTag(key);
@@ -382,6 +388,7 @@ public class RecordActivity extends Activity {
         rowLp.setMargins(dp2(4), dp2(6), dp2(4), dp2(6));
         row.setLayoutParams(rowLp);
         FrameLayout thumb = new FrameLayout(this);
+        thumb.setTag("thumbBox");   // 刷新器据此在分片/成片路径变化时重取首帧
         LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(140, 90);
         tp.rightMargin = 24;
         thumb.setLayoutParams(tp);
@@ -434,6 +441,7 @@ public class RecordActivity extends Activity {
         rowLp.setMargins(dp2(4), dp2(6), dp2(4), dp2(6));
         row.setLayoutParams(rowLp);
         FrameLayout thumb = new FrameLayout(this);
+        thumb.setTag("thumbBox");   // 刷新器据此在分片/成片路径变化时重取首帧
         LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(140, 90);
         tp.rightMargin = 24;
         thumb.setLayoutParams(tp);
@@ -473,19 +481,33 @@ public class RecordActivity extends Activity {
                 // 点击时按当前索引重取条目: 历史列表增删后行视图被复用, 闭包里的 it/idx 可能已过期
                 HistoryStore.Item cur = (hist != null && idx < hist.size()) ? hist.get(idx) : it;
                 PopupMenu pm = new PopupMenu(RecordActivity.this, v);
-                pm.getMenu().add("播放");
+                pm.getMenu().add("打开");
+                pm.getMenu().add("分享");
+                pm.getMenu().add("选取");
+                pm.getMenu().add("属性");
                 pm.getMenu().add("删除");
+                pm.getMenu().add("打开为");
+                pm.getMenu().add("重命名");
+                pm.getMenu().add("重新下载");
+                pm.getMenu().add("打开下载页");
+                pm.getMenu().add("复制下载地址");
+                pm.getMenu().add("打开所在目录");
                 pm.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     public boolean onMenuItemClick(android.view.MenuItem m2) {
                         String t = m2.getTitle().toString();
                         HistoryStore.Item cur = (hist != null && idx < hist.size()) ? hist.get(idx) : it;
-                        if (t.equals("播放")) {
-                            try { playInApp(cur.path, cur.title); } catch (Throwable e) { Toast.makeText(RecordActivity.this, "打不开", Toast.LENGTH_SHORT).show(); }
-                        } else if (t.equals("删除")) {
-                            HistoryStore.removeAt(RecordActivity.this, idx);
-                            rowOrder.clear();
-                            rebuild();
-                        }
+                        if (t.equals("打开")) {
+                            try { playInApp(cur.path, cur.title); } catch (Throwable e) { toast("打不开"); }
+                        } else if (t.equals("分享")) shareItem(cur);
+                        else if (t.equals("选取")) openFileList(cur.path, true);
+                        else if (t.equals("属性")) showProperties(cur);
+                        else if (t.equals("删除")) confirmDelete(cur, idx);
+                        else if (t.equals("打开为")) openAs(cur);
+                        else if (t.equals("重命名")) renameItem(cur, idx);
+                        else if (t.equals("重新下载")) reDownload(cur);
+                        else if (t.equals("打开下载页")) openSourcePage(cur);
+                        else if (t.equals("复制下载地址")) copySourceUrl(cur);
+                        else if (t.equals("打开所在目录")) openFileList(cur.path, false);
                         return true;
                     }
                 });
@@ -503,6 +525,201 @@ public class RecordActivity extends Activity {
         i.putExtra("kernel", "native");
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(i);
+    }
+
+    private void toast(String s) { Toast.makeText(this, s, Toast.LENGTH_SHORT).show(); }
+
+    /** 历史路径 → 本地 File（相册 content:// 返回 null） */
+    private static java.io.File fileOf(String path) {
+        if (path == null || path.startsWith("content://")) return null;
+        String p = path.startsWith("file://") ? path.substring(7) : path;
+        return new java.io.File(p);
+    }
+
+    /** 路径 → 可外发/外部应用可读的 Uri */
+    private android.net.Uri uriOf(String path) {
+        if (path == null) return null;
+        if (path.startsWith("content://")) return android.net.Uri.parse(path);
+        java.io.File f = fileOf(path);
+        if (f == null || !f.exists()) return null;
+        return FileListActivity.uriFor(this, f);
+    }
+
+    private String mimeOfItem(HistoryStore.Item it) {
+        String n = it.title == null ? "" : it.title;
+        String m = FileListActivity.mimeOf(n);
+        if ("*/*".equals(m) && it.path != null) m = FileListActivity.mimeOf(it.path);
+        return m;
+    }
+
+    private void shareItem(HistoryStore.Item it) {
+        try {
+            android.net.Uri u = uriOf(it.path);
+            if (u == null) { toast("文件不存在"); return; }
+            String mime = mimeOfItem(it);
+            Intent sh = new Intent(Intent.ACTION_SEND);
+            sh.setType(mime);
+            sh.putExtra(Intent.EXTRA_STREAM, u);
+            sh.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            sh.setClipData(new android.content.ClipData("文件", new String[]{mime}, new android.content.ClipData.Item(u)));
+            startActivity(Intent.createChooser(sh, "分享"));
+        } catch (Throwable e) { toast("没有可分享的应用"); }
+    }
+
+    private void openAs(HistoryStore.Item it) {
+        try {
+            android.net.Uri u = uriOf(it.path);
+            if (u == null) { toast("文件不存在"); return; }
+            Intent v = new Intent(Intent.ACTION_VIEW);
+            v.setDataAndType(u, mimeOfItem(it));
+            v.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(Intent.createChooser(v, "打开为"));
+        } catch (Throwable e) { toast("没有可打开的应用"); }
+    }
+
+    /** 打开所在目录 / 选取：图2 文件列表页；相册文件回退到录制目录 */
+    private void openFileList(String path, boolean pick) {
+        java.io.File f = fileOf(path);
+        if (f == null || !f.exists()) {
+            f = new java.io.File(getExternalFilesDir(null), "录制合并");
+            if (!f.isDirectory()) f = getExternalFilesDir(null);
+            path = null;
+            pick = false;
+        }
+        Intent i = new Intent(this, FileListActivity.class);
+        i.putExtra("dir", f.isDirectory() ? f.getAbsolutePath() : f.getParent());
+        if (path != null) i.putExtra("select", f.getAbsolutePath());
+        i.putExtra("selectMode", pick);
+        try { startActivity(i); } catch (Throwable e) { toast("打不开文件列表"); }
+    }
+
+    /** 属性对话框：名称/路径/大小/类型/时长/分辨率/修改时间/来源地址 */
+    private void showProperties(final HistoryStore.Item it) {
+        new Thread(new Runnable() { public void run() {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("名称：").append(it.title == null ? "-" : it.title).append("\n");
+            sb.append("类型：").append(it.type == null ? "-" : it.type).append("\n");
+            sb.append("路径：").append(it.path == null ? "-" : it.path).append("\n");
+            java.io.File f = fileOf(it.path);
+            if (f != null && f.exists()) {
+                sb.append("大小：").append(fmtSize(f.length())).append("\n");
+                sb.append("修改时间：").append(android.text.format.DateFormat.format("yyyy-MM-dd HH:mm", f.lastModified())).append("\n");
+            }
+            String mime = mimeOfItem(it);
+            sb.append("MIME：").append(mime).append("\n");
+            if (mime.startsWith("video/") || mime.startsWith("audio/")) {
+                android.media.MediaMetadataRetriever mm = new android.media.MediaMetadataRetriever();
+                try {
+                    if (it.path != null && it.path.startsWith("content://")) mm.setDataSource(RecordActivity.this, android.net.Uri.parse(it.path));
+                    else if (f != null) mm.setDataSource(f.getAbsolutePath());
+                    String dur = mm.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION);
+                    if (dur != null) {
+                        long ms = Long.parseLong(dur);
+                        sb.append("媒体时长：").append(fmtDur(ms / 1000)).append("\n");
+                    }
+                    String w = mm.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH);
+                    String h = mm.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT);
+                    if (w != null && h != null) sb.append("分辨率：").append(w).append(" × ").append(h).append("\n");
+                    String br = mm.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_BITRATE);
+                    if (br != null) sb.append("码率：").append(fmtCompact(Long.parseLong(br) / 8)).append("B/s\n");
+                } catch (Throwable ignored) {}
+                finally { try { mm.release(); } catch (Throwable ignored) {} }
+            }
+            if (it.url != null) sb.append("来源地址：").append(it.url).append("\n");
+            runOnUiThread(new Runnable() { public void run() {
+                try {
+                    new android.app.AlertDialog.Builder(RecordActivity.this)
+                        .setTitle("属性")
+                        .setMessage(sb.toString().trim())
+                        .setPositiveButton("确定", null)
+                        .setNeutralButton("复制路径", new android.content.DialogInterface.OnClickListener() {
+                            public void onClick(android.content.DialogInterface d, int w) { copyText(it.path); }
+                        }).show();
+                } catch (Throwable ignored) {}
+            } });
+        } }).start();
+    }
+
+    private void copyText(String s) {
+        if (s == null) return;
+        try {
+            android.content.ClipboardManager cm = (android.content.ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            if (cm != null) cm.setPrimaryClip(android.content.ClipData.newPlainText("地址", s));
+        } catch (Throwable ignored) {}
+    }
+
+    private void copySourceUrl(HistoryStore.Item it) {
+        if (it.url == null || it.url.isEmpty()) { toast("该记录没有来源地址"); return; }
+        copyText(it.url);   // 静默复制，不弹 Toast
+    }
+
+    private void openSourcePage(HistoryStore.Item it) {
+        if (it.url == null || it.url.isEmpty()) { toast("该记录没有来源地址"); return; }
+        try {
+            Intent i = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(it.url));
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+        } catch (Throwable e) { toast("打不开来源页面"); }
+    }
+
+    private void reDownload(HistoryStore.Item it) {
+        if (it.url == null || it.url.isEmpty()) { toast("该记录没有来源地址，无法重新下载"); return; }
+        try { DlManager.start(it.url); rebuild(); }
+        catch (Throwable e) { toast("无法开始下载"); }
+    }
+
+    private void confirmDelete(final HistoryStore.Item it, final int idx) {
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("删除")
+            .setMessage("确定删除「" + (it.title == null ? "该文件" : it.title) + "」？\n将同时删除本地文件与这条记录。")
+            .setPositiveButton("删除", new android.content.DialogInterface.OnClickListener() {
+                public void onClick(android.content.DialogInterface d, int w) {
+                    if (it.path != null && it.path.startsWith("content://")) {
+                        try { getContentResolver().delete(android.net.Uri.parse(it.path), null, null); } catch (Throwable ignored) {}
+                    } else {
+                        java.io.File f = fileOf(it.path);
+                        if (f != null) { try { f.delete(); } catch (Throwable ignored) {} }
+                    }
+                    HistoryStore.removeAt(RecordActivity.this, idx);
+                    lastHistCount = -1;          // 强制下次 rebuild 重新解析历史
+                    rowOrder.clear();
+                    rebuild();
+                }
+            })
+            .setNegativeButton("取消", null)
+            .show();
+    }
+
+    private void renameItem(final HistoryStore.Item it, final int idx) {
+        final java.io.File f = fileOf(it.path);
+        if (f == null || !f.isFile()) { toast("相册文件暂不支持重命名"); return; }
+        final android.widget.EditText et = new android.widget.EditText(this);
+        et.setText(it.title == null ? f.getName() : it.title);
+        et.setSingleLine(true);
+        et.setPadding(32, 24, 32, 24);
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("重命名")
+            .setView(et)
+            .setPositiveButton("确定", new android.content.DialogInterface.OnClickListener() {
+                public void onClick(android.content.DialogInterface d, int w) {
+                    String name = et.getText().toString().trim();
+                    if (name.isEmpty()) { toast("名称不能为空"); return; }
+                    String oldExt = "";
+                    int dot = it.title != null ? it.title.lastIndexOf('.') : -1;
+                    if (dot > 0) oldExt = it.title.substring(dot);
+                    if (oldExt.length() > 0 && !name.toLowerCase().endsWith(oldExt.toLowerCase())) name += oldExt;
+                    java.io.File dst = new java.io.File(f.getParentFile(), name);
+                    if (dst.exists()) { toast("同名文件已存在"); return; }
+                    if (!f.renameTo(dst)) { toast("重命名失败"); return; }
+                    String newPath = "file://" + dst.getAbsolutePath();
+                    HistoryStore.updateAt(RecordActivity.this, idx, name, newPath);
+                    hist = HistoryStore.load(RecordActivity.this);
+                    lastHistCount = HistoryStore.count(RecordActivity.this);
+                    rebuild();
+                }
+            })
+            .setNegativeButton("取消", null)
+            .show();
     }
 
     private void showDlMenu(View anchor, final DlManager.DlJob j) {
@@ -604,9 +821,10 @@ public class RecordActivity extends Activity {
     }
 
     // ---- 首帧缩略图: MediaMetadataRetriever 后台解码 + 内存缓存 ----
-    private static final java.util.HashMap<String, android.graphics.Bitmap> THUMB_CACHE = new java.util.HashMap<String, android.graphics.Bitmap>();
+    static final java.util.HashMap<String, android.graphics.Bitmap> THUMB_CACHE = new java.util.HashMap<String, android.graphics.Bitmap>();
     private static final java.util.HashMap<android.widget.ImageView, String> THUMB_REQ = new java.util.HashMap<android.widget.ImageView, String>();
-    private static final java.util.concurrent.ExecutorService THUMB_POOL = java.util.concurrent.Executors.newSingleThreadExecutor();
+    private static final java.util.HashMap<android.widget.ImageView, Long> THUMB_TRY = new java.util.HashMap<android.widget.ImageView, Long>();
+    static final java.util.concurrent.ExecutorService THUMB_POOL = java.util.concurrent.Executors.newSingleThreadExecutor();
 
     /** 从录制/下载目录里挑一个可解码的视频文件: 优先成品 mp4, 否则最早的分片 */
     private static String videoPathIn(java.io.File dir) {
@@ -625,6 +843,23 @@ public class RecordActivity extends Activity {
         } catch (Throwable e) { return null; }
     }
 
+    /**
+     * 每轮卡片刷新时调用: 行视图是增量复用的, 建卡时文件可能还没生成,
+     * 之后分片落地/合并成 MP4/历史删除导致索引移位, 都会让首帧路径变化。
+     * 已成功显示则跳过; 路径变化立即重取; 同路径仍未成功(下载中文件未写完)每 3s 重试一次。
+     */
+    private void refreshThumb(FrameLayout box, String path) {
+        if (box == null || path == null || path.isEmpty()) return;
+        android.widget.ImageView iv = box.findViewWithTag("thumbIv");
+        boolean samePath = iv != null && path.equals(iv.getContentDescription());
+        if (samePath) {
+            if (iv.getVisibility() == View.VISIBLE) return;   // 该路径首帧已显示
+            Long last = THUMB_TRY.get(iv);
+            if (last != null && System.currentTimeMillis() - last < 3000) return;  // 限流, 防任务堆积
+        }
+        setThumb(box, path);
+    }
+
     /** 缩略块显示视频首帧; 解码失败或未就绪时保持原 ▶/⇣ 占位图标 */
     private void setThumb(final FrameLayout thumb, final String path) {
         if (path == null || path.isEmpty()) return;
@@ -636,14 +871,33 @@ public class RecordActivity extends Activity {
             thumb.addView(iv, 0, new FrameLayout.LayoutParams(-1, -1));   // 压在占位图标下层
         }
         final android.widget.ImageView fiv = iv;
+        boolean samePath = path.equals(fiv.getContentDescription());
+        fiv.setContentDescription(path);   // 当前已请求的首帧文件路径
+        THUMB_TRY.put(fiv, System.currentTimeMillis());
+        if (!samePath) {
+            // 换了文件: 清掉旧画面, 恢复占位图标, 避免显示上一个文件的首帧
+            fiv.setImageBitmap(null);
+            fiv.setVisibility(View.INVISIBLE);
+            for (int i = 0; i < thumb.getChildCount(); i++) {
+                View c = thumb.getChildAt(i);
+                if (c != fiv) c.setVisibility(View.VISIBLE);
+            }
+        }
         synchronized (THUMB_CACHE) {
             android.graphics.Bitmap bm = THUMB_CACHE.get(path);
-            if (bm != null) { fiv.setImageBitmap(bm); fiv.setVisibility(View.VISIBLE); return; }
+            if (bm != null) {
+                fiv.setImageBitmap(bm); fiv.setVisibility(View.VISIBLE);
+                for (int i = 0; i < thumb.getChildCount(); i++) {
+                    View c = thumb.getChildAt(i);
+                    if (c != fiv) c.setVisibility(View.GONE);   // 隐藏 ▶ / ⇣ 占位图标
+                }
+                return;
+            }
         }
         fiv.setVisibility(View.INVISIBLE);
         THUMB_REQ.put(fiv, path);
         THUMB_POOL.execute(new Runnable() { public void run() {
-            android.graphics.Bitmap bm = decodeThumb(path);
+            android.graphics.Bitmap bm = decodeThumb(RecordActivity.this, path);
             if (bm != null) synchronized (THUMB_CACHE) {
                 if (THUMB_CACHE.size() > 96) THUMB_CACHE.clear();   // 简单上限, 防长列表撑爆内存
                 THUMB_CACHE.put(path, bm);
@@ -652,17 +906,24 @@ public class RecordActivity extends Activity {
                 if (!path.equals(THUMB_REQ.get(fiv))) return;   // 行已复用到别的条目, 丢弃过期结果
                 android.graphics.Bitmap b2;
                 synchronized (THUMB_CACHE) { b2 = THUMB_CACHE.get(path); }
-                if (b2 != null) { fiv.setImageBitmap(b2); fiv.setVisibility(View.VISIBLE); }
+                if (b2 != null) {
+                    fiv.setImageBitmap(b2); fiv.setVisibility(View.VISIBLE);
+                    for (int i = 0; i < thumb.getChildCount(); i++) {
+                        View c = thumb.getChildAt(i);
+                        if (c != fiv) c.setVisibility(View.GONE);
+                    }
+                }
             } });
         } });
     }
 
     /** 取视频 0ms 处关键帧并居中裁剪到缩略块尺寸(140x90 px), 失败返回 null */
-    private static android.graphics.Bitmap decodeThumb(String path) {
+    static android.graphics.Bitmap decodeThumb(Context c, String path) {
         android.media.MediaMetadataRetriever mm = new android.media.MediaMetadataRetriever();
         try {
             String p = path.startsWith("file://") ? path.substring(7) : path;
-            mm.setDataSource(p);
+            if (path.startsWith("content://")) mm.setDataSource(c, android.net.Uri.parse(path));
+            else mm.setDataSource(p);
             android.graphics.Bitmap f = mm.getFrameAtTime(0, android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
             if (f == null) return null;
             int W = 140, H = 90;
@@ -688,6 +949,7 @@ public class RecordActivity extends Activity {
 
         // 左侧占位缩略块（▶）
         FrameLayout thumb = new FrameLayout(this);
+        thumb.setTag("thumbBox");   // 刷新器据此在分片/成片路径变化时重取首帧
         LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(140, 90);
         tp.rightMargin = 24;
         thumb.setLayoutParams(tp);
