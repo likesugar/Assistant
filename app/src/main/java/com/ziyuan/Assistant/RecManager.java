@@ -279,14 +279,15 @@ public class RecManager {
                             } finally {
                                 if (pc != null) { try { pc.disconnect(); } catch (Throwable ignored) {} }
                             }
-                            // master 清单：只认 _or4 原画; 没有则每2秒刷新清单等待原画出现
+                            // master 清单：只认 _or4 原画; 没有则快速刷新清单等待原画出现
                             if (!variants.isEmpty() && segs.isEmpty()) {
                                 String pick = null;
                                 for (String v : variants) if (v.contains("_or4")) { pick = v; break; }
                                 if (pick == null) {
-                                    job.state = "兜底画质, 等待原画(2s刷新)…";
+                                    job.state = "兜底画质, 等待原画…";
                                     if (job.finishNow) break;
-                                    Thread.sleep(2000);
+                                    // 500ms 快速刷新：原画变体一出现立即抓片，缩短缓存预热期
+                                    Thread.sleep(500);
                                     continue;
                                 }
                                 curUrl = pick; failStreak = 0; job.state = null; continue;
