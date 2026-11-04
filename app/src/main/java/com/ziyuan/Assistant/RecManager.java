@@ -291,7 +291,7 @@ public class RecManager {
                                 }
                                 curUrl = pick; failStreak = 0; job.state = null; continue;
                             }
-                            if (!ok) { failStreak++; job.state = "清单失败x" + failStreak + " (HTTP" + pc.getResponseCode() + ")"; Thread.sleep(2000); continue; }
+                            if (!ok) { failStreak++; job.state = "清单失败x" + failStreak + " (HTTP" + pc.getResponseCode() + ")"; Thread.sleep(1000); continue; }
                             // ---- 逐分片下载（独立容错）----
                             for (String seg : segs) {
                                 if (!job.active) break;
@@ -321,7 +321,8 @@ public class RecManager {
                                 }
                             }
                             if (job.finishNow) break;
-                            Thread.sleep(2000);
+                            // 500ms 轮询：抓片速度必须快于直播出片速度(2s/片)，否则录制断口、播放缓存断供
+                            Thread.sleep(500);
                         }
                     } catch (Throwable t) {
                         job.state = "中断: " + t.getClass().getSimpleName();

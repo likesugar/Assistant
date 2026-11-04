@@ -180,7 +180,11 @@ public class NativePlayerActivity extends Activity {
                 for (String ru : cands) {
                     boolean match = curKey != null && curKey.equals(Or4Helper.streamKey(ru));
                     if (!match && curId != null) match = curId.equals(streamId(ru));
-                    if (match) { url = "http://127.0.0.1:" + LiveProxy.PORT + "/playlist.m3u8"; break; }
+                    // 门槛：缓存已有分片才切代理；录制刚启动/断供时保持直连，绝不空等转圈
+                    if (match && LiveProxy.cacheSegmentCount() >= 2) {
+                        url = "http://127.0.0.1:" + LiveProxy.PORT + "/playlist.m3u8";
+                        break;
+                    }
                 }
             }
         } catch (Throwable ignored) {}
