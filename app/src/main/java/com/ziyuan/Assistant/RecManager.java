@@ -971,6 +971,27 @@ public class RecManager {
         } }).start();
     }
 
+    /** storeUri 指向文件的实际大小(打不开返回 -1) */
+    static long storeUriSize(android.net.Uri u) {
+        try {
+            android.os.ParcelFileDescriptor fd = sCtx.getContentResolver().openFileDescriptor(u, "r");
+            if (fd == null) return -1;
+            long n = fd.getStatSize();
+            try { fd.close(); } catch (Throwable ignored) {}
+            return n;
+        } catch (Throwable t) { return -1; }
+    }
+
+    /** 转换失败且 flv 为 0 字节(两者同时满足)才删: 文件无内容, 记录与本地文件一并清掉; 有内容仍保留 */
+    static void dropIfEmptyOnFail(RecJob job) {
+        if (storeUriSize(job.storeUri) > 0) return;   // 有内容: 保留(用户可稍后处理)
+        try { if (job.storeUri != null) sCtx.getContentResolver().delete(job.storeUri, null, null); } catch (Throwable ignored) {}
+        try { if (job.file != null && job.file.isFile()) job.file.delete(); } catch (Throwable ignored) {}
+        job.state = null;
+        stoppedJobs.remove(job.id);          // 卡片一并消失
+        removeLiveRec(job); releaseWakeIfIdle();
+    }
+
     static void convertToMp4(final RecJob job) {
         job.state = "合并视频";
         try {
@@ -978,7 +999,8 @@ public class RecManager {
             java.io.File tmp = new java.io.File(sCtx.getCacheDir(), "conv_" + System.currentTimeMillis() + ".mp4");
             com.arthenica.ffmpegkit.FFmpegSession st = com.arthenica.ffmpegkit.FFmpegKit.executeWithArguments(
                 new String[]{"-y", "-i", src, "-c", "copy", "-movflags", "+faststart", tmp.getAbsolutePath()});
-            if (st.getState().equals(com.arthenica.ffmpegkit.SessionState.COMPLETED) && tmp.length() > 0) {
+            boolean ok = st.getState().equals(com.arthenica.ffmpegkit.SessionState.COMPLETED) && tmp.length() > 0;
+            if (ok) {
                 String name = job.name != null ? job.name : "rec.mp4";
                 String mp4Name = (name.endsWith(".flv") ? name.substring(0, name.length() - 4) : name) + ".mp4";
                 android.content.ContentValues cv = new android.content.ContentValues();
@@ -996,8 +1018,10 @@ public class RecManager {
             }
             tmp.delete();
             stoppedJobs.remove(job.id);   // 成功：从列表移除
+            if (!ok) dropIfEmptyOnFail(job);   // 无异常的转换失败: 0字节flv直接删, 有内容保留
         } catch (Throwable t) {
             job.state = "转换失败(保留flv)";
+            dropIfEmptyOnFail(job);           // 0字节: 卡片消失+文件删除; 有内容: 状态保留供用户处理
         }
     }
 
