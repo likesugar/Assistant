@@ -45,10 +45,6 @@ public class LiveProxy {
     public static int cacheSegmentCount() {
         synchronized (segCache) { return segCache.size(); }
     }
-    /** 该键是否已被喂过（分片直喂线程续录重启时跳过已喂分片用） */
-    public static boolean segFed(String key) {
-        synchronized (LiveProxy.class) { return fetched.contains(key); }
-    }
     private static volatile boolean running = false;
     private static volatile boolean refreshing = false;
     /** 真实录制器(RecManager)正在喂数据时为 true——缓存数据源与刷新器解耦 */
@@ -177,26 +173,6 @@ public class LiveProxy {
             while ((n = in.read(b)) > 0) bo.write(b, 0, n);
             in.close();
             // 不调用 disconnect：让连接回到平台 keep-alive 池复用，后续请求省去 TLS 握手
-            return bo.toByteArray();
-        } catch (Throwable e) {
-            return null;
-        }
-    }
-
-    /** 带 HLS 直播请求头的抓取（清单兜底回退用），连接回到 keep-alive 池复用 */
-    private static byte[] httpGetHls(String url) {
-        try {
-            HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
-            c.setConnectTimeout(6000);
-            c.setReadTimeout(6000);
-            c.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
-            c.setRequestProperty("Referer", "https://live.douyin.com/");
-            if (c.getResponseCode() != 200) { c.disconnect(); return null; }
-            InputStream in = c.getInputStream();
-            ByteArrayOutputStream bo = new ByteArrayOutputStream();
-            byte[] b = new byte[8192]; int n;
-            while ((n = in.read(b)) > 0) bo.write(b, 0, n);
-            in.close();
             return bo.toByteArray();
         } catch (Throwable e) {
             return null;
@@ -380,9 +356,8 @@ public class LiveProxy {
                 // 之前直接转发上游原始列表，最新分片往往还没抓完，播放器被迫自己去上游下载（实测反而慢 3.5s）。
                 java.util.ArrayList<String> window = new java.util.ArrayList<>();
                 long seq = 0;
-                // 录制刚启动/录制器还在等原画时缓存可能是空的：等首片落地（最多 3 秒），
-                // 超时即回退转发上游列表，不给播放器长等待
-                for (int i = 0; i < 6; i++) {
+                // 录制刚启动/录制器还在等原画时缓存可能是空的：等待首片落地（最多 8 秒），避免播放器拿到空列表报错
+                for (int i = 0; i < 16; i++) {
                     synchronized (LiveProxy.class) {
                         int n = fetched.size();
                         window.clear();
@@ -397,36 +372,7 @@ public class LiveProxy {
                     if (!window.isEmpty()) break;
                     try { Thread.sleep(500); } catch (Exception ignored) {}
                 }
-                if (window.isEmpty()) {
-                    // 兜底：录制刚启动/原画迟迟未出，缓存 8s 仍为空 —— 回退转发上游原始列表
-                    //（分片经 /ts?u= 中转：缓存命中走内存，未命中流式转发），播放器不至于拿 404 报错
-                    try {
-                        String mu = mediaUrl;
-                        byte[] up = mu != null ? httpGetHls(mu) : null;
-                        if (up != null && new String(up, 0, Math.min(up.length, 16), "UTF-8").startsWith("#EXTM3U")) {
-                            StringBuilder fb = new StringBuilder("#EXTM3U\n");
-                            String base = mu;
-                            for (String ln : new String(up, "UTF-8").split("\n")) {
-                                String t = ln.trim();
-                                if (!t.isEmpty() && !t.startsWith("#")) {
-                                    String abs = new URL(new URL(base), t).toString();
-                                    if (t.contains(".m3u8")) {   // 变体清单行：继续经 /relay 递归改写
-                                        ln = "http://127.0.0.1:" + PORT + "/relay?u="
-                                            + java.net.URLEncoder.encode(abs, "UTF-8");
-                                    } else {                     // 分片行：缓存命中走内存，未命中流式转发
-                                        ln = "http://127.0.0.1:" + PORT + "/ts?u="
-                                            + java.net.URLEncoder.encode(abs, "UTF-8");
-                                    }
-                                }
-                                fb.append(ln).append("\n");
-                            }
-                            writeResp(s, "200 OK", "application/vnd.apple.mpegurl", fb.toString().getBytes());
-                            return;
-                        }
-                    } catch (Throwable ignored) {}
-                    writeResp(s, "404 Not Found", "text/plain", "no stream".getBytes());
-                    return;
-                }
+                if (window.isEmpty()) { writeResp(s, "404 Not Found", "text/plain", "no stream".getBytes()); return; }
                 StringBuilder sb = new StringBuilder();
                 sb.append("#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:2\n")
                   .append("#EXT-X-MEDIA-SEQUENCE:").append(seq).append("\n");
@@ -444,10 +390,6 @@ public class LiveProxy {
                 // 1) 命中录制刷新器已抓取的分片缓存：直接回内存数据，播放器零等待
                 byte[] cached = getSeg(raw);
                 if (cached != null) { writeResp(s, "200 OK", "video/mp2t", cached); return; }
-                if (raw.startsWith("dyseg://")) {   // 录制分片键已被淘汰：不再回源(无对应网络地址)
-                    writeResp(s, "404 Not Found", "text/plain", "seg evicted".getBytes());
-                    return;
-                }
                 // 2) 未命中：流式转发（边下边发），播放器不必等整个分片下载完
                 OutputStream os = s.getOutputStream();
                 try {

@@ -180,8 +180,8 @@ public class NativePlayerActivity extends Activity {
                 for (String ru : cands) {
                     boolean match = curKey != null && curKey.equals(Or4Helper.streamKey(ru));
                     if (!match && curId != null) match = curId.equals(streamId(ru));
-                    // 恢复 1.2.5 手感：默认直连秒开；仅当录制缓存已有分片(小工具路径)才切代理。
-                    // 缓存为空(含后台ffmpeg录制)一律直连，不走代理不空等
+                    // 门槛：缓存有首片即切代理（录制预热已提速，首片1~2s内落地）；
+                    // 缓存全空/录制断供时保持直连，绝不空等转圈
                     if (match && LiveProxy.cacheSegmentCount() >= 1) {
                         url = "http://127.0.0.1:" + LiveProxy.PORT + "/playlist.m3u8";
                         break;
