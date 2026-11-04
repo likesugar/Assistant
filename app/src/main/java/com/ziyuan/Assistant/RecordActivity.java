@@ -216,7 +216,13 @@ public class RecordActivity extends Activity {
     }
 
     @Override
-    protected void onResume() { super.onResume(); handler.post(tick); }
+    protected void onResume() {
+        super.onResume();
+        // 回页面重读历史: 在软件外删除/新增文件后, 记录立即对齐实际文件
+        hist = HistoryStore.load(this);
+        lastHistCount = HistoryStore.count(this);
+        handler.post(tick);
+    }
 
     @Override
     protected void onPause() { super.onPause(); handler.removeCallbacks(tick); }
@@ -1006,7 +1012,7 @@ public class RecordActivity extends Activity {
                         java.io.File f = fileOf(it.path);
                         if (f != null) { try { f.delete(); } catch (Throwable ignored) {} }
                     }
-                    HistoryStore.removeAt(RecordActivity.this, idx);
+                    HistoryStore.removeItem(RecordActivity.this, it);   // 按记录匹配(显示过滤后 index 已错位)
                     lastHistCount = -1;          // 强制下次 rebuild 重新解析历史
                     rowOrder.clear();
                     rebuild();
@@ -1038,7 +1044,7 @@ public class RecordActivity extends Activity {
                     if (dst.exists()) { toast("同名文件已存在"); return; }
                     if (!f.renameTo(dst)) { toast("重命名失败"); return; }
                     String newPath = "file://" + dst.getAbsolutePath();
-                    HistoryStore.updateAt(RecordActivity.this, idx, name, newPath);
+                    HistoryStore.updateItem(RecordActivity.this, it, name, newPath);   // 按记录匹配
                     hist = HistoryStore.load(RecordActivity.this);
                     lastHistCount = HistoryStore.count(RecordActivity.this);
                     rebuild();
