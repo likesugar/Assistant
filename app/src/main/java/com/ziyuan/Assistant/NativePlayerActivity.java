@@ -180,9 +180,10 @@ public class NativePlayerActivity extends Activity {
                 for (String ru : cands) {
                     boolean match = curKey != null && curKey.equals(Or4Helper.streamKey(ru));
                     if (!match && curId != null) match = curId.equals(streamId(ru));
-                    // 门槛：缓存有首片即切代理（录制预热已提速，首片1~2s内落地）；
-                    // 缓存全空/录制断供时保持直连，绝不空等转圈
-                    if (match && LiveProxy.cacheSegmentCount() >= 1) {
+                    // 门槛：录制中即切代理（缓存 0 片也切）。代理播放列表会等首片落地（最多8s），
+                    // 首片一就绪立即开始读——播放数据全程走录制内存缓存，与录制不抢上游带宽；
+                    // 首片迟迟不来时代理自动回退上游列表，绝不 404 空等
+                    if (match) {
                         url = "http://127.0.0.1:" + LiveProxy.PORT + "/playlist.m3u8";
                         break;
                     }

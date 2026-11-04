@@ -179,6 +179,26 @@ public class LiveProxy {
         }
     }
 
+    /** 带 HLS 直播请求头的抓取（清单兜底回退用），连接回到 keep-alive 池复用 */
+    private static byte[] httpGetHls(String url) {
+        try {
+            HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+            c.setConnectTimeout(6000);
+            c.setReadTimeout(6000);
+            c.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
+            c.setRequestProperty("Referer", "https://live.douyin.com/");
+            if (c.getResponseCode() != 200) { c.disconnect(); return null; }
+            InputStream in = c.getInputStream();
+            ByteArrayOutputStream bo = new ByteArrayOutputStream();
+            byte[] b = new byte[8192]; int n;
+            while ((n = in.read(b)) > 0) bo.write(b, 0, n);
+            in.close();
+            return bo.toByteArray();
+        } catch (Throwable e) {
+            return null;
+        }
+    }
+
     public static void fetchLatest(String url) {
         final String fUrl = url;
         new Thread(new Runnable() { public void run() {
@@ -372,7 +392,36 @@ public class LiveProxy {
                     if (!window.isEmpty()) break;
                     try { Thread.sleep(500); } catch (Exception ignored) {}
                 }
-                if (window.isEmpty()) { writeResp(s, "404 Not Found", "text/plain", "no stream".getBytes()); return; }
+                if (window.isEmpty()) {
+                    // 兜底：录制刚启动/原画迟迟未出，缓存 8s 仍为空 —— 回退转发上游原始列表
+                    //（分片经 /ts?u= 中转：缓存命中走内存，未命中流式转发），播放器不至于拿 404 报错
+                    try {
+                        String mu = mediaUrl;
+                        byte[] up = mu != null ? httpGetHls(mu) : null;
+                        if (up != null && new String(up, 0, Math.min(up.length, 16), "UTF-8").startsWith("#EXTM3U")) {
+                            StringBuilder fb = new StringBuilder("#EXTM3U\n");
+                            String base = mu;
+                            for (String ln : new String(up, "UTF-8").split("\n")) {
+                                String t = ln.trim();
+                                if (!t.isEmpty() && !t.startsWith("#")) {
+                                    String abs = new URL(new URL(base), t).toString();
+                                    if (t.contains(".m3u8")) {   // 变体清单行：继续经 /relay 递归改写
+                                        ln = "http://127.0.0.1:" + PORT + "/relay?u="
+                                            + java.net.URLEncoder.encode(abs, "UTF-8");
+                                    } else {                     // 分片行：缓存命中走内存，未命中流式转发
+                                        ln = "http://127.0.0.1:" + PORT + "/ts?u="
+                                            + java.net.URLEncoder.encode(abs, "UTF-8");
+                                    }
+                                }
+                                fb.append(ln).append("\n");
+                            }
+                            writeResp(s, "200 OK", "application/vnd.apple.mpegurl", fb.toString().getBytes());
+                            return;
+                        }
+                    } catch (Throwable ignored) {}
+                    writeResp(s, "404 Not Found", "text/plain", "no stream".getBytes());
+                    return;
+                }
                 StringBuilder sb = new StringBuilder();
                 sb.append("#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:2\n")
                   .append("#EXT-X-MEDIA-SEQUENCE:").append(seq).append("\n");

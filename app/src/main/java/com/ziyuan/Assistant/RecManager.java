@@ -709,6 +709,9 @@ public class RecManager {
         job.bgSession = com.arthenica.ffmpegkit.FFmpegKit.executeWithArgumentsAsync(args,
             new com.arthenica.ffmpegkit.FFmpegSessionCompleteCallback() {
                 public void apply(com.arthenica.ffmpegkit.FFmpegSession st) {
+                    if (gen != job.bgGen || job.bgCancel) {   // 旧会话/已暂停(含结束时的取消)：直接作废，
+                        return;                              // 不再覆写任务状态(之前会把"合并视频"盖成cancel文案)
+                    }
                     try {
                         String logs = st.getAllLogsAsString();
                         dump("BG sess rc=" + st.getReturnCode() + " state=" + st.getState()
@@ -721,7 +724,6 @@ public class RecManager {
                             job.state = "拉流失败自动重连 · " + last;
                         }
                     } catch (Throwable ignored) {}
-                    if (gen != job.bgGen || job.bgCancel) return;  // 旧会话/已暂停：直接作废
                     if (job.active) {
                         // 流已断开：用嗅探页面登记的新鲜地址续录，最多尝试 2 次。
                         // 每次最多等约 6s 查新鲜地址；2 次都抓不到 → 把已录片段合并成视频并结束。
@@ -783,7 +785,8 @@ public class RecManager {
     static void stopBgSession(RecJob job) {
         job.bgCancel = true;
         try { if (job.bgSession != null) com.arthenica.ffmpegkit.FFmpegKit.cancel(job.bgSession.getSessionId()); } catch (Throwable ignored) {}
-        job.bgSession = null;
+        // 保留 bgSession 引用不置空：合并前要轮询它的状态，确认 ffmpeg 线程完全停止、
+        // 最后一个分片完整落盘后才能列目录合并（cancel 是异步的）
     }
 
     static void pauseBg(RecJob job, String why) {
@@ -801,29 +804,73 @@ public class RecManager {
         releaseWakeIfIdle();
     }
 
+    /** 分片文件名 seg%03d.ts → 数字序号（数值排序，防 999 之后字典序错乱） */
+    static int segIndex(java.io.File f) {
+        try {
+            String n = f.getName();
+            int s = n.indexOf("seg") + 3, e = n.indexOf('.');
+            return Integer.parseInt(n.substring(s, e > s ? e : n.length()));
+        } catch (Throwable t) { return Integer.MAX_VALUE; }
+    }
+
+    /** 等 ffmpeg 会话真正停止（cancel 是异步的）：最后一个分片写完整才能合并 */
+    static void waitForSessionStop(RecJob job) {
+        try {
+            for (int i = 0; i < 40; i++) {   // 最多等 10s
+                com.arthenica.ffmpegkit.FFmpegSession st = job.bgSession;
+                if (st == null) return;
+                if (!st.getState().equals(com.arthenica.ffmpegkit.SessionState.RUNNING)) return;
+                Thread.sleep(250);
+            }
+        } catch (Throwable ignored) {}
+        try { Thread.sleep(300); } catch (Throwable ignored) {}   // 留出最后的 flush 时间
+    }
+
     static void mergeSegs(final RecJob job) {
         job.state = "合并视频";
         new Thread(new Runnable() { public void run() {
+            java.io.File full = null;
             try {
+                // 1) 等 ffmpeg 完全停止（结束时的 cancel 是异步的），避免读到一个还在写的半截分片
+                waitForSessionStop(job);
+                // 2) 数值排序收集全部分片（暂停/重连产生的多段 seg 一并收入）
                 java.io.File[] segs = job.file.listFiles();
-                java.util.Arrays.sort(segs);
                 java.util.List<java.io.File> list = new java.util.ArrayList<java.io.File>();
-                for (java.io.File f : segs) if (f.getName().startsWith("seg") && f.length() > 0) list.add(f);
+                if (segs != null) {
+                    for (java.io.File f : segs) if (f.getName().startsWith("seg") && f.length() > 0) list.add(f);
+                    java.util.Collections.sort(list, new java.util.Comparator<java.io.File>() {
+                        public int compare(java.io.File a, java.io.File b) { return segIndex(a) - segIndex(b); }
+                    });
+                }
                 if (list.isEmpty()) { job.state = "无数据"; stoppedJobs.put(job.id, job); return; }
-                java.io.File listFile = new java.io.File(job.file, "list.txt");
-                java.io.FileWriter fw = new java.io.FileWriter(listFile);
-                for (java.io.File f : list) fw.write("file '" + f.getAbsolutePath() + "'\n");
-                fw.close();
+                // 3) 字节级拼接成整段 TS——TS 是流式封装，可首尾相接，纯拷贝零转码，
+                //    任何情况下都不会丢中间内容。（旧方案 ffmpeg concat demuxer 会在
+                //    暂停/重连造成的封装断口处整段截断：600MB 只剩 107MB 的根因）
+                full = new java.io.File(job.file, "full.ts");
+                long estTotal = 0;
+                for (java.io.File f : list) estTotal += f.length();
+                java.io.FileOutputStream fts = new java.io.FileOutputStream(full);
+                byte[] buf = new byte[65536]; int n;
+                long copied = 0;
+                for (java.io.File f : list) {
+                    java.io.InputStream in = new java.io.FileInputStream(f);
+                    while ((n = in.read(buf)) > 0) { fts.write(buf, 0, n); copied += n; }
+                    in.close();
+                    job.mergePct = (int) Math.min(29, copied * 30 / Math.max(1, estTotal));  // 拼接阶段 0-30%
+                }
+                fts.flush(); fts.close();
+                long totalIn = full.length();
+                job.mergeTotal = totalIn;
+                job.mergeDurMs = Math.max(1, job.secs) * 1000;
+                job.mergePct = 30;
+                job.bytes = 0;
+                // 4) 整段 TS → MP4（流拷贝）。genpts/igndts 作为输入选项：
+                //    暂停后时间戳归零、中途断流等时间戳断口在此统一修复
                 final java.io.File mp4 = new java.io.File(job.file, "out.mp4");
-                long totalIn = 1;
-                for (java.io.File f : list) totalIn += f.length();
-                job.mergeTotal = totalIn;                       // 兜底分母(输入总大小)
-                job.mergeDurMs = Math.max(1, job.secs) * 1000;  // 主分母: 录制总时长(ms), 输出时间向它推进
-                job.mergePct = 0;
-                job.bytes = 0;                                  // 合并阶段: 已生成 mp4 字节数, 从 0 涨到最终
                 com.arthenica.ffmpegkit.FFmpegSession st = com.arthenica.ffmpegkit.FFmpegKit.executeWithArgumentsAsync(
-                    new String[]{"-y", "-stats_period", "0.5", "-f", "concat", "-safe", "0", "-i", listFile.getAbsolutePath(),
-                        "-c", "copy", "-fflags", "+genpts", mp4.getAbsolutePath()},
+                    new String[]{"-y", "-stats_period", "0.5", "-fflags", "+genpts+igndts",
+                        "-i", full.getAbsolutePath(), "-c", "copy", "-movflags", "+faststart",
+                        mp4.getAbsolutePath()},
                     new com.arthenica.ffmpegkit.FFmpegSessionCompleteCallback() {
                         public void apply(com.arthenica.ffmpegkit.FFmpegSession st2) { }
                     }, new com.arthenica.ffmpegkit.LogCallback() {
@@ -832,13 +879,13 @@ public class RecManager {
                         public void apply(com.arthenica.ffmpegkit.Statistics stat) {
                             try {
                                 long s = stat.getSize();
-                                if (s > 0) job.bytes = s;               // 已生成字节, 从 0 增长
-                                long t = (long) stat.getTime();         // 输出时间(ms, double→long): 流拷贝也连续递增 0→总时长
+                                if (s > 0) job.bytes = s;
+                                long t = (long) stat.getTime();
                                 int p;
-                                if (t > 0 && job.mergeDurMs > 0) p = (int) (t * 100 / job.mergeDurMs);
-                                else if (job.mergeTotal > 0) p = (int) (s * 100 / job.mergeTotal);
-                                else p = 0;
-                                if (p > 99) p = 99;                     // 100 留给真正完成那一刻
+                                if (t > 0 && job.mergeDurMs > 0) p = 30 + (int) (t * 65 / job.mergeDurMs);
+                                else if (job.mergeTotal > 0) p = 30 + (int) (s * 65 / job.mergeTotal);
+                                else p = 30;
+                                if (p > 99) p = 99;
                                 if (p > job.mergePct) job.mergePct = p;
                             } catch (Throwable ignored) {}
                         }
@@ -848,42 +895,46 @@ public class RecManager {
                     && !st.getState().equals(com.arthenica.ffmpegkit.SessionState.FAILED)
                     ) {
                     try { job.state = "合并视频"; } catch (Throwable ignored) {}
-                    // 时间驱动兜底进度: concat 流拷贝的 ffmpeg 进度上报很稀疏(甚至为0), 靠已用时间从0爬到95%,
-                    // 保证用户能看到 0→100 的推进; 若 ffmpeg 真有上报, 统计回调的 mergePct 会更高, 取两者最大
                     long el = System.currentTimeMillis() - mergeStart;
-                    int timeP = (int) Math.min(95, el * 95L / 4000);
+                    int timeP = (int) Math.min(99, 30 + el * 65L / 4000);
                     if (timeP > job.mergePct) job.mergePct = timeP;
                     try { Thread.sleep(500); } catch (Throwable e) { }
                 }
-                if (st.getState().equals(com.arthenica.ffmpegkit.SessionState.COMPLETED) && mp4.length() > 0) {
-                    job.mergePct = 100;              // 完成: 定格 100%
-                    job.bytes = mp4.length();
-                    String mp4Name = job.name.endsWith(".ts") ? job.name.substring(0, job.name.length() - 3) + ".mp4" : job.name + ".mp4";
-                    android.content.ContentValues cv = new android.content.ContentValues();
-                    cv.put(android.provider.MediaStore.Video.Media.DISPLAY_NAME, mp4Name);
-                    cv.put(android.provider.MediaStore.Video.Media.MIME_TYPE, "video/mp4");
-                    cv.put(android.provider.MediaStore.Video.Media.RELATIVE_PATH, "Movies/录制");
-                    android.net.Uri out = sCtx.getContentResolver().insert(
-                        android.provider.MediaStore.Video.Media.getContentUri("external_primary"), cv);
-                    java.io.InputStream in = new java.io.FileInputStream(mp4);
-                    java.io.OutputStream os = sCtx.getContentResolver().openOutputStream(out);
-                    byte[] b = new byte[32768]; int n;
-                    while ((n = in.read(b)) > 0) os.write(b, 0, n);
-                    in.close(); os.close();
-                    // 保留 MP4 在 /Android/data/com.ziyuan.Assistant/files/录制/<文件夹>/
-                    for (java.io.File f : job.file.listFiles()) {
-                        if (!f.equals(mp4) && !f.equals(listFile)) f.delete();
-                    }
-                    listFile.delete();
-                    mp4.renameTo(new java.io.File(job.file, mp4Name));
-                    job.state = "已保存: files/录制合并/" + mp4Name.replace(".mp4", "") + "/" + mp4Name;
-                    HistoryStore.add(sCtx, "录制", mp4Name, "file://" + new java.io.File(job.file, mp4Name).getAbsolutePath());
-                    job.savedToHistory = true;
-                } else job.state = "合并失败";
+                // 5) 先校验再清理：MP4 大小须达输入一半以上（流拷贝体积与 TS 相当），
+                //    否则视为转换截断 —— 保留整段 full.ts 作为成片兜底，绝不删分片
+                boolean mp4Ok = st.getState().equals(com.arthenica.ffmpegkit.SessionState.COMPLETED)
+                    && mp4.length() > 0 && mp4.length() >= totalIn / 2;
+                String mp4Name = job.name.endsWith(".ts") ? job.name.substring(0, job.name.length() - 3) + ".mp4" : job.name + ".mp4";
+                String finalName = mp4Ok ? mp4Name : mp4Name.replace(".mp4", ".ts");
+                java.io.File finalFile = mp4Ok ? mp4 : full;
+                job.mergePct = 100;
+                job.bytes = finalFile.length();
+                android.content.ContentValues cv = new android.content.ContentValues();
+                cv.put(android.provider.MediaStore.Video.Media.DISPLAY_NAME, finalName);
+                cv.put(android.provider.MediaStore.Video.Media.MIME_TYPE, mp4Ok ? "video/mp4" : "video/mp2t");
+                cv.put(android.provider.MediaStore.Video.Media.RELATIVE_PATH, "Movies/录制");
+                android.net.Uri out = sCtx.getContentResolver().insert(
+                    android.provider.MediaStore.Video.Media.getContentUri("external_primary"), cv);
+                java.io.InputStream in = new java.io.FileInputStream(finalFile);
+                java.io.OutputStream os = sCtx.getContentResolver().openOutputStream(out);
+                byte[] b = new byte[32768]; int nn;
+                while ((nn = in.read(b)) > 0) os.write(b, 0, nn);
+                in.close(); os.close();
+                job.state = mp4Ok
+                    ? "已保存: files/录制合并/" + mp4Name.replace(".mp4", "") + "/" + mp4Name
+                    : "MP4转换未完整，已保留完整TS: " + finalName;
+                HistoryStore.add(sCtx, "录制", finalName, "file://" + new java.io.File(job.file, finalName).getAbsolutePath());
+                job.savedToHistory = true;
+                // 6) 成片已落相册，才允许清理中间文件（保留成片在 files/录制合并/<名>/）
+                for (java.io.File f : job.file.listFiles()) {
+                    if (f.getName().startsWith("seg") || f.getName().equals("list.txt")) f.delete();
+                }
+                if (mp4Ok) mp4.renameTo(new java.io.File(job.file, mp4Name));
+                if (full != null) full.delete();
                 recJobs.remove(job.id); removeLiveRec(job); releaseWakeIfIdle(); // 合并完成, 卡片此时才移出
                 stoppedJobs.put(job.id, job);
             } catch (Throwable e) {
-                job.state = "转换失败: " + e.getClass().getSimpleName();
+                job.state = "合并异常(分片已保留): " + e.getClass().getSimpleName();
                 stoppedJobs.put(job.id, job);
             }
         } }).start();
