@@ -43,8 +43,35 @@ public class LiveProxy {
     }
     private static volatile boolean running = false;
     private static volatile boolean refreshing = false;
+    /** 真实录制器(RecManager)正在喂数据时为 true——缓存数据源与刷新器解耦 */
+    public static volatile boolean cacheLive = false;
     private static final LinkedHashSet<String> fetched = new LinkedHashSet<>();
     private static long totalFetched = 0;   // 成功抓取的分片总数（用于 MEDIA-SEQUENCE 单调递增）
+
+    /** 录制开始时由 RecManager 调用：登记媒体列表地址并清空旧缓存 */
+    public static void beginCacheFeed(String mediaListUrl) {
+        mediaUrl = mediaListUrl;
+        cacheLive = true;
+        synchronized (LiveProxy.class) { fetched.clear(); totalFetched = 0; }
+        synchronized (segCache) { segCache.clear(); }
+    }
+
+    /** 录制结束时由 RecManager 调用：释放缓存 */
+    public static void endCacheFeed() {
+        cacheLive = false;
+        mediaUrl = null;
+        synchronized (LiveProxy.class) { fetched.clear(); totalFetched = 0; }
+        synchronized (segCache) { segCache.clear(); }
+    }
+
+    /** 录制器每完整抓取一个分片调用：进内存缓存，供播放 /ts?u= 秒读 */
+    public static void noteSegment(String url, byte[] body) {
+        if (url == null || body == null || body.length == 0) return;
+        synchronized (LiveProxy.class) {
+            if (!fetched.contains(url)) { fetched.add(url); totalFetched++; }
+        }
+        putSeg(url, body);
+    }
 
     public static void start() {
         if (running) return;
@@ -123,9 +150,9 @@ public class LiveProxy {
         synchronized (segCache) { segCache.clear(); }
     }
 
-    /** 录制刷新器是否在跑（同一路流播放可改走本代理，分片命中内存缓存） */
+    /** 缓存有数据可用（录制器喂数据中，或独立刷新器在跑）——同一路流播放可改走本代理秒进 */
     public static boolean isRefresherActive() {
-        return refreshing && mediaUrl != null;
+        return cacheLive || (refreshing && mediaUrl != null);
     }
 
     private static byte[] httpGet(String url) {
@@ -324,17 +351,22 @@ public class LiveProxy {
                 // 播放器全程只读本地内存、零上游请求，不与录制抢带宽。
                 // 之前直接转发上游原始列表，最新分片往往还没抓完，播放器被迫自己去上游下载（实测反而慢 3.5s）。
                 java.util.ArrayList<String> window = new java.util.ArrayList<>();
-                long seq;
-                synchronized (LiveProxy.class) {
-                    int n = fetched.size();
-                    seq = totalFetched;
-                    if (n > 0) {
-                        int win = Math.min(6, n);   // 滑动窗口 6 片 ≈ 12s，全在缓存内
-                        int skip = n - win;
-                        int i = 0;
-                        for (String u : fetched) { if (i++ >= skip) window.add(u); }
-                        seq = totalFetched - win;
+                long seq = 0;
+                // 录制刚启动缓存还是空时，短暂等待首个分片落地（最多 4 秒），避免播放器拿到空列表报错
+                for (int i = 0; i < 9; i++) {
+                    synchronized (LiveProxy.class) {
+                        int n = fetched.size();
+                        window.clear();
+                        if (n > 0) {
+                            int win = Math.min(6, n);   // 滑动窗口 6 片 ≈ 12s，全在缓存内
+                            int skip = n - win;
+                            int k = 0;
+                            for (String u : fetched) { if (k++ >= skip) window.add(u); }
+                            seq = totalFetched - win;
+                        }
                     }
+                    if (!window.isEmpty()) break;
+                    try { Thread.sleep(500); } catch (Exception ignored) {}
                 }
                 if (window.isEmpty()) { writeResp(s, "404 Not Found", "text/plain", "no stream".getBytes()); return; }
                 StringBuilder sb = new StringBuilder();
