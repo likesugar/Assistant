@@ -1633,13 +1633,18 @@ public class SniffActivity extends Activity {
         // 同一路流只留一条最高画质：原画(_or4) > 蓝光(_uhd) > 高清(_hd)
         boolean isBiliLive = title != null && title.startsWith("B站直播");
         final int rank = isBiliLive ? biliSeq : qualRank(url);
+        // 抖音去重：CDN 主机/签名参数每次刷新都变，按流文件名(stream-<房间id>[_画质].m3u8)归一键；
+        // 同一房间反复嗅探只更新原行地址，不再新增重复卡片(图1问题)
+        String dyKey = (!isBiliLive && url != null && url.contains("douyincdn")) ? Or4Helper.streamKey(url) : null;
+        if (dyKey != null) dyKey = dyKey.replaceAll("_(or4|uhd|hd|sd|ld|ocs)(?=\\.)", "");
         final String bk = isBiliLive ? url.substring(0, url.indexOf('?') > 0 ? url.indexOf('?') : url.length())
-                                     : baseKey(url);
+                                     : (dyKey != null ? "dy#" + dyKey : baseKey(url));
         if (recByBase.containsKey(bk)) {
             Object[] prev = recByBase.get(bk);
             int pr = (Integer) prev[0];
-            if (rank < pr || (rank == pr && !isBiliLive)) { dumpFc2Debug("ADD SKIP dup bk=" + bk); return; }  // 已有更高或同等画质，丢弃
+            if (rank < pr || (rank == pr && !isBiliLive && dyKey == null)) { dumpFc2Debug("ADD SKIP dup bk=" + bk); return; }  // 已有更高或同等画质，丢弃
             // B站直播：新地址(带新有效期)原地替换旧地址，记录永不过期
+            // 抖音同画质新地址(签名刷新)也原地替换，保持地址最新可播
             prev[0] = rank; prev[1] = url;
             if (isBiliLive) {
                 ((TextView) prev[2]).setText(title);

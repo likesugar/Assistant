@@ -28,6 +28,7 @@ public class RecManager {
         volatile boolean finishNow = false;
         volatile String state = null;   // null=暂停录制 / 转换MP4中 / 转换失败
         volatile boolean savedToHistory = false;  // 已写入历史记录（下载页去重用）
+        volatile boolean feederRun = false;       // 分片直喂线程存活标记（防重复启动）
         int notifId;
         volatile long secs = 0;
         volatile long startTs = 0;
@@ -430,6 +431,8 @@ public class RecManager {
             acquireWake();
             startBgPlayer(job);
             startBgSession(job);
+            LiveProxy.beginCacheFeed(job.url);  // 续录重新登记缓存(暂停时已释放)
+            startSegFeeder(job);
             startWatchdog(job);  // 续录重启看门狗，大小才会刷新
             return;
         }
@@ -449,6 +452,7 @@ public class RecManager {
         RecJob live = recJobs.get(jid);
         if (live != null && "合并视频".equals(live.state)) return;  // 合并中: 防 apply/看门狗重复触发
         if (live != null && live.file != null && live.file.isDirectory()) {
+            live.feederRun = false;            // 直喂线程把最后一片喂完后退出
             stopBgSession(live);
             stopBgPlayer(live);
             live.active = false;
@@ -559,8 +563,17 @@ public class RecManager {
             try { SniffActivity.registerLanLink(url, (url != null && url.contains("douyin") ? "抖音·原画" : "直播") + " " + job.name.replace(".ts", "")); } catch (Throwable ignored) {}
             job.startTs = System.currentTimeMillis();
             String title2 = job.name.endsWith(".ts") ? job.name.substring(0, job.name.length() - 3) : job.name;
-            final java.io.File dir = new java.io.File(sCtx.getExternalFilesDir(null), "录制合并/" + title);
+            final java.io.File dir = new java.io.File(sCtx.getExternalFilesDir(null), "录制合并/" + title2);
             dir.mkdirs();
+            // 同名目录复用时清掉上次残留的中间文件：否则新录制的大小从一开始就带着旧分片(如50MB)，
+            // 结束合并还会把旧分片并进新视频。只删分片/中间产物，上次合并出的 .mp4 成片保留
+            try {
+                java.io.File[] olds = dir.listFiles();
+                if (olds != null) for (java.io.File f : olds) {
+                    String n = f.getName();
+                    if (n.startsWith("seg") || n.equals("full.ts") || n.equals("out.mp4") || n.equals("list.txt")) f.delete();
+                }
+            } catch (Throwable ignored) {}
             job.file = dir;
             recJobs.put(job.id, job);
             // 全部后台化: 抖音兜底探测含网络+sleep, 主线程跑会冻死UI(2026-10-07 实测卡住根因)
@@ -601,6 +614,9 @@ public class RecManager {
             }
             startBgPlayer(job);
             startBgSession(job);
+            // 通知本地代理：后台 ffmpeg 录制同样喂数据，播放同一路流时直读分片缓存（秒进）
+            LiveProxy.beginCacheFeed(job.url);
+            startSegFeeder(job);
             startWatchdog(job);
             } catch (Throwable e) {
                 try {
@@ -703,7 +719,7 @@ public class RecManager {
             "-headers", "Referer: https://live.douyin.com/\r\n",
             "-i", job.url, "-c", "copy",
             "-flush_packets", "1",   // 每包立即写盘: 文件大小实时增长, 而不是攒够缓冲才落
-            "-f", "segment", "-segment_time", "30", "-reset_timestamps", "1",
+            "-f", "segment", "-segment_time", "2", "-reset_timestamps", "1",   // 2s分片: 播放缓存2-4s内可读到首片(秒进)
             "-segment_start_number", String.valueOf(segN),
             new java.io.File(job.file, "seg%03d.ts").getAbsolutePath() };
         job.bgSession = com.arthenica.ffmpegkit.FFmpegKit.executeWithArgumentsAsync(args,
@@ -759,6 +775,62 @@ public class RecManager {
             null);  // 录制阶段大小走目录求和(看门狗1s采样): ffmpeg getSize 对分段封装返回0, 不可靠
     }
 
+    static byte[] readFileBytes(java.io.File f) {
+        try {
+            java.io.FileInputStream in = new java.io.FileInputStream(f);
+            java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+            byte[] b = new byte[65536]; int n;
+            while ((n = in.read(b)) > 0) bo.write(b, 0, n);
+            in.close();
+            return bo.toByteArray();
+        } catch (Throwable e) { return null; }
+    }
+
+    /** 后台录制分片直喂：ffmpeg 写出的 seg*.ts 逐个搬进播放内存缓存（dyseg:// 键）。
+     *  录制开始的 2-4 秒内播放即可零网络读分片（秒进），播放与录制共用同一次拉流不抢带宽。
+     *  完整判定：下一序号分片已出现 ⇒ 当前分片已写完；停止/暂停时最后一片也照喂（文件写到哪算哪）。 */
+    static void startSegFeeder(final RecJob job) {
+        if (job.feederRun) return;
+        job.feederRun = true;
+        final String base = "dyseg://" + job.id + "/";
+        new Thread(new Runnable() { public void run() {
+            int next = 0;
+            try {
+                while (true) {
+                    boolean progressed = false;
+                    try {
+                        java.io.File cur = segFile(job.file, next);
+                        java.io.File nxt = segFile(job.file, next + 1);
+                        // 已喂过的键(续录重启)直接跳过，不重复读文件
+                        while (cur.exists() && LiveProxy.segFed(base + next)) {
+                            next++; cur = nxt; nxt = segFile(job.file, next + 1); progressed = true;
+                        }
+                        while (nxt != null && nxt.exists() && nxt.length() > 0 && job.feederRun && job.active) {
+                            if (cur.exists() && cur.length() > 0) {
+                                byte[] body = readFileBytes(cur);
+                                if (body != null && body.length > 0) LiveProxy.noteSegment(base + next, body);
+                            }
+                            next++; cur = nxt; nxt = segFile(job.file, next + 1); progressed = true;
+                        }
+                        // 录制已停：把最后一片(可能不完整)也喂进去后退出
+                        if ((!job.feederRun || !job.active) && cur != null && cur.exists() && cur.length() > 0
+                                && !LiveProxy.segFed(base + next)) {
+                            byte[] body = readFileBytes(cur);
+                            if (body != null && body.length > 0) LiveProxy.noteSegment(base + next, body);
+                            next++;
+                        }
+                    } catch (Throwable ignored) {}
+                    if (!job.active || !job.feederRun) break;
+                    if (!progressed) { try { Thread.sleep(400); } catch (Throwable e) { break; } }
+                }
+            } finally { job.feederRun = false; }
+        } }).start();
+    }
+
+    static java.io.File segFile(java.io.File dir, int idx) {
+        return new java.io.File(dir, String.format(java.util.Locale.US, "seg%03d.ts", idx));
+    }
+
     static void startBgPlayer(final RecJob job) {
         // 旧地址过期(403)时热替换为同一路直播的最新地址
         try { String f = Or4Helper.freshFor(job.url); if (f != null) job.url = f; } catch (Throwable ignored) {}
@@ -790,6 +862,7 @@ public class RecManager {
     }
 
     static void pauseBg(RecJob job, String why) {
+        job.feederRun = false;                 // 直喂线程把最后一片喂完后退出
         stopBgSession(job);
         stopBgPlayer(job);
         job.active = false;
@@ -801,6 +874,7 @@ public class RecManager {
         job.state = why;
         recJobs.remove(job.id);
         stoppedJobs.put(job.id, job);
+        LiveProxy.endCacheFeed();              // 暂停期间不再让播放页路由到本任务的缓存
         releaseWakeIfIdle();
     }
 
@@ -831,6 +905,7 @@ public class RecManager {
         new Thread(new Runnable() { public void run() {
             java.io.File full = null;
             try {
+                LiveProxy.endCacheFeed();      // 合并开始即释放播放缓存(成片落盘前不再提供播放路由)
                 // 1) 等 ffmpeg 完全停止（结束时的 cancel 是异步的），避免读到一个还在写的半截分片
                 waitForSessionStop(job);
                 // 2) 数值排序收集全部分片（暂停/重连产生的多段 seg 一并收入）
@@ -977,6 +1052,8 @@ public class RecManager {
         RecJob job = (j != null) ? j : stoppedJobs.get(jid);
         if (job == null) return;
         stoppedJobs.remove(job.id);
+        job.feederRun = false;
+        LiveProxy.endCacheFeed();
         try { if (job.storeUri != null) sCtx.getContentResolver().delete(job.storeUri, null, null); } catch (Throwable ignored) {}
     }
 

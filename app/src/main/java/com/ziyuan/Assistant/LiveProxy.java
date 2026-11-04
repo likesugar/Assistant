@@ -45,6 +45,10 @@ public class LiveProxy {
     public static int cacheSegmentCount() {
         synchronized (segCache) { return segCache.size(); }
     }
+    /** 该键是否已被喂过（分片直喂线程续录重启时跳过已喂分片用） */
+    public static boolean segFed(String key) {
+        synchronized (LiveProxy.class) { return fetched.contains(key); }
+    }
     private static volatile boolean running = false;
     private static volatile boolean refreshing = false;
     /** 真实录制器(RecManager)正在喂数据时为 true——缓存数据源与刷新器解耦 */
@@ -376,8 +380,9 @@ public class LiveProxy {
                 // 之前直接转发上游原始列表，最新分片往往还没抓完，播放器被迫自己去上游下载（实测反而慢 3.5s）。
                 java.util.ArrayList<String> window = new java.util.ArrayList<>();
                 long seq = 0;
-                // 录制刚启动/录制器还在等原画时缓存可能是空的：等待首片落地（最多 8 秒），避免播放器拿到空列表报错
-                for (int i = 0; i < 16; i++) {
+                // 录制刚启动/录制器还在等原画时缓存可能是空的：等首片落地（最多 3 秒），
+                // 超时即回退转发上游列表，不给播放器长等待
+                for (int i = 0; i < 6; i++) {
                     synchronized (LiveProxy.class) {
                         int n = fetched.size();
                         window.clear();
@@ -439,6 +444,10 @@ public class LiveProxy {
                 // 1) 命中录制刷新器已抓取的分片缓存：直接回内存数据，播放器零等待
                 byte[] cached = getSeg(raw);
                 if (cached != null) { writeResp(s, "200 OK", "video/mp2t", cached); return; }
+                if (raw.startsWith("dyseg://")) {   // 录制分片键已被淘汰：不再回源(无对应网络地址)
+                    writeResp(s, "404 Not Found", "text/plain", "seg evicted".getBytes());
+                    return;
+                }
                 // 2) 未命中：流式转发（边下边发），播放器不必等整个分片下载完
                 OutputStream os = s.getOutputStream();
                 try {
