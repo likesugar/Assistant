@@ -172,6 +172,7 @@ public class NativePlayerActivity extends Activity {
                 String recKey = Or4Helper.streamKey(LiveProxy.mediaUrl);
                 if (curKey != null && curKey.equals(recKey)) {
                     url = "http://127.0.0.1:" + LiveProxy.PORT + "/playlist.m3u8";
+                    Toast.makeText(this, "已启用录制缓存加速", Toast.LENGTH_SHORT).show();
                 }
             }
         } catch (Throwable ignored) {}
