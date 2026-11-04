@@ -217,6 +217,19 @@ public class RecManager {
     /** m3u8：ffmpeg-kit 直接拉 HLS 录成 MP4（-c copy 边下边封装） */
 
     /** m3u8：纯 Java 解析播放清单，循环抓 .ts 分片合并（小工具 KB 同款请求头，容错重试） */
+    /** 录制启动预热: HEAD 提前完成 DNS/TLS 握手, 后续清单/分片请求复用连接; 失败立即继续不拖累 */
+    static void prewarm(String url) {
+        try {
+            java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
+            c.setRequestMethod("HEAD");
+            c.setConnectTimeout(2000); c.setReadTimeout(2000);
+            c.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
+            c.setRequestProperty("Referer", "https://live.douyin.com/");
+            c.getResponseCode();
+            c.disconnect();
+        } catch (Throwable ignored) {}
+    }
+
     static void startHlsRec(final String url) {
         try {
             final RecJob job = new RecJob();
@@ -234,6 +247,8 @@ public class RecManager {
                 public void run() {
                     java.io.FileOutputStream fo = null;
                     try {
+                        prewarm(job.url);            // 预热: 省 DNS/TLS 约1s
+                        job.state = "连接直播…";      // 首个分片落地前, 让大小0有明确原因可读
                         // 通知本地代理：录制开始喂数据，播放同一路流时可走内存缓存秒进
                         LiveProxy.beginCacheFeed(job.url);
                         fo = new java.io.FileOutputStream(job.file, true);
@@ -311,6 +326,7 @@ public class RecManager {
                                         fo.flush();
                                         in.close();
                                         failStreak = 0;
+                                        if ("连接直播…".equals(job.state)) job.state = null;   // 首片落地, 大小/缩略图即出现
                                         // 完整分片进内存缓存：录制中播放同一路流直接命中（秒进）
                                         LiveProxy.noteSegment(seg, cab.toByteArray());
                                     } else failStreak++;
@@ -579,7 +595,9 @@ public class RecManager {
             try {
             saveLiveRec(job);
             acquireWake();
-            // 抖音: 只录原画——兜底变体(_sd/_hd/_uhd)时, 构造_or4原画地址每2秒探测直到可用
+            prewarm(job.url);                    // 预热: 省 DNS/TLS 约1s
+            job.state = "连接直播…";              // 首个分片落地前(看门狗在字节>0时清除), 让大小0有明确原因
+            // 抖音: 只录原画——兜底变体(_sd/_hd/_uhd)时, 构造_or4原画地址每1秒探测直到可用
             if (job.url != null && job.url.contains("douyin")) {
                 boolean isLow = job.url.matches(".*_(sd|ld|hd|uhd|ocs)(/|\\.).*");
                 String or4 = isLow ? job.url.replaceFirst("_(sd|ld|hd|uhd)/", "_or4/") : job.url;
@@ -588,7 +606,7 @@ public class RecManager {
                     try {
                         java.net.HttpURLConnection pc = (java.net.HttpURLConnection) new java.net.URL(or4).openConnection();
                         pc.setRequestMethod("HEAD");
-                        pc.setConnectTimeout(8000); pc.setReadTimeout(8000);
+                        pc.setConnectTimeout(3000); pc.setReadTimeout(3000);
                         pc.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
                         pc.setRequestProperty("Referer", "https://live.douyin.com/");
                         int rc = pc.getResponseCode();
@@ -598,14 +616,14 @@ public class RecManager {
                             job.state = null;
                             break;
                         }
-                        job.state = "兜底画质, 等待原画(2s刷新)…";
+                        job.state = "兜底画质, 等待原画(1s刷新)…";
                         if (job.finishNow) break;
-                        Thread.sleep(2000);
+                        Thread.sleep(1000);
                         waits++;
-                        if (waits > 900) break;
+                        if (waits > 1800) break;
                     } catch (Throwable e2) {
                         if (!job.active || job.finishNow) break;
-                        try { Thread.sleep(2000); } catch (Throwable ignored) {}
+                        try { Thread.sleep(1000); } catch (Throwable ignored) {}
                         continue;
                     }
                 }
@@ -635,7 +653,10 @@ public class RecManager {
                 if (!job.active) break;
                 // 录制大小: 目录求和(分段 .ts 文件). 分段封装下 ffmpeg getSize 恒为0/逐段重置, 目录求和是稳定真实的实时大小
                 long d = dirTotal(job);
-                if (d >= 0) job.bytes = d;
+                if (d >= 0) {
+                    job.bytes = d;
+                    if (d > 0 && "连接直播…".equals(job.state)) job.state = null;   // 首片落地, 进入正常录制显示
+                }
                 long now = System.currentTimeMillis();
                 // 速率: 固定 ~1s 窗口算, 避开 getSize 0.5s 上报周期错位导致的翻倍, dv>0 才记
                 if (job.statTs == 0) { job.statTs = now; job.rateBytes = job.bytes; }
@@ -712,6 +733,11 @@ public class RecManager {
         String[] args = { "-y", "-stats_period", "0.5",   // 显式指定统计周期, 保证大小约每 0.5s 上报一次
             "-user_agent", BG_UA,
             "-headers", "Referer: https://live.douyin.com/\r\n",
+            // 输入侧探测提速(默认 probesize 5MB / analyzeduration 5s, 开流要等近10s才有首字节):
+            // 缩到 1MB/2s + nobuffer, 开流快数秒, 首字节更早落盘 → 大小从启动起就能每秒看到增长
+            "-fflags", "nobuffer",
+            "-probesize", "1000000",
+            "-analyzeduration", "2000000",
             "-i", job.url, "-c", "copy",
             "-flush_packets", "1",   // 每包立即写盘: 文件大小实时增长, 而不是攒够缓冲才落
             "-f", "segment", "-segment_time", "30", "-reset_timestamps", "1",
