@@ -303,7 +303,12 @@ public class RecordActivity extends Activity {
             View cur = list.getChildAt(i);
             View v = byKey.get(key);
             if (v == null) { v = makeRow(key, meta.get(key)); byKey.put(key, v); }
-            if (v != cur) list.addView(v, i);   // 挪到正确位置(自动从原位置移除)
+            if (v != cur) {
+                // Android 的 addView 不接受已有 parent 的子视图: 同列挪位/新建追加后
+                // 插入前先从原位置摘下, 再插到目标位置
+                if (v.getParent() != null) list.removeView(v);
+                list.addView(v, i);
+            }
             Runnable u = rowUpdaters.get(key);
             if (u != null) u.run();
         }
