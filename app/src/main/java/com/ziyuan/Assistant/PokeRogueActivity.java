@@ -38,9 +38,18 @@ public class PokeRogueActivity extends Activity {
      *     自动拉开不重叠。必须沿用 zoom; 早期用 transform:scale 只视觉放大不改占位, 导致按钮互相压叠。
      *  2) 摇杆 .tc-stick 不吃 zoom(非 .tc-btn), 用 width/margin 的 calc 乘法以中心等比放大。
      *  3) 中下道具格 .hud-bl(touch 模式底部居中)归 --hs(hudScale) 管, 把 --pbk 乘进它的 transform。
-     *  !important 压过游戏外链/内联样式; 右上角 .tc-sm 小按钮不在放大列(保持游戏原生 zoom:1)。 */
+     *  !important 压过游戏外链/内联样式; 右上角 .tc-sm 小按钮不在放大列(保持游戏原生 zoom:1)。
+     *
+     *  地图放大: 右上小地图 .minimap 是 canvas, 触摸模式基准 140px*--mm。乘 1.25 放大,
+     *  保留游戏内「Tamaño del minimapa」(mapScale) 设置可继续调。
+     *
+     *  紫色香炉 .tc-inc 移位: 原锚右下 right:50/bottom:232, 与一堆动作键挤在一起。按用户要求
+     *  横屏移到中下道具栏「黄色挂锁格」右边的草地空白(锁格中心约屏幕 50%+120px, 视觉放大后右缘
+     *  约 50%+156px, 故 left 取 50%+175px)。此处不能用 zoom —— zoom 会把 left/bottom 一起放大导致
+     *  坐标漂移; 改用独立 scale 属性(只缩放自身、不改定位基准, 且与 game 的 transform:.88 按下态
+     *  叠加而非冲突)。竖屏不应用(保持游戏原生右下位置)。不碰 display: 游戏每秒写内联显隐照常生效。 */
     private static final String BTN_CSS =
-        ".tc-jump,.tc-dash,.tc-lock,.tc-inc,.tc-bag,.tc-pot,.tc-ultb,.tc-act"
+        ".tc-jump,.tc-dash,.tc-lock,.tc-bag,.tc-pot,.tc-ultb,.tc-act"
       + "{zoom:calc(var(--tcs,1)*var(--pbk,1))!important}"
       + ".tc-stick{width:calc(128px*var(--tcs,1)*var(--pbk,1))!important;"
       + "height:calc(128px*var(--tcs,1)*var(--pbk,1))!important;"
@@ -52,7 +61,20 @@ public class PokeRogueActivity extends Activity {
       + "scale:none!important;transform-origin:bottom!important}"
       // 游戏每帧 update() 会写 this.fs.style.display, WebView 不支持 HTML5 Fullscreen 时
       // 该「进入全屏」入口常驻(官方 Capacitor 壳全屏成功后自动隐藏), 用 !important 压过内联样式
-      + ".tc-fs{display:none!important}";
+      + ".tc-fs{display:none!important}"
+      // 以下两条只在横屏生效, 竖屏完全保持游戏原生(与既有「横屏才对齐」一致)
+      + "@media (orientation:landscape){"
+      // 右上小地图放大 25%, 乘在 --mm 上保留游戏内设置
+      + "html.touch .hud-tr .minimap{width:calc(140px*var(--mm,1)*1.25)!important;"
+      + "height:calc(140px*var(--mm,1)*1.25)!important}"
+      // 紫色香炉移到黄色挂锁格右边的草地空白。
+      // 锁格位置 = 视口中心 + 120px(slots 半宽) * --hs * --pbk; 把香炉绑到同一表达式,
+      // 游戏内改 UI 缩放时两者同步, 不会漂移。独立 scale 属性只缩放自身、不改 left/bottom 定位基准,
+      // 也不会像 zoom 那样把定位坐标一起放大; 且与游戏 transform:.88 按下态叠加而非冲突。
+      + ".tc-inc{zoom:1!important;"
+      + "scale:calc(var(--hs,1)*var(--pbk,1))!important;"
+      + "right:auto!important;left:calc(50% + 120px*var(--hs,1)*var(--pbk,1) + 28px)!important;"
+      + "bottom:calc(14px*var(--hs,1)*var(--pbk,1) + var(--sb))!important;top:auto!important}}";
 
     private WebView webHome, webGuide;
     private FrameLayout capsule;
