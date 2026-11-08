@@ -1,6 +1,8 @@
 package com.ziyuan.Assistant;
 
+import android.animation.ValueAnimator;
 import android.app.Activity;
+import android.content.res.Configuration;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
@@ -21,6 +23,7 @@ import android.widget.TextView;
  * 宝可梦肉鸽: 独立双页容器。
  * 「首页」= https://pokebonk.com/ (游戏)  「攻略」= https://pokebonk-moves.app.workbuddy.host/
  * 两个独立 WebView 叠放保活, 底部胶囊两页签只切可见性 —— 切走再切回不重载, 游戏进度/攻略滚动位置保留。
+ * 胶囊尺寸/样式与首页 CapsuleBottomBar 对齐(去阴影); 横屏隐藏胶囊。
  * 与首页其它卡片完全独立, 不复用娱乐/网页转应用等逻辑。
  */
 public class PokeRogueActivity extends Activity {
@@ -29,7 +32,10 @@ public class PokeRogueActivity extends Activity {
     private static final String URL_GUIDE = "https://pokebonk-moves.app.workbuddy.host/";
 
     private WebView webHome, webGuide;
+    private FrameLayout capsule;
+    private View pill;
     private TextView tabHome, tabGuide;
+    private int itemW;
     private boolean guideLoaded = false;
     private int current = 0;              // 0=首页 1=攻略
     private boolean dark = true;
@@ -53,18 +59,35 @@ public class PokeRogueActivity extends Activity {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         webGuide.setVisibility(View.GONE);
 
-        // 底部悬浮胶囊: 首页 / 攻略
-        FrameLayout capsule = new FrameLayout(this);
+        // 底部悬浮胶囊: 首页 / 攻略 (尺寸/样式对齐首页 CapsuleBottomBar, 无阴影)
+        int screenW = getResources().getDisplayMetrics().widthPixels;
+        itemW = Math.min(dp(78), (screenW - dp(20)) / 6);   // 与首页单格同宽
+        int pillBg = dark ? 0xFF3D6DFF : 0xFF1677FF;
+        int pillStroke = dark ? 0xFF5A7BD8 : 0xFF0B5BD6;
+
+        capsule = new FrameLayout(this);
         GradientDrawable cbg = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
                 new int[]{ dark ? 0x1FFFFFFF : 0x73FFFFFF, dark ? 0x0AFFFFFF : 0x59EFF5FF });
         cbg.setCornerRadius(dp(22));
         cbg.setStroke(dp(1), dark ? 0x40FFFFFF : 0x66FFFFFF);
-        capsule.setBackground(cbg);
-        capsule.setElevation(dp(18));
+        capsule.setBackground(cbg);   // 不设 elevation / outline shadow: 无阴影
+
+        // 滑动选中块(与首页一致: 高36dp, 宽 itemW-10dp, 圆角16)
+        pill = new View(this);
+        GradientDrawable pg = new GradientDrawable();
+        pg.setCornerRadius(dp(16));
+        pg.setColor(pillBg);
+        pg.setStroke(dp(1), pillStroke);
+        pill.setBackground(pg);
+        FrameLayout.LayoutParams plp = new FrameLayout.LayoutParams(
+                itemW - dp(10), dp(36), Gravity.CENTER_VERTICAL | Gravity.START);
+        plp.leftMargin = dp(5);
+        capsule.addView(pill, plp);
 
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setPadding(dp(6), dp(6), dp(6), dp(6));
+        capsule.addView(row, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         tabHome = makeTab("首页");
         tabGuide = makeTab("攻略");
         tabHome.setOnClickListener(new View.OnClickListener() {
@@ -73,19 +96,19 @@ public class PokeRogueActivity extends Activity {
         tabGuide.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { selectTab(1); }
         });
-        row.addView(tabHome);
-        row.addView(tabGuide);
-        capsule.addView(row);
+        row.addView(tabHome, new LinearLayout.LayoutParams(itemW, dp(42)));
+        row.addView(tabGuide, new LinearLayout.LayoutParams(itemW, dp(42)));
 
         FrameLayout.LayoutParams clp = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
                 Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-        clp.bottomMargin = dp(16);
+        clp.bottomMargin = dp(12);   // 与首页一致
         root.addView(capsule, clp);
 
         setContentView(root);
         webHome.loadUrl(URL_HOME);
         selectTab(0);
+        applyOrientation();
     }
 
     private WebView makeWeb() {
@@ -116,10 +139,8 @@ public class PokeRogueActivity extends Activity {
     private TextView makeTab(String text) {
         TextView t = new TextView(this);
         t.setText(text);
-        t.setTextSize(15);
-        t.setTypeface(Typeface.DEFAULT_BOLD);
+        t.setTextSize(12.5f);
         t.setGravity(Gravity.CENTER);
-        t.setPadding(dp(24), dp(9), dp(24), dp(9));
         return t;
     }
 
@@ -128,21 +149,35 @@ public class PokeRogueActivity extends Activity {
         webHome.setVisibility(t == 0 ? View.VISIBLE : View.GONE);
         webGuide.setVisibility(t == 1 ? View.VISIBLE : View.GONE);
         if (t == 1 && !guideLoaded) { guideLoaded = true; webGuide.loadUrl(URL_GUIDE); } // 攻略懒加载一次
-        styleTab(tabHome, t == 0);
-        styleTab(tabGuide, t == 1);
+        int offText = dark ? 0xFF8A94A6 : 0xFF7C8694;
+        styleTab(tabHome, t == 0, offText);
+        styleTab(tabGuide, t == 1, offText);
+        // 滑动 pill 到对应格
+        float to = t * itemW;
+        ValueAnimator va = ValueAnimator.ofFloat(pill.getTranslationX(), to);
+        va.setDuration(240);
+        va.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            public void onAnimationUpdate(ValueAnimator a) { pill.setTranslationX((Float) a.getAnimatedValue()); }
+        });
+        va.start();
     }
 
-    private void styleTab(TextView t, boolean on) {
-        if (on) {
-            GradientDrawable g = new GradientDrawable();
-            g.setCornerRadius(dp(16));
-            g.setColor(dark ? 0xFF3D6DFF : 0xFF1677FF);
-            t.setBackground(g);
-            t.setTextColor(0xFFFFFFFF);
-        } else {
-            t.setBackground(null);
-            t.setTextColor(dark ? 0xFF8A94A6 : 0xFF7C8694);
-        }
+    private void styleTab(TextView t, boolean on, int offText) {
+        t.setTextColor(on ? 0xFFFFFFFF : offText);
+        t.setTypeface(on ? Typeface.DEFAULT_BOLD : Typeface.DEFAULT);
+    }
+
+    /** 横屏隐藏胶囊, 竖屏显示; 配合 Manifest 的 configChanges, 旋转不重建 WebView */
+    private void applyOrientation() {
+        if (capsule == null) return;
+        boolean landscape = getResources().getConfiguration().orientation
+                == Configuration.ORIENTATION_LANDSCAPE;
+        capsule.setVisibility(landscape ? View.GONE : View.VISIBLE);
+    }
+
+    @Override public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        applyOrientation();
     }
 
     @Override public boolean onKeyDown(int keyCode, KeyEvent e) {
