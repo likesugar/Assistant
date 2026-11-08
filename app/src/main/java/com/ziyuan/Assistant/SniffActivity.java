@@ -893,7 +893,8 @@ public class SniffActivity extends Activity {
     private final java.util.Set<String> reqTsLogged = java.util.Collections.synchronizedSet(new java.util.HashSet<String>());
 
     // 会话型多档位直播流: /stream/<room>/<mode>/playlist?<会话签名>
-    // 服务器会把请求的档位降一级下发(菜单选 2M 实际拿到 /42/), 故反推提升一级: 请求 62 → 落到 52(2M)。
+    // 服务器按会话下发降一级档位; 隐藏档 90/92 实测持续可用(90=半秒切片低延迟, 92=1秒切片)。
+    // 直接把这两个真实存在的档位补建为记录卡, 不再臆造 62(实测 404)。
     // 站点无关: 只认 URL 形态, 不含任何域名硬编码; 不动 UA / 网页 / 播放器链路。
     private static final java.util.regex.Pattern HQ_STREAM =
         java.util.regex.Pattern.compile("(/stream/\\d+/)(\\d+)(/playlist\\?[^\\s]+)");
@@ -901,11 +902,10 @@ public class SniffActivity extends Activity {
         java.util.Collections.synchronizedSet(new java.util.HashSet<String>());
     private final java.util.Map<String, Integer> hqTries =
         java.util.Collections.synchronizedMap(new java.util.HashMap<String, Integer>());
-    private static final int[] HQ_MODES = {62};  // 反推补偿档: 服务端降级后落到 52(2M); 非官方档位, 由同流/带宽检测兜底
+    private static final int[] HQ_MODES = {92, 90};  // 实测真实隐藏档: 92(1s切片)优先, 90(0.5s低延迟)次之; 由同流/带宽检测兜底
 
-    /** 反推画质表(真机确认 + 服务端降一级补偿): 22=400K 32=1.2M 42/52/62=2M(最高档钳位)。
-     *  服务器下发的 URL 档位号比菜单选的画质低一级, 故标注整体提升一级反推回来;
-     *  12 及以下未实测, 不臆造标注; 未知道位返回 null 不标注。 */
+    /** 反推画质表(真机确认 + 服务端降一级补偿): 22=400K 32=1.2M 42/52=2M(最高档钳位)。
+     *  隐藏档 90/92 由 maybeAddHqCard 直接标档位号, 不在此臆造画质名。 */
     static String streamQualityName(String url) {
         if (url == null) return null;
         String s = LiveProxy.unwrap(url);   // 解壳(兼容任意端口/双重外壳)
@@ -913,7 +913,7 @@ public class SniffActivity extends Activity {
             .compile("(/stream/\\d+/)(\\d+)(/playlist\\?)").matcher(s);
         if (!m.find()) return null;
         String mode = m.group(2);
-        if ("62".equals(mode) || "52".equals(mode) || "42".equals(mode)) return "2M";
+        if ("52".equals(mode) || "42".equals(mode)) return "2M";
         if ("32".equals(mode)) return "1.2M";
         if ("22".equals(mode)) return "400K";
         return null;
@@ -926,7 +926,7 @@ public class SniffActivity extends Activity {
             if (!m.find()) return;
             final int curMode;
             try { curMode = Integer.parseInt(m.group(2)); } catch (Throwable e2) { return; }
-            if (curMode >= 62) return;                        // 已到反推补偿档上限, 无需补卡
+            if (curMode >= 90) return;                        // 已是隐藏档, 无需补卡
             final String key = m.group(1);                     // /stream/<room>/ : 一个房间只补一次(签名会轮换)
             if (hqDone.contains(key)) return;
             synchronized (hqTries) {
@@ -959,8 +959,7 @@ public class SniffActivity extends Activity {
                         continue;                              // 假档位: 同一份流, 不建卡
                     }
                     pick = cand;
-                    String candQn = streamQualityName(cand);
-                    label = "FC2·" + (candQn != null ? candQn : "2M");
+                    label = "FC2·" + hq + "档";   // 只用真实档位号, 不臆造画质名
                     dumpFc2Debug("HQ REAL: /" + hq + "/ bw=" + bw + " base=" + baseBw);
                     break;
                 }
