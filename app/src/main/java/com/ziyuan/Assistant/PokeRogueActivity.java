@@ -46,7 +46,10 @@ public class PokeRogueActivity extends Activity {
       + "margin:calc(-29px*var(--tcs,1)*var(--pbk,1))!important}"
       + ".tc-jump,.tc-dash,.tc-lock,.tc-inc,.tc-sm,.tc-bag,.tc-pot,.tc-ultb,.tc-aim,.tc-act"
       + "{transform:scale(var(--pbk,1))!important}"
-      + ".tc-btn.on{transform:scale(calc(var(--pbk,1)*.88)) translateY(2px)!important}";
+      + ".tc-btn.on{transform:scale(calc(var(--pbk,1)*.88)) translateY(2px)!important}"
+      // 游戏每帧 update() 会写 this.fs.style.display, WebView 不支持 HTML5 Fullscreen 时
+      // 该「进入全屏」入口常驻(官方 Capacitor 壳全屏成功后自动隐藏), 用 !important 压过内联样式
+      + ".tc-fs{display:none!important}";
 
     private WebView webHome, webGuide;
     private FrameLayout capsule;
