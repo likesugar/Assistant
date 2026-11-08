@@ -44,11 +44,12 @@ public class PokeRogueActivity extends Activity {
      *  保留游戏内「Tamaño del minimapa」(mapScale) 设置可继续调。高度增量用等量负 margin-bottom
      *  抵消, 避免把下方 .counters 推去压住大圆动作键。
      *
-     *  右上两按钮分开(VC=94): 「自动」.tc-aim 和「双精灵球」.tc-pause(实为暂停键, title=Pausa)
-     *  原本同挤在右侧一竖列(right:12px; top:70 / 12)。按用户标注把它们分开到小地图右上、
-     *  右下两处空白: .tc-aim 上移到 top:12px(右上蓝色圈处), .tc-pause 左移到 right:105px、
-     *  下移到 top:235px(小地图 1.5x 后底缘 224px 之下, .counters 计数条 [1102,209] 左侧),
-     *  形成对角, 互不遮挡。竖屏不改动。
+     *  右上按钮与「精灵球 0」计数(VC=95, 按最初图): 撤销 VC=93/94 对「自动」.tc-aim 和「双精灵球」
+     *  .tc-pause(实为暂停键, title=Pausa)的位移, 恢复游戏原生 —— 暂停 top:12 在上、自动 top:70 在下。
+     *  「精灵球 0」计数器 .counters(JS: t.kills, 内含 poke-ball 图标与数字)是 .hud-tr 这个
+     *  flex 竖列的成员, 原位 [1083,209]。用 position:relative 视觉平移到自动按钮正下方 [1145,140]
+     *  (left:+62px / top:-69px), 保留 flex 占位, 下方 .kgoal 不上移、不压 1.5x 地图圆。
+     *  VC=94 里计数器与暂停键本就重叠(counter_pause=true), 一并消除。竖屏不改动。
      *
      *  紫色香炉 .tc-inc 移位: 原锚右下 right:50/bottom:232, 与一堆动作键挤在一起。按用户要求
      *  横屏移到中下道具栏「黄色挂锁格」右边的草地空白(锁格中心约屏幕 50%+120px, 视觉放大后右缘
@@ -77,11 +78,13 @@ public class PokeRogueActivity extends Activity {
       + "html.touch .hud-tr .minimap{width:calc(140px*var(--mm,1)*1.5)!important;"
       + "height:calc(140px*var(--mm,1)*1.5)!important;margin-right:20px!important;"
       + "margin-bottom:calc(-25px*var(--mm,1))!important}"
-      // 按用户标注把右上两按钮分开: 「自动」上移到蓝色圈空白(top:12px),
-      // 「双精灵球」(暂停键)左下移到 right:105px / top:235px(小地图底缘 224 之下、计数条左侧)。
-      // 实测(CSS 1207x453): aim[1145,12,50,62] pause[1052,235,50,50], 圆到矩形最近距 124>105, 全不重叠。
-      + ".tc-aim{top:calc(12px + var(--st))!important}"
-      + ".tc-pause{top:calc(235px + var(--st))!important;right:calc(105px + var(--sr))!important}"
+      // 按最初图恢复右上两按钮原生位置 —— 不注入 .tc-aim / .tc-pause 规则即回到暂停上、自动下。
+      // 只把「精灵球 0」计数器 .counters 移到自动按钮正下方:
+      // 原位 [1083,209,51,28] -> [1145,140,51,28]; 自动 [1145,70,50,62] 底部 132, 留 8px 间隙。
+      // relative 保留 flex 占位: 下方 .kgoal 保持 [983,247] 不上移, 圆到矩形距 128 > 半径 105。
+      // 实测(CSS 1207x453): 全部 overlap=false; 计数器到圆心距 138.6 > 半径 105。
+      + "html.touch .hud-tr .counters{position:relative!important;"
+      + "left:62px!important;top:calc(-69px + var(--st))!important}"
       // 紫色香炉移到黄色挂锁格右边的草地空白。
       // 锁格位置 = 视口中心 + 120px(slots 半宽) * --hs * --pbk; 把香炉绑到同一表达式,
       // 游戏内改 UI 缩放时两者同步, 不会漂移。独立 scale 属性只缩放自身、不改 left/bottom 定位基准,
