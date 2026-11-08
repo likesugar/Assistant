@@ -283,7 +283,7 @@ public class SniffActivity extends Activity {
                                 new java.io.ByteArrayInputStream(new byte[0]));
                 } catch (Throwable ignored) {}
                 try { maybeRecordGeneric(request.getUrl().toString(), request.getMethod()); } catch (Throwable ignored) {}
-                try { maybeAddHqCard(request.getUrl().toString()); } catch (Throwable ignored) {}  // 会话型多档位流: 复用签名补建最高画质(3M)卡
+                try { maybeAddHqCard(request.getUrl().toString()); } catch (Throwable ignored) {}  // 会话型多档位流: 复用签名补建最高画质(2M)卡
                 try {
                     if (!"GET".equalsIgnoreCase(request.getMethod())) return null;
                     Uri u = request.getUrl();
@@ -893,7 +893,7 @@ public class SniffActivity extends Activity {
     private final java.util.Set<String> reqTsLogged = java.util.Collections.synchronizedSet(new java.util.HashSet<String>());
 
     // 会话型多档位直播流: /stream/<room>/<mode>/playlist?<会话签名>
-    // 同一签名对所有档位有效 → 复用签名把档位抬到最高(3M/原画), 额外建一张高画质卡。
+    // 同一签名对所有档位有效 → 复用签名把档位抬到最高(2M), 额外建一张高画质卡。
     // 站点无关: 只认 URL 形态, 不含任何域名硬编码; 不动 UA / 网页 / 播放器链路。
     private static final java.util.regex.Pattern HQ_STREAM =
         java.util.regex.Pattern.compile("(/stream/\\d+/)(\\d+)(/playlist\\?[^\\s]+)");
@@ -901,10 +901,10 @@ public class SniffActivity extends Activity {
         java.util.Collections.synchronizedSet(new java.util.HashSet<String>());
     private final java.util.Map<String, Integer> hqTries =
         java.util.Collections.synchronizedMap(new java.util.HashMap<String, Integer>());
-    private static final int[] HQ_MODES = {52};  // 官方画质表最高档即 52(3Mbps β); 90/92 并非官方档位, 已移除
+    private static final int[] HQ_MODES = {52};  // 实测最高档 52=2M; 站点无 3M 档, 90/92 并非官方档位, 已移除
 
-    /** 官方画质表(liveView.bundle.js): 12=150K 22=400K 32=1.2M 42=2M 52=3M(β)。
-     *  站点无关, 只认 /stream/<room>/<mode>/playlist? 形态; 未知道位返回 null 不标注。 */
+    /** 实测画质表(真机确认): 32=400K 42=1.2M 52=2M(最高档, 站点无 3M 档)。
+     *  22/12 未实测确认, 不臆造标注; 未知道位返回 null 不标注。 */
     static String streamQualityName(String url) {
         if (url == null) return null;
         String s = LiveProxy.unwrap(url);   // 解壳(兼容任意端口/双重外壳)
@@ -912,11 +912,9 @@ public class SniffActivity extends Activity {
             .compile("(/stream/\\d+/)(\\d+)(/playlist\\?)").matcher(s);
         if (!m.find()) return null;
         String mode = m.group(2);
-        if ("52".equals(mode)) return "3M(β)";
-        if ("42".equals(mode)) return "2M";
-        if ("32".equals(mode)) return "1.2M";
-        if ("22".equals(mode)) return "400K";
-        if ("12".equals(mode)) return "150K";
+        if ("52".equals(mode)) return "2M";
+        if ("42".equals(mode)) return "1.2M";
+        if ("32".equals(mode)) return "400K";
         return null;
     }
 
@@ -927,7 +925,7 @@ public class SniffActivity extends Activity {
             if (!m.find()) return;
             final int curMode;
             try { curMode = Integer.parseInt(m.group(2)); } catch (Throwable e2) { return; }
-            if (curMode >= 52) return;                        // 已是 3M 或更高, 无需补卡
+            if (curMode >= 52) return;                        // 已是最高档 2M, 无需补卡
             final String key = m.group(1);                     // /stream/<room>/ : 一个房间只补一次(签名会轮换)
             if (hqDone.contains(key)) return;
             synchronized (hqTries) {
@@ -961,7 +959,7 @@ public class SniffActivity extends Activity {
                     }
                     pick = cand;
                     String candQn = streamQualityName(cand);
-                    label = "FC2·" + (candQn != null ? candQn : "3M");
+                    label = "FC2·" + (candQn != null ? candQn : "2M");
                     dumpFc2Debug("HQ REAL: /" + hq + "/ bw=" + bw + " base=" + baseBw);
                     break;
                 }
@@ -1669,7 +1667,7 @@ public class SniffActivity extends Activity {
             btnSwitchUa.setBackgroundColor(0x4D2ed573);
             isMobileUa = true;
         }
-        // 切 UA = 一次全新会话: 重置嗅探去重与 3M 探测状态, 让新 UA 下发的流能作为新记录追加。
+        // 切 UA = 一次全新会话: 重置嗅探去重与最高档探测状态, 让新 UA 下发的流能作为新记录追加。
         // 界面上已有的记录行保留不动, 只解除「旧状态」对新流的拦截。
         try {
             recordKeys.clear();
