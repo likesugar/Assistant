@@ -44,7 +44,7 @@ public class PokeRogueActivity extends Activity {
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
-        Immersive.hide(this);
+        applyImmersive();
         dark = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", true);
 
         FrameLayout root = new FrameLayout(this);
@@ -167,17 +167,52 @@ public class PokeRogueActivity extends Activity {
         t.setTypeface(on ? Typeface.DEFAULT_BOLD : Typeface.DEFAULT);
     }
 
-    /** 横屏隐藏胶囊, 竖屏显示; 配合 Manifest 的 configChanges, 旋转不重建 WebView */
+    /** 与首页 applyImmersive 一致: 隐藏系统状态栏+导航栏(沉浸式 sticky, 上滑临时呼出自动回落)。
+     *  比通用 Immersive.hide(仅导航栏) 更彻底, 保证横屏游戏全屏不被三大键顶起。 */
+    private void applyImmersive() {
+        if (android.os.Build.VERSION.SDK_INT >= 30) {
+            getWindow().setDecorFitsSystemWindows(false);
+            android.view.WindowInsetsController c = getWindow().getInsetsController();
+            if (c != null) {
+                c.hide(android.view.WindowInsets.Type.systemBars());
+                c.setSystemBarsBehavior(android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            }
+        } else {
+            getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+        }
+    }
+
+    /** 横屏隐藏胶囊, 竖屏显示; 配合 Manifest 的 configChanges, 旋转不重建 WebView。
+     *  旋转后系统会重新显示导航栏, 故同时重新隐藏。 */
     private void applyOrientation() {
         if (capsule == null) return;
         boolean landscape = getResources().getConfiguration().orientation
                 == Configuration.ORIENTATION_LANDSCAPE;
         capsule.setVisibility(landscape ? View.GONE : View.VISIBLE);
+        applyImmersive();
     }
 
     @Override public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         applyOrientation();
+    }
+
+    /** 系统导航栏在 WebView 交互/输入法收起/回到前台后会被系统重新显示,
+     *  与首页/娱乐页一致: 获得焦点或回前台时重新隐藏, 保证横屏游戏全屏不被三大键顶起。 */
+    @Override public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) applyImmersive();
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        applyImmersive();
     }
 
     @Override public boolean onKeyDown(int keyCode, KeyEvent e) {
