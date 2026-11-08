@@ -33,20 +33,23 @@ public class PokeRogueActivity extends Activity {
 
     /** 横屏时游戏触摸按键放大系数(对齐官方 App 手感), 竖屏 1.0 原样。 */
     private static final double BTN_SCALE_LANDSCAPE = 1.3;
-    /** 独立 CSS 变量 --pbk 叠加放大: 摇杆用 --tcs(游戏内 touchScale 设置) × --pbk, 二者都保留;
-     *  固定 px 动作键(game 内不随 --tcs 变化)用 transform:scale(--pbk) 放大。
-     *  !important 保证覆盖游戏外链样式(与加载顺序无关); 游戏后续动态创建控件自动套用。
-     *  动作键原本无 transform; .tc-btn.on 是按下态 scale(.88), 一并乘上 --pbk 避免按下时缩回原尺寸。 */
+    /** 独立 CSS 变量 --pbk 叠加放大, 三个区域各自的原生缩放变量都保留(乘法叠加, 不废掉游戏内设置):
+     *  1) 右下动作键: 游戏用 .tc-btn{zoom:var(--tcs,1)} —— zoom 会连同 right/bottom 一起等比缩放、
+     *     自动拉开不重叠。必须沿用 zoom; 早期用 transform:scale 只视觉放大不改占位, 导致按钮互相压叠。
+     *  2) 摇杆 .tc-stick 不吃 zoom(非 .tc-btn), 用 width/margin 的 calc 乘法以中心等比放大。
+     *  3) 中下道具格 .hud-bl(touch 模式底部居中)归 --hs(hudScale) 管, 把 --pbk 乘进它的 transform。
+     *  !important 压过游戏外链/内联样式; 右上角 .tc-sm 小按钮不在放大列(保持游戏原生 zoom:1)。 */
     private static final String BTN_CSS =
-        ".tc-stick{width:calc(128px*var(--tcs,1)*var(--pbk,1))!important;"
+        ".tc-jump,.tc-dash,.tc-lock,.tc-inc,.tc-bag,.tc-pot,.tc-ultb,.tc-act"
+      + "{zoom:calc(var(--tcs,1)*var(--pbk,1))!important}"
+      + ".tc-stick{width:calc(128px*var(--tcs,1)*var(--pbk,1))!important;"
       + "height:calc(128px*var(--tcs,1)*var(--pbk,1))!important;"
       + "margin:calc(-64px*var(--tcs,1)*var(--pbk,1)) 0 0 calc(-64px*var(--tcs,1)*var(--pbk,1))!important}"
       + ".tc-stick>i{width:calc(58px*var(--tcs,1)*var(--pbk,1))!important;"
       + "height:calc(58px*var(--tcs,1)*var(--pbk,1))!important;"
       + "margin:calc(-29px*var(--tcs,1)*var(--pbk,1))!important}"
-      + ".tc-jump,.tc-dash,.tc-lock,.tc-inc,.tc-sm,.tc-bag,.tc-pot,.tc-ultb,.tc-aim,.tc-act"
-      + "{transform:scale(var(--pbk,1))!important}"
-      + ".tc-btn.on{transform:scale(calc(var(--pbk,1)*.88)) translateY(2px)!important}"
+      + "html.touch .hud-bl{transform:translateX(-50%) scale(calc(var(--hs,1)*var(--pbk,1)))!important;"
+      + "scale:none!important;transform-origin:bottom!important}"
       // 游戏每帧 update() 会写 this.fs.style.display, WebView 不支持 HTML5 Fullscreen 时
       // 该「进入全屏」入口常驻(官方 Capacitor 壳全屏成功后自动隐藏), 用 !important 压过内联样式
       + ".tc-fs{display:none!important}";
