@@ -404,7 +404,10 @@ public class HomeActivity extends Activity {
                 collectTextViews((android.view.ViewGroup) card, tvs2);
                 for (TextView tv : tvs2) {
                     String x = tv.getText().toString().trim();
-                    if (x.isEmpty() || x.length() > 12) continue;
+                    // 仅放宽带 tag="title" 的真标题到 20 字符(如「宝可梦Poke'Catch」);
+                    // 其余状态文字(如用药提醒的动态文案)维持 12, 避免被误提成卡片标题。
+                    int titleCap = "title".equals(String.valueOf(tv.getTag())) ? 20 : 12;
+                    if (x.isEmpty() || x.length() > titleCap) continue;
                     boolean hasText = false;
                     for (char ch : x.toCharArray()) if ((ch >= 0x4E00 && ch <= 0x9FFF) || Character.isLetterOrDigit(ch) && ch < 128) { hasText = true; break; }
                     if (hasText) { if (x.length() > bestTitle.length()) bestTitle = x; }
@@ -757,7 +760,18 @@ public class HomeActivity extends Activity {
                     if (lp instanceof LinearLayout.LayoutParams) {
                         LinearLayout.LayoutParams llp = (LinearLayout.LayoutParams) lp;
                         llp.weight = 0;
-                        llp.width = (int) Math.ceil(tv.getPaint().measureText("字字字字")) + (int) dp2(2);
+                        // 标题窗口兼容至多 20 字符(字号仍 15sp 不变): 至少 4 字窗口保持既有短标题不变,
+                        // 中等标题按实际文本宽完整显示不滚动, 上限 20 字符宽且不超过两列卡片可用宽度,
+                        // 超长部分仍由下方 MARQUEE 滚动显示 —— 不缩小字号硬塞。
+                        float w4 = tv.getPaint().measureText("字字字字");
+                        float wTxt = tv.getPaint().measureText(s);
+                        float w20 = tv.getPaint().measureText("字字字字字字字字字字字字字字字字字字字字");
+                        // 两列卡片内标题实际可用宽: (屏宽-左右padding-列间距)/2 - (图标+内padding+爱心预留)
+                        int sw = getResources().getDisplayMetrics().widthPixels;
+                        int avail = (sw - (int) dp2(46)) / 2 - (int) dp2(75);
+                        // 下限 w4 保持既有短标题不变; 上限 min(文本宽,20字宽,卡片可用宽), 超出走 MARQUEE
+                        int win = (int) Math.ceil(Math.max(w4, Math.min(Math.min(wTxt, w20), (float) avail)));
+                        llp.width = win + (int) dp2(2);
                         tv.setLayoutParams(llp);
                     }
                     tv.setMaxWidth(Integer.MAX_VALUE);
@@ -801,7 +815,7 @@ public class HomeActivity extends Activity {
         put("cardLive", "直播"); put("cardCalendar", "日历"); put("cardChat", "聊天室");
         put("cardMedicine", "用药提醒"); put("cardTapper", "点击器"); put("cardShortcut", "创建快捷键");
         put("cardWebShell", "网页转应用"); put("cardFun", "娱乐中心"); put("cardBili", "B站登录");
-        put("cardPokeBonk", "宝可梦肉鸽");
+        put("cardPokeBonk", "宝可梦肉鸽"); put("cardPokeCatch", "宝可梦Poke'Catch");
     }};
 
     private static final java.util.HashMap<String, String[]> CARD_INFO = new java.util.HashMap<String, String[]>() {{
@@ -1129,6 +1143,10 @@ public class HomeActivity extends Activity {
         TapGuard.guard(findViewById(R.id.cardPokeBonk));
         findViewById(R.id.cardPokeBonk).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, PokeRogueActivity.class)); }
+        });
+        TapGuard.guard(findViewById(R.id.cardPokeCatch));
+        findViewById(R.id.cardPokeCatch).setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) { startActivity(new Intent(HomeActivity.this, PokeCatchActivity.class)); }
         });
 
         TapGuard.guard(findViewById(R.id.cardShortcut));
