@@ -297,14 +297,13 @@ public class SniffActivity extends Activity {
                             dumpFc2Debug("REQ: " + url);
                         }
                         if (isMaster) {
-                            // 画质优先 90 其次 40：从 master 推导对应子列表，探测可用后进记录
+                            // 从 master 按带宽选最高公开档(52) 探测可用后进记录; 隐藏档 90/92 不参与
                             final String fUrl = url;
                             final String chKey = url.substring(0, url.indexOf('?') > 0 ? url.indexOf('?') : url.length());
                             new Thread(new Runnable() { public void run() {
                                 String pick = pickFc2Quality(fUrl);
                                 String qLabel = bestFc2Name != null && bestFc2Name.length() > 0 ? bestFc2Name : "直播";
-                                if (pick != null && pick.contains("/90/")) qLabel = "原画";
-                                else if (pick != null && pick.contains("/40/")) qLabel = "高清";
+                                if (pick != null && pick.contains("/40/")) qLabel = "高清";
                                 final String titleQ = "FC2·" + qLabel;
                                 if (pick == null) pick = fUrl;
                                 final String pickUrl = pick;
@@ -1216,6 +1215,7 @@ public class SniffActivity extends Activity {
             });
             for (int i = 0; i < idx.length; i++) {
                 String cand = urls.get(idx[i]);
+                if (cand.contains("/90/") || cand.contains("/92/")) continue;  // 隐藏档只有声音无画面
                 dumpFc2Debug("候选#" + (i + 1) + " bw=" + bws.get(idx[i])[0] + " name=" + names.get(idx[i]) + " " + cand);
                 if (probeHls(cand)) {
                     int rank = i + 1;  // 1=最高带宽
