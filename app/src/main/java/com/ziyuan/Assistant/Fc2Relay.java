@@ -180,7 +180,7 @@ public class Fc2Relay {
         try {
             if (msg.contains("playlists") && msg.contains("url")) {
                 gotFlag[0] = true;
-                // _response_ 携带 HLS 信息：挑 mode 最高（>=90 减 90 比较）
+                // _response_ 携带 HLS 信息：挑 mode 最高；隐藏档 90/92 只有声音无画面，直接排除
                 String best = null; int bestMode = -1;
                 java.util.regex.Matcher mu = java.util.regex.Pattern.compile("\"url\"\\s*:\\s*\"([^\"]+)\"").matcher(msg);
                 java.util.regex.Matcher mm = java.util.regex.Pattern.compile("\"mode\"\\s*:\\s*(\\d+)").matcher(msg);
@@ -190,8 +190,8 @@ public class Fc2Relay {
                 while (mm.find()) modes.add(Integer.parseInt(mm.group(1)));
                 for (int i = 0; i < urls.size() && i < modes.size(); i++) {
                     int m = modes.get(i);
-                    int cmp = m >= 90 ? m - 90 : m;
-                    if (cmp > bestMode) { bestMode = cmp; best = urls.get(i); }
+                    if (m >= 90) continue;   // 隐藏档 90/92: 不参与选档
+                    if (m > bestMode) { bestMode = m; best = urls.get(i); }
                 }
                 if (best != null) hlsUrl = best;
                 debugInfo = "playlists=" + urls.size();

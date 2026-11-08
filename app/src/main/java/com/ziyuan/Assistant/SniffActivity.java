@@ -180,8 +180,8 @@ public class SniffActivity extends Activity {
                     while (mm.find()) modes.add(Integer.parseInt(mm.group(1)));
                     for (int i = 0; i < urls.size() && i < modes.size(); i++) {
                         int m = modes.get(i);
-                        int cmp = m >= 90 ? m - 90 : m;
-                        if (cmp > bestMode) { bestMode = cmp; best = urls.get(i); }
+                        if (m >= 90) continue;   // 隐藏档 90/92: 只有声音无画面, 不参与选档
+                        if (m > bestMode) { bestMode = m; best = urls.get(i); }
                     }
                 } catch (Throwable ignored) {}
                 if (best == null) return;
@@ -893,8 +893,9 @@ public class SniffActivity extends Activity {
     private final java.util.Set<String> reqTsLogged = java.util.Collections.synchronizedSet(new java.util.HashSet<String>());
 
     // 会话型多档位直播流: /stream/<room>/<mode>/playlist?<会话签名>
-    // 服务器按会话下发降一级档位; 隐藏档 90/92 实测持续可用(90=半秒切片低延迟, 92=1秒切片)。
-    // 直接把这两个真实存在的档位补建为记录卡, 不再臆造 62(实测 404)。
+    // 服务器按会话下发降一级档位; 补卡只认 master 公开最高档 52(实测 BANDWIDTH 5.4M, 视频轨正常)。
+    // 隐藏档 90/92 虽返回 200 有效清单, 但真机播放只有声音无画面(视频轨 app 解不了), 已移除;
+    // 62 为臆造档(实测 404), 同样移除。补卡失败或同流则由检测兜底, 记录页只留真实档。
     // 站点无关: 只认 URL 形态, 不含任何域名硬编码; 不动 UA / 网页 / 播放器链路。
     private static final java.util.regex.Pattern HQ_STREAM =
         java.util.regex.Pattern.compile("(/stream/\\d+/)(\\d+)(/playlist\\?[^\\s]+)");
@@ -902,10 +903,10 @@ public class SniffActivity extends Activity {
         java.util.Collections.synchronizedSet(new java.util.HashSet<String>());
     private final java.util.Map<String, Integer> hqTries =
         java.util.Collections.synchronizedMap(new java.util.HashMap<String, Integer>());
-    private static final int[] HQ_MODES = {92, 90};  // 实测真实隐藏档: 92(1s切片)优先, 90(0.5s低延迟)次之; 由同流/带宽检测兜底
+    private static final int[] HQ_MODES = {52};  // 仅 master 公开最高档(视频轨可正常解码); 隐藏档 90/92 只有声音无画面, 已移除
 
     /** 反推画质表(真机确认 + 服务端降一级补偿): 22=400K 32=1.2M 42/52=2M(最高档钳位)。
-     *  隐藏档 90/92 由 maybeAddHqCard 直接标档位号, 不在此臆造画质名。 */
+     *  12 及以下未实测, 不臆造标注; 未知道位返回 null 不标注。 */
     static String streamQualityName(String url) {
         if (url == null) return null;
         String s = LiveProxy.unwrap(url);   // 解壳(兼容任意端口/双重外壳)
@@ -926,7 +927,7 @@ public class SniffActivity extends Activity {
             if (!m.find()) return;
             final int curMode;
             try { curMode = Integer.parseInt(m.group(2)); } catch (Throwable e2) { return; }
-            if (curMode >= 90) return;                        // 已是隐藏档, 无需补卡
+            if (curMode >= 52) return;                        // 已是公开最高档, 无需补卡
             final String key = m.group(1);                     // /stream/<room>/ : 一个房间只补一次(签名会轮换)
             if (hqDone.contains(key)) return;
             synchronized (hqTries) {
