@@ -542,11 +542,15 @@ public class RecordActivity extends Activity {
 
     private void playInApp(String path, String title) { playInApp(path, title, null); }
 
-    /** 文件名/来源带 FC2 → 照资源嗅探记录页 FC2 的原理：本地代理常驻 + relay 外壳 + ACTION_VIEW 浏览器打开 */
+    /** 已完成成品 / 本地文件 → 一律走本 apk 内置播放器(NativePlayerActivity)。
+     *  仅当 path 本身是网络流(http/https)且带 FC2 时, 才照资源嗅探记录页原理走 relay + 浏览器打开。 */
     private void playInApp(String path, String title, String srcUrl) {
-        if (isFc2(title, srcUrl) && openWithBrowser(srcUrl != null && !srcUrl.isEmpty() ? srcUrl : path)) return;
+        boolean network = path != null && (path.startsWith("http://") || path.startsWith("https://"));
+        if (network && isFc2(title, srcUrl) && openWithBrowser(srcUrl != null && !srcUrl.isEmpty() ? srcUrl : path)) return;
+        String playPath = path;
+        if (playPath != null && !playPath.contains("://")) playPath = "file://" + playPath;  // 纯绝对路径补 scheme, 防播放器当相对路径
         Intent i = new Intent(this, NativePlayerActivity.class);
-        i.putExtra("url", path);
+        i.putExtra("url", playPath);
         i.putExtra("title", title == null ? "播放" : title);
         i.putExtra("kernel", "native");
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
