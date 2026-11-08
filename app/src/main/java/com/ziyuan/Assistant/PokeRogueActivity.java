@@ -40,8 +40,13 @@ public class PokeRogueActivity extends Activity {
      *  3) 中下道具格 .hud-bl(touch 模式底部居中)归 --hs(hudScale) 管, 把 --pbk 乘进它的 transform。
      *  !important 压过游戏外链/内联样式; 右上角 .tc-sm 小按钮不在放大列(保持游戏原生 zoom:1)。
      *
-     *  地图放大: 右上小地图 .minimap 是 canvas, 触摸模式基准 140px*--mm。乘 1.25 放大,
-     *  保留游戏内「Tamaño del minimapa」(mapScale) 设置可继续调。
+     *  地图放大: 右上小地图 .minimap 是 canvas, 触摸模式基准 140px*--mm。乘 1.5 放大并左移 20px,
+     *  保留游戏内「Tamaño del minimapa」(mapScale) 设置可继续调。高度增量用等量负 margin-bottom
+     *  抵消, 避免把下方 .counters 推去压住大圆动作键。
+     *
+     *  右上「精灵球」按钮移位: 该圆形按钮图标是两颗精灵球, 实际是暂停键 .tc-pause(title=Pausa),
+     *  原生位置 top:12px 在「自动」.tc-aim 上方。按用户要求横屏移到自动按钮下方(top:142px),
+     *  与已隐藏的 .tc-fs 原位置一致; 竖屏不改动。
      *
      *  紫色香炉 .tc-inc 移位: 原锚右下 right:50/bottom:232, 与一堆动作键挤在一起。按用户要求
      *  横屏移到中下道具栏「黄色挂锁格」右边的草地空白(锁格中心约屏幕 50%+120px, 视觉放大后右缘
@@ -64,9 +69,15 @@ public class PokeRogueActivity extends Activity {
       + ".tc-fs{display:none!important}"
       // 以下两条只在横屏生效, 竖屏完全保持游戏原生(与既有「横屏才对齐」一致)
       + "@media (orientation:landscape){"
-      // 右上小地图放大 25%, 乘在 --mm 上保留游戏内设置
-      + "html.touch .hud-tr .minimap{width:calc(140px*var(--mm,1)*1.25)!important;"
-      + "height:calc(140px*var(--mm,1)*1.25)!important}"
+      // 右上小地图再放大(基准 140px*--mm): 1.25 -> 1.5, 并整体左移 20px。
+      // 高度比 1.25 多出 35px, 用 -25px 负 margin-bottom 抵消大部分: 既不让 .counters
+      // (精灵球计数)被推下去压住大圆动作键, 又让它下移 10px 避开放大后地图圆的右下边缘。
+      + "html.touch .hud-tr .minimap{width:calc(140px*var(--mm,1)*1.5)!important;"
+      + "height:calc(140px*var(--mm,1)*1.5)!important;margin-right:20px!important;"
+      + "margin-bottom:calc(-25px*var(--mm,1))!important}"
+      // 右上圆形「精灵球」按钮(实为暂停键 .tc-pause)移到「自动」.tc-aim 下方。
+      // .tc-aim: top:70px / height:62px -> 底部 132px, 留 10px 间隙取 142px(原 .tc-fs 位置)。
+      + ".tc-pause{top:calc(142px + var(--st))!important}"
       // 紫色香炉移到黄色挂锁格右边的草地空白。
       // 锁格位置 = 视口中心 + 120px(slots 半宽) * --hs * --pbk; 把香炉绑到同一表达式,
       // 游戏内改 UI 缩放时两者同步, 不会漂移。独立 scale 属性只缩放自身、不改 left/bottom 定位基准,
