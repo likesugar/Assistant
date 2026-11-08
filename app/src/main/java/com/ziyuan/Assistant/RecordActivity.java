@@ -508,7 +508,7 @@ public class RecordActivity extends Activity {
                         String t = m2.getTitle().toString();
                         HistoryStore.Item cur = (hist != null && idx < hist.size()) ? hist.get(idx) : it;
                         if (t.equals("打开")) {
-                            try { playInApp(cur.path, cur.title); } catch (Throwable e) { toast("打不开"); }
+                            try { playInApp(cur.path, cur.title, cur.url); } catch (Throwable e) { toast("打不开"); }
                         } else if (t.equals("分享")) shareItem(cur);
                         else if (t.equals("选取")) openFileList(cur.path, true);
                         else if (t.equals("属性")) showProperties(cur);
@@ -534,19 +534,43 @@ public class RecordActivity extends Activity {
             public void onClick(View v) {
                 // 行复用时按当前索引重取条目，避免删除后错位打开别的文件
                 HistoryStore.Item cur = (hist != null && idx < hist.size()) ? hist.get(idx) : it;
-                try { playInApp(cur.path, cur.title); } catch (Throwable e) { toast("打不开"); }
+                try { playInApp(cur.path, cur.title, cur.url); } catch (Throwable e) { toast("打不开"); }
             }
         });
         parent.addView(row);
     }
 
-    private void playInApp(String path, String title) {
+    private void playInApp(String path, String title) { playInApp(path, title, null); }
+
+    /** 文件名/来源带 FC2 → 照资源嗅探记录页 FC2 的原理：本地代理常驻 + relay 外壳 + ACTION_VIEW 浏览器打开 */
+    private void playInApp(String path, String title, String srcUrl) {
+        if (isFc2(title, srcUrl) && openWithBrowser(srcUrl != null && !srcUrl.isEmpty() ? srcUrl : path)) return;
         Intent i = new Intent(this, NativePlayerActivity.class);
         i.putExtra("url", path);
         i.putExtra("title", title == null ? "播放" : title);
         i.putExtra("kernel", "native");
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(i);
+    }
+
+    private static boolean isFc2(String title, String url) {
+        String s = ((title == null ? "" : title) + " " + (url == null ? "" : url))
+                .toUpperCase(java.util.Locale.ROOT);
+        return s.contains("FC2");
+    }
+
+    /** 与 SniffActivity.playUrl 的 relay 分支一致：不 finish、浏览器直开中转流 */
+    private boolean openWithBrowser(String u) {
+        if (u == null || (!u.startsWith("http://") && !u.startsWith("https://"))) return false;
+        try { LiveProxy.start(); } catch (Throwable ignored) {}   // 本地中转必须常驻, FC2 流才拉得动
+        String target = LiveProxy.isRelay(u) ? LiveProxy.normalize(u) : LiveProxy.relay(u);
+        if (target == null) return false;
+        try {
+            Intent i = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(target));
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+            return true;
+        } catch (Throwable e) { return false; }
     }
 
     private void toast(String s) { Toast.makeText(this, s, Toast.LENGTH_SHORT).show(); }

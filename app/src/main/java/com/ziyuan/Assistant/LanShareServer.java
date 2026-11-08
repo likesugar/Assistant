@@ -173,7 +173,7 @@ public class LanShareServer {
             }
             String me = localIp();
             OutputStream os = s.getOutputStream();
-            os.write(("HTTP/1.1 302 Found\r\nLocation: http://" + me + ":8123/relay?u="
+            os.write(("HTTP/1.1 302 Found\r\nLocation: http://" + me + ":" + LiveProxy.PORT + "/relay?u="
                 + java.net.URLEncoder.encode(u, "UTF-8") + "\r\nConnection: close\r\nContent-Length: 0\r\n\r\n").getBytes());
             os.flush();
             return;

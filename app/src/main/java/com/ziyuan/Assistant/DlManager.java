@@ -38,9 +38,9 @@ public class DlManager {
     public static java.util.Collection<DlJob> jobs() { return JOBS.values(); }
 
     public static void start(String url) {
+        if (LiveProxy.isRelay(url)) { startHls(LiveProxy.normalize(url)); return; }
         String lu = url.toLowerCase();
-        if (lu.contains("127.0.0.1:8123/relay")) startHls(url);
-        else if (lu.contains(".m3u8") || lu.contains("playlist")) startM3u8(url);  // M3U8Manger 方式: 解析+并行ts+合并
+        if (lu.contains(".m3u8") || lu.contains("playlist")) startM3u8(url);  // M3U8Manger 方式: 解析+并行ts+合并
         else startDirect(url);
     }
 

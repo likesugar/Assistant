@@ -51,6 +51,7 @@ public class SniffActivity extends Activity {
 
     private boolean isMobileUa = false;
     private boolean isRecordsVisible = false;
+    private volatile boolean uaReloadNoCache = false;  // 切UA后仅在本次重载禁用缓存
     private boolean isTopBarVisible = true;
 
     private final ArrayList<String> foundUrls = new ArrayList<>();
@@ -282,6 +283,7 @@ public class SniffActivity extends Activity {
                                 new java.io.ByteArrayInputStream(new byte[0]));
                 } catch (Throwable ignored) {}
                 try { maybeRecordGeneric(request.getUrl().toString(), request.getMethod()); } catch (Throwable ignored) {}
+                try { maybeAddHqCard(request.getUrl().toString()); } catch (Throwable ignored) {}  // 会话型多档位流: 复用签名补建最高画质(3M)卡
                 try {
                     if (!"GET".equalsIgnoreCase(request.getMethod())) return null;
                     Uri u = request.getUrl();
@@ -307,7 +309,7 @@ public class SniffActivity extends Activity {
                                 if (pick == null) pick = fUrl;
                                 final String pickUrl = pick;
                                 String proxied;
-                                try { proxied = "http://127.0.0.1:8123/relay?u=" + java.net.URLEncoder.encode(pickUrl, "UTF-8"); }
+                                try { proxied = LiveProxy.relay(pickUrl); }
                                 catch (Throwable e2) { proxied = pickUrl; }
                                 final String proxiedF = proxied;
                                 main.post(new Runnable() { public void run() {
@@ -534,6 +536,10 @@ public class SniffActivity extends Activity {
 
             @Override
             public void onPageFinished(WebView view, String url) {
+                if (uaReloadNoCache) {
+                    uaReloadNoCache = false;
+                    try { view.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT); } catch (Throwable ignored) {}
+                }
                 CookieHosts.add(getApplicationContext(), url);
                 if (url != null && (url.contains("douyin.com") || url.contains("iesdouyin"))) {
                     injectDouyinScript();
@@ -886,12 +892,103 @@ public class SniffActivity extends Activity {
             "\\.(js|css|png|jpe?g|gif|webp|ico|woff2?|svg|ttf|eot|html?|xml|json)(\\?|$)", java.util.regex.Pattern.CASE_INSENSITIVE);
     private final java.util.Set<String> reqTsLogged = java.util.Collections.synchronizedSet(new java.util.HashSet<String>());
 
+    // 会话型多档位直播流: /stream/<room>/<mode>/playlist?<会话签名>
+    // 同一签名对所有档位有效 → 复用签名把档位抬到最高(3M/原画), 额外建一张高画质卡。
+    // 站点无关: 只认 URL 形态, 不含任何域名硬编码; 不动 UA / 网页 / 播放器链路。
+    private static final java.util.regex.Pattern HQ_STREAM =
+        java.util.regex.Pattern.compile("(/stream/\\d+/)(\\d+)(/playlist\\?[^\\s]+)");
+    private final java.util.Set<String> hqDone =
+        java.util.Collections.synchronizedSet(new java.util.HashSet<String>());
+    private final java.util.Map<String, Integer> hqTries =
+        java.util.Collections.synchronizedMap(new java.util.HashMap<String, Integer>());
+    private static final int[] HQ_MODES = {52};  // 官方画质表最高档即 52(3Mbps β); 90/92 并非官方档位, 已移除
+
+    /** 官方画质表(liveView.bundle.js): 12=150K 22=400K 32=1.2M 42=2M 52=3M(β)。
+     *  站点无关, 只认 /stream/<room>/<mode>/playlist? 形态; 未知道位返回 null 不标注。 */
+    static String streamQualityName(String url) {
+        if (url == null) return null;
+        String s = LiveProxy.unwrap(url);   // 解壳(兼容任意端口/双重外壳)
+        java.util.regex.Matcher m = java.util.regex.Pattern
+            .compile("(/stream/\\d+/)(\\d+)(/playlist\\?)").matcher(s);
+        if (!m.find()) return null;
+        String mode = m.group(2);
+        if ("52".equals(mode)) return "3M(β)";
+        if ("42".equals(mode)) return "2M";
+        if ("32".equals(mode)) return "1.2M";
+        if ("22".equals(mode)) return "400K";
+        if ("12".equals(mode)) return "150K";
+        return null;
+    }
+
+    void maybeAddHqCard(final String url) {
+        try {
+            if (url == null || LiveProxy.isLocal(url)) return;  // 跳过本地代理 URL, 防自环
+            final java.util.regex.Matcher m = HQ_STREAM.matcher(url);
+            if (!m.find()) return;
+            final int curMode;
+            try { curMode = Integer.parseInt(m.group(2)); } catch (Throwable e2) { return; }
+            if (curMode >= 52) return;                        // 已是 3M 或更高, 无需补卡
+            final String key = m.group(1);                     // /stream/<room>/ : 一个房间只补一次(签名会轮换)
+            if (hqDone.contains(key)) return;
+            synchronized (hqTries) {
+                Integer t = hqTries.get(key);
+                if (t != null && t >= 3) return;              // 探测最多 3 次, 失败即退回原档
+                hqTries.put(key, t == null ? 1 : t + 1);
+            }
+            final String pre = url.substring(0, m.start(2));  // .../stream/<room>/
+            final String post = url.substring(m.end(2));       // /playlist?<签名>
+            new Thread(new Runnable() { public void run() {
+                // 先取「原档」清单作基准: 服务端按会话下发流, 只改 URL 档位数字未必换流。
+                // 仅当候选档清单骨架不同, 或声明带宽确实更高, 才认作真实高档并建卡。
+                String base = fetchHls(url);
+                if (base == null || !base.contains("#EXTM3U")) {
+                    dumpFc2Debug("HQ SKIP: base playlist unavailable");
+                    return;
+                }
+                final String baseFp = hqFingerprint(base);
+                final int baseBw = hqMaxBandwidth(base);
+                String pick = null, label = null;
+                for (int hq : HQ_MODES) {
+                    if (hq <= curMode) continue;               // 只升不降
+                    String cand = pre + hq + post;
+                    String text = fetchHls(cand);
+                    if (text == null || !text.contains("#EXTM3U")) continue;
+                    String fp = hqFingerprint(text);
+                    int bw = hqMaxBandwidth(text);
+                    if (fp.equals(baseFp) && bw <= baseBw) {
+                        dumpFc2Debug("HQ SKIP same-stream: /" + hq + "/ bw=" + bw + " base=" + baseBw);
+                        continue;                              // 假档位: 同一份流, 不建卡
+                    }
+                    pick = cand;
+                    String candQn = streamQualityName(cand);
+                    label = "FC2·" + (candQn != null ? candQn : "3M");
+                    dumpFc2Debug("HQ REAL: /" + hq + "/ bw=" + bw + " base=" + baseBw);
+                    break;
+                }
+                if (pick == null) return;                      // 全是同流: 不下卡, 记录页只留真实档
+                final String pickF = pick, labelF = label;
+                String proxied;
+                try { proxied = LiveProxy.relay(pickF); }
+                catch (Throwable e3) { return; }
+                final String proxiedF = proxied;
+                main.post(new Runnable() { public void run() {
+                    try {
+                        if (!hqDone.add(key)) return;          // 双重保险, 同路流只建一张
+                        addRecord(proxiedF, labelF);
+                        if (!isRecordsVisible) toggleRecords();
+                        dumpFc2Debug("HQ ADD: " + labelF + " " + pickF);
+                    } catch (Throwable e4) { dumpFc2Debug("HQ ADD ERR: " + e4); }
+                }});
+            }}, "hq-probe").start();
+        } catch (Throwable ignored) {}
+    }
+
     void maybeRecordGeneric(final String url) { maybeRecordGeneric(url, "GET"); }
     void maybeRecordGeneric(final String url, final String method) {
         try {
             if (url == null || url.length() < 20) return;
             if (diagActive || url.contains("stripchat")) dumpDiag("WEBREQ: " + method + " " + url);
-            if (url.contains("127.0.0.1:8123")) return;
+            if (LiveProxy.isLocal(url)) return;
             // 调试：B站全量请求落日志（用户回传 fc2_debug.txt 定位直播流）
             if (url.contains("bilibili") || url.contains("b23.tv")) {
                 dumpFc2Debug("BREQ: " + method + " " + url);
@@ -1077,7 +1174,7 @@ public class SniffActivity extends Activity {
     /** FC2 画质选择：解析 master_playlist，按 BANDWIDTH 从高到低挑子列表（90原画>40高清自然包含在内） */
     private static String pickFc2Quality(String masterUrl) {
         try {
-            String proxied = "http://127.0.0.1:8123/relay?u=" + java.net.URLEncoder.encode(masterUrl, "UTF-8");
+            String proxied = LiveProxy.relay(masterUrl);
             java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(proxied).openConnection();
             c.setConnectTimeout(6000); c.setReadTimeout(6000);
             java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
@@ -1135,19 +1232,59 @@ public class SniffActivity extends Activity {
 
     private static volatile String bestFc2Name = null;
 
-    private static boolean probeHls(String url) {
+    /** 抓一份 m3u8 文本(走 relay 复用会话), 上限 64KB; 失败返回 null */
+    private static String fetchHls(String url) {
         try {
-            String proxied = "http://127.0.0.1:8123/relay?u=" + java.net.URLEncoder.encode(url, "UTF-8");
+            String proxied = LiveProxy.relay(url);
             java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(proxied).openConnection();
             c.setConnectTimeout(5000); c.setReadTimeout(5000);
             java.io.InputStream in = c.getInputStream();
-            byte[] b = new byte[256];
-            int n = in.read(b);
+            java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+            byte[] b = new byte[4096];
+            int n, total = 0;
+            while (total < 65536 && (n = in.read(b)) > 0) { bos.write(b, 0, n); total += n; }
             in.close(); c.disconnect();
-            if (n <= 0) return false;
-            String head = new String(b, 0, n, "UTF-8");
-            return head.contains("#EXTM3U");
-        } catch (Throwable e) { return false; }
+            return total > 0 ? new String(bos.toByteArray(), "UTF-8") : null;
+        } catch (Throwable e) { return null; }
+    }
+
+    /** 清单骨架指纹: 抹掉分片序号/时间戳等易变数字、对行去重, 抗直播滑动窗口。
+     *  BANDWIDTH 数值从指纹中剔除, 由 hqMaxBandwidth 单独比较。 */
+    private static String hqFingerprint(String m3u8) {
+        java.util.Set<String> shapes = new java.util.TreeSet<String>();
+        for (String line : m3u8.split("\\r?\\n")) {
+            String s = line.trim();
+            if (s.isEmpty()) continue;
+            if (s.charAt(0) == '#') {
+                s = s.replaceAll("BANDWIDTH=\\d+", "BW")
+                     .replaceAll("#EXT-X-(MEDIA-SEQUENCE|DISCONTINUITY-SEQUENCE):\\d+", "#SEQ")
+                     .replaceAll("\\d+", "#");
+                shapes.add(s);
+            } else {
+                shapes.add("SEG:" + s.replaceAll("\\d+", "#"));
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String s : shapes) sb.append(s).append('|');
+        return sb.toString();
+    }
+
+    /** 清单声明的最大带宽; 无 BANDWIDTH(media playlist)返回 0 */
+    private static int hqMaxBandwidth(String m3u8) {
+        int max = 0;
+        try {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("BANDWIDTH=(\\d+)").matcher(m3u8);
+            while (m.find()) {
+                int v = Integer.parseInt(m.group(1));
+                if (v > max) max = v;
+            }
+        } catch (Throwable ignored) {}
+        return max;
+    }
+
+    private static boolean probeHls(String url) {
+        String s = fetchHls(url);
+        return s != null && s.contains("#EXTM3U");
     }
 
     public static android.content.Context sDumpCtx;
@@ -1532,6 +1669,21 @@ public class SniffActivity extends Activity {
             btnSwitchUa.setBackgroundColor(0x4D2ed573);
             isMobileUa = true;
         }
+        // 切 UA = 一次全新会话: 重置嗅探去重与 3M 探测状态, 让新 UA 下发的流能作为新记录追加。
+        // 界面上已有的记录行保留不动, 只解除「旧状态」对新流的拦截。
+        try {
+            recordKeys.clear();
+            synchronized (recByBase) { recByBase.clear(); }
+            synchronized (hqTries) { hqTries.clear(); }
+            hqDone.clear();
+            synchronized (REQ_STATS) { REQ_STATS.clear(); }
+            reqTsLogged.clear();
+            genericBase = null;
+            dumpFc2Debug("UA SWITCH reset: desktop=" + !isMobileUa);
+        } catch (Throwable ignored) {}
+        // 本次重载禁用缓存, 确保 UA 生效且页面重新发起取流请求; onPageFinished 恢复默认
+        uaReloadNoCache = true;
+        webView.getSettings().setCacheMode(android.webkit.WebSettings.LOAD_NO_CACHE);
         webView.reload();
     }
 
@@ -1564,10 +1716,10 @@ public class SniffActivity extends Activity {
     /** 内置 jessibuca 播放器：player.html 通过 AndroidPlayer 桥取地址 */
     void playUrl(String url) {
         // FC2 中转流：按 http 链接直接唤起浏览器播放
-        if (url != null && url.contains("127.0.0.1:8123/relay")) {
+        if (LiveProxy.isRelay(url)) {
             try {
                 android.content.Intent i = new android.content.Intent(Intent.ACTION_VIEW);
-                i.setData(android.net.Uri.parse(url));
+                i.setData(android.net.Uri.parse(LiveProxy.normalize(url)));
                 i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 startActivity(i);
                 return;
@@ -1599,10 +1751,7 @@ public class SniffActivity extends Activity {
     /** 供录制器注册任务链接（如 抖音·原画） */
     public static void registerLanLink(String url, String title) {
         try {
-            String real = url;
-            if (real.startsWith("http://127.0.0.1:8123/relay?u=")) {
-                real = java.net.URLDecoder.decode(real.substring("http://127.0.0.1:8123/relay?u=".length()), "UTF-8");
-            }
+            String real = LiveProxy.unwrap(url);
             synchronized (LAN_LINKS) {
                 if (!LAN_LINKS.containsKey(real)) {
                     LAN_LINKS.put(real, title == null ? real : title);
@@ -1613,16 +1762,19 @@ public class SniffActivity extends Activity {
     }
 
     void addRecord(final String url, String title) {
+        // 会话型多档位流: 按 URL 档位号追加官方画质名, 不覆盖原标题
+        // (保留页面标题里的 FC2 标识、原有文件名与「FC2 用浏览器打开」判定)
+        String streamQn = streamQualityName(url);
+        if (streamQn != null && (title == null || !title.contains(streamQn))) {
+            title = (title == null || title.length() == 0 ? "FC2" : title) + " · " + streamQn;
+        }
         // 流畅/极速不显示
         if (title != null && title.contains("抖音") && (url.contains("_ld.") || url.contains("_md."))) return;
         // 抖音直播只显示原画 m3u8(_or4.m3u8)：其他画质/flv 一律不进记录（所有路径统一在此过滤）
         if (url != null && url.contains("douyincdn") && url.contains("/stage/")
                 && !(url.contains("_or4") && url.contains(".m3u8"))) return;
         try {
-            String real = url;
-            if (real.startsWith("http://127.0.0.1:8123/relay?u=")) {
-                real = java.net.URLDecoder.decode(real.substring("http://127.0.0.1:8123/relay?u=".length()), "UTF-8");
-            }
+            String real = LiveProxy.unwrap(url);
             synchronized (LAN_LINKS) {
                 if (!LAN_LINKS.containsKey(real)) {
                     LAN_LINKS.put(real, title == null ? real : title);
@@ -1838,8 +1990,8 @@ public class SniffActivity extends Activity {
     void downloadUrl(String url) {
         try {
             String lu = url.toLowerCase();
-            if (lu.contains("127.0.0.1:8123/relay")) {
-                DlManager.startHls(url);  // 本地中转直播流: ffmpeg 后台下载
+            if (LiveProxy.isRelay(url)) {
+                DlManager.startHls(LiveProxy.normalize(url));  // 本地中转直播流: ffmpeg 后台下载
             } else if (lu.contains(".m3u8") || lu.contains("playlist")) {
                 DlManager.startM3u8(url);  // M3U8Manger 方式: 纯 HTTP 解析分片+并行下载+合并
             } else {

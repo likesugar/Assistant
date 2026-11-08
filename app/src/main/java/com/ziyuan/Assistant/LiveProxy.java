@@ -15,10 +15,49 @@ import java.util.LinkedHashSet;
 
 /** 本地代理+独立刷新器：页面点播放后拿到媒体列表地址(c/d)，
  *  之后服务自己每 800ms 轮询该地址（页面可退），分片由刷新器抓取并写入录制文件，
- *  VLC 播 http://127.0.0.1:8123/playlist.m3u8（ts 经 /ts?u= 中转，绕过 ffmpeg-min 无 https） */
+ *  VLC 播 http://127.0.0.1:<运行时端口>/playlist.m3u8（ts 经 /ts?u= 中转） */
 public class LiveProxy {
 
-    public static final int PORT = 8123;
+    /** 运行时端口: start() 同步确定; 8123 仅为未启动时的兜底值 */
+    public static volatile int PORT = 8123;
+    private static final String RELAY_HOST = "http://127.0.0.1:";
+    private static final String RELAY_PATH = "/relay?u=";
+
+    /** 统一生成 relay 外壳(始终用当前端口) */
+    public static String relay(String rawUrl) {
+        if (rawUrl == null) return null;
+        try { return RELAY_HOST + PORT + RELAY_PATH + java.net.URLEncoder.encode(rawUrl, "UTF-8"); }
+        catch (Throwable t) { return rawUrl; }
+    }
+
+    /** 只认路径, 不含端口: 历史卡片端口与当前不同也能识别 */
+    public static boolean isRelay(String url) {
+        return url != null && url.startsWith(RELAY_HOST) && url.contains(RELAY_PATH);
+    }
+
+    /** 任意本地代理 URL(含 /ts?u= /playlist.m3u8), 用于防自环过滤 */
+    public static boolean isLocal(String url) {
+        return url != null && url.startsWith(RELAY_HOST);
+    }
+
+    /** 把历史 relay URL 的端口改写成当前端口(App 重启后端口变化也能继续用) */
+    public static String normalize(String url) {
+        if (!isRelay(url)) return url;
+        int i = url.indexOf(RELAY_PATH);
+        return RELAY_HOST + PORT + url.substring(i);
+    }
+
+    /** 解出 relay 里的真实地址(支持双重外壳) */
+    public static String unwrap(String url) {
+        String s = url;
+        for (int k = 0; k < 2; k++) {
+            if (!isRelay(s)) break;
+            int i = s.indexOf(RELAY_PATH);
+            try { s = URLDecoder.decode(s.substring(i + RELAY_PATH.length()), "UTF-8"); }
+            catch (Throwable t) { break; }
+        }
+        return s;
+    }
     public static volatile byte[] latestBody = null;
     public static volatile long latestAt = 0;
     public static volatile String mediaUrl = null;
@@ -77,23 +116,64 @@ public class LiveProxy {
         putSeg(url, body);
     }
 
-    public static void start() {
+    /** 同步绑定端口后再返回: 调用方拿到 start() 结果时 PORT 已确定, 无启动竞态 */
+    public static synchronized void start() {
         if (running) return;
+        final ServerSocket srv = bindPort();
+        if (srv == null) return;              // 绑定失败: running 不置位, 下次仍可重试
         running = true;
         new Thread(new Runnable() {
             public void run() {
                 try {
-                    ServerSocket ss = new ServerSocket(PORT);
                     while (running) {
-                        final Socket s = ss.accept();
+                        final Socket s = srv.accept();
                         new Thread(new Runnable() { public void run() {
                             try { handle(s); } catch (Throwable ignored) {}
                             finally { try { s.close(); } catch (Throwable ignored) {} }
                         } }).start();
                     }
-                } catch (Throwable ignored) {}
+                } catch (Throwable ignored) {
+                    running = false;          // accept 异常也复位, 允许下次重启
+                } finally {
+                    try { srv.close(); } catch (Throwable ignored) {}
+                }
             }
-        }).start();
+        }, "live-proxy").start();
+    }
+
+    /** 优先复用上次端口; 被占用则由系统分配空闲端口(ServerSocket(0)), 零冲突 */
+    private static ServerSocket bindPort() {
+        int prefer = loadPort();
+        if (prefer > 0) {
+            try { ServerSocket s = new ServerSocket(prefer); PORT = s.getLocalPort(); return s; }
+            catch (Throwable ignored) {}
+        }
+        for (int i = 0; i < 3; i++) {
+            try {
+                ServerSocket s = new ServerSocket(0);
+                PORT = s.getLocalPort();
+                savePort(PORT);
+                return s;
+            } catch (Throwable ignored) {}
+        }
+        return null;
+    }
+
+    private static int loadPort() {
+        try {
+            android.content.Context c = SniffActivity.sDumpCtx;
+            if (c == null) return 0;
+            return c.getSharedPreferences("liveproxy", android.content.Context.MODE_PRIVATE).getInt("port", 0);
+        } catch (Throwable t) { return 0; }
+    }
+
+    private static void savePort(int p) {
+        try {
+            android.content.Context c = SniffActivity.sDumpCtx;
+            if (c == null) return;
+            c.getSharedPreferences("liveproxy", android.content.Context.MODE_PRIVATE)
+                .edit().putInt("port", p).apply();
+        } catch (Throwable ignored) {}
     }
 
     /** 独立刷新器：服务里启动；每 800ms 轮询媒体列表 + 抓新分片写录制文件 */
@@ -222,8 +302,7 @@ public class LiveProxy {
                                 String t = ln.trim();
                                 if (!t.isEmpty() && !t.startsWith("#")) {
                                     String abs = new URL(new URL(raw), t).toString();
-                                    ln = "http://127.0.0.1:" + PORT + "/relay?u="
-                                        + java.net.URLEncoder.encode(abs, "UTF-8");
+                                    ln = relay(abs);
                                 }
                                 sb.append(ln).append("\n");
                             }
