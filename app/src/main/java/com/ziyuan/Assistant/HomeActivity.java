@@ -801,6 +801,7 @@ public class HomeActivity extends Activity {
         put("cardLive", "直播"); put("cardCalendar", "日历"); put("cardChat", "聊天室");
         put("cardMedicine", "用药提醒"); put("cardTapper", "点击器"); put("cardShortcut", "创建快捷键");
         put("cardWebShell", "网页转应用"); put("cardFun", "娱乐中心"); put("cardBili", "B站登录");
+        put("cardPokeBonk", "宝可梦肉鸽");
     }};
 
     private static final java.util.HashMap<String, String[]> CARD_INFO = new java.util.HashMap<String, String[]>() {{
@@ -1124,6 +1125,10 @@ public class HomeActivity extends Activity {
         TapGuard.guard(findViewById(R.id.cardEnt));
         findViewById(R.id.cardEnt).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, EntertainmentActivity.class)); }
+        });
+        TapGuard.guard(findViewById(R.id.cardPokeBonk));
+        findViewById(R.id.cardPokeBonk).setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) { startActivity(new Intent(HomeActivity.this, PokeRogueActivity.class)); }
         });
 
         TapGuard.guard(findViewById(R.id.cardShortcut));

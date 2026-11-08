@@ -77,6 +77,7 @@
         <activity android:name=".PanApiActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".DynaActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".EntertainmentActivity" android:exported="false"/>
+        <activity android:name=".PokeRogueActivity" android:exported="false" android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize"/>
         <activity android:name=".AiChatActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
         <receiver android:name=".MedPlanActivity$MedPlanReceiver" android:exported="false"/>
         <receiver android:name=".MedPlanActivity$MedConfirmReceiver" android:exported="false"/>
