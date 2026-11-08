@@ -61,7 +61,8 @@ public class PokeRogueActivity extends Activity {
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
-        applyImmersive();
+        // 注意: 不可在 setContentView 之前调用 applyImmersive(), 此时 DecorView 尚未挂载窗口,
+        // getInsetsController() 内部访问会返回 null 并 NPE。沉浸式交由 onResume/onWindowFocusChanged 兜底。
         dark = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", true);
 
         FrameLayout root = new FrameLayout(this);
@@ -194,12 +195,17 @@ public class PokeRogueActivity extends Activity {
     /** 与首页 applyImmersive 一致: 隐藏系统状态栏+导航栏(沉浸式 sticky, 上滑临时呼出自动回落)。
      *  比通用 Immersive.hide(仅导航栏) 更彻底, 保证横屏游戏全屏不被三大键顶起。 */
     private void applyImmersive() {
+        android.view.Window w = getWindow();
+        if (w == null) return;
         if (android.os.Build.VERSION.SDK_INT >= 30) {
-            getWindow().setDecorFitsSystemWindows(false);
-            android.view.WindowInsetsController c = getWindow().getInsetsController();
-            if (c != null) {
-                c.hide(android.view.WindowInsets.Type.systemBars());
-                c.setSystemBarsBehavior(android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            w.setDecorFitsSystemWindows(false);
+            // DecorView 未挂载窗口时 getInsetsController() 会 NPE, 必须先判 attached
+            if (w.getDecorView() != null && w.getDecorView().isAttachedToWindow()) {
+                android.view.WindowInsetsController c = w.getInsetsController();
+                if (c != null) {
+                    c.hide(android.view.WindowInsets.Type.systemBars());
+                    c.setSystemBarsBehavior(android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                }
             }
         } else {
             getWindow().getDecorView().setSystemUiVisibility(
