@@ -31,6 +31,23 @@ public class PokeRogueActivity extends Activity {
     private static final String URL_HOME  = "https://pokebonk.com/";
     private static final String URL_GUIDE = "https://pokebonk-moves.app.workbuddy.host/";
 
+    /** 横屏时游戏触摸按键放大系数(对齐官方 App 手感), 竖屏 1.0 原样。 */
+    private static final double BTN_SCALE_LANDSCAPE = 1.3;
+    /** 独立 CSS 变量 --pbk 叠加放大: 摇杆用 --tcs(游戏内 touchScale 设置) × --pbk, 二者都保留;
+     *  固定 px 动作键(game 内不随 --tcs 变化)用 transform:scale(--pbk) 放大。
+     *  !important 保证覆盖游戏外链样式(与加载顺序无关); 游戏后续动态创建控件自动套用。
+     *  动作键原本无 transform; .tc-btn.on 是按下态 scale(.88), 一并乘上 --pbk 避免按下时缩回原尺寸。 */
+    private static final String BTN_CSS =
+        ".tc-stick{width:calc(128px*var(--tcs,1)*var(--pbk,1))!important;"
+      + "height:calc(128px*var(--tcs,1)*var(--pbk,1))!important;"
+      + "margin:calc(-64px*var(--tcs,1)*var(--pbk,1)) 0 0 calc(-64px*var(--tcs,1)*var(--pbk,1))!important}"
+      + ".tc-stick>i{width:calc(58px*var(--tcs,1)*var(--pbk,1))!important;"
+      + "height:calc(58px*var(--tcs,1)*var(--pbk,1))!important;"
+      + "margin:calc(-29px*var(--tcs,1)*var(--pbk,1))!important}"
+      + ".tc-jump,.tc-dash,.tc-lock,.tc-inc,.tc-sm,.tc-bag,.tc-pot,.tc-ultb,.tc-aim,.tc-act"
+      + "{transform:scale(var(--pbk,1))!important}"
+      + ".tc-btn.on{transform:scale(calc(var(--pbk,1)*.88)) translateY(2px)!important}";
+
     private WebView webHome, webGuide;
     private FrameLayout capsule;
     private View pill;
@@ -118,16 +135,23 @@ public class PokeRogueActivity extends Activity {
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
         s.setUseWideViewPort(true);
-        s.setLoadWithOverviewMode(true);
-        s.setBuiltInZoomControls(true);
+        // 对齐官方 Capacitor 壳: 不开 overview(否则整页被缩小, 游戏触摸按键跟着变小);
+        // zoomEnabled=false, 缩放由游戏自己的 viewport(user-scalable=no) 管理。
+        s.setLoadWithOverviewMode(false);
+        s.setBuiltInZoomControls(false);
         s.setDisplayZoomControls(false);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
+        // 对齐官方壳 capacitor.config.json 的 appendUserAgent, 游戏据此识别「已装 App」分支
         s.setUserAgentString("Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 "
-                + "(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
+                + "(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+                + " PokeBonkAndroid/1.0.1");
         w.setWebChromeClient(new WebChromeClient());
         w.setWebViewClient(new WebViewClient() {
+            @Override public void onPageFinished(WebView v, String u) {
+                if (v == webHome) applyButtonScale();   // 页面就绪即注入放大样式(幂等)
+            }
             @Override public boolean shouldOverrideUrlLoading(WebView v, String u) { return false; }
             @Override public void onReceivedSslError(WebView v, android.webkit.SslErrorHandler h,
                                                      android.net.http.SslError e) { h.proceed(); }
@@ -196,6 +220,23 @@ public class PokeRogueActivity extends Activity {
                 == Configuration.ORIENTATION_LANDSCAPE;
         capsule.setVisibility(landscape ? View.GONE : View.VISIBLE);
         applyImmersive();
+        applyButtonScale();   // 横屏放大/竖屏还原, 实时改 CSS 变量, 不重载 WebView
+    }
+
+    /** app 级按键放大: 横屏放大游戏触摸摇杆与全部动作键, 竖屏原样。
+     *  只改独立 CSS 变量 --pbk, 首次注入样式后切档无需重载, 游戏进度不丢。 */
+    private void applyButtonScale() {
+        if (webHome == null) return;
+        boolean landscape = getResources().getConfiguration().orientation
+                == Configuration.ORIENTATION_LANDSCAPE;
+        String k = landscape ? String.valueOf(BTN_SCALE_LANDSCAPE) : "1.0";
+        String js = "(function(){try{"
+              + "document.documentElement.style.setProperty('--pbk'," + k + ");"
+              + "var s=document.getElementById('pbk-zoom');"
+              + "if(!s){s=document.createElement('style');s.id='pbk-zoom';"
+              + "s.textContent='" + BTN_CSS + "';document.head.appendChild(s);}"
+              + "}catch(e){}})()";
+        try { webHome.evaluateJavascript(js, null); } catch (Throwable ignored) {}
     }
 
     @Override public void onConfigurationChanged(Configuration newConfig) {
