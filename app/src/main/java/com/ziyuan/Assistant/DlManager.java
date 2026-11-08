@@ -28,6 +28,9 @@ public class DlManager {
     private static final ConcurrentHashMap<Integer, DlJob> JOBS = new ConcurrentHashMap<Integer, DlJob>();
     private static final ConcurrentHashMap<Integer, com.arthenica.ffmpegkit.FFmpegSession> HLS_SESS =
         new java.util.concurrent.ConcurrentHashMap<Integer, com.arthenica.ffmpegkit.FFmpegSession>();
+    /** 自管 HLS 抓片任务(hls.py 移植): 替代 ffmpeg 直吃 m3u8, 暂停复用 seen 去重集合 */
+    private static final ConcurrentHashMap<Integer, HlsPuller.Task> HLS_PULL =
+        new java.util.concurrent.ConcurrentHashMap<Integer, HlsPuller.Task>();
     private static final ConcurrentHashMap<Integer, M3u8Util.CancelToken> M3U8_TOKENS =
         new java.util.concurrent.ConcurrentHashMap<Integer, M3u8Util.CancelToken>();
     private static final AtomicInteger SEQ = new AtomicInteger(0);
@@ -73,7 +76,7 @@ public class DlManager {
         JOBS.put(j.id, j);
         try { DownloadService.start(sCtx); } catch (Throwable ignored) {}
         DlKeepService.ensure(sCtx);
-        launchSegmentFfmpeg(j);
+        launchHlsPull(j);
     }
 
     /** M3U8Manger 下载方式: 纯 HTTP 解析 m3u8(识别分片) + 并行下载全部 ts + 合并, 无需 ffmpeg */
@@ -141,32 +144,29 @@ public class DlManager {
         M3U8_TOKENS.remove(j.id);
     }
 
-    private static void launchSegmentFfmpeg(final DlJob j) {
+    /**
+     * 自管抓片(hls.py 移植): 每 1s 轮询 relay 清单, 按分片 ID 增量去重, 4 线程并行下载,
+     * 按序写 seg%05d.ts; 403=流结束 / 30s 无新片=超时。替代 ffmpeg 直吃 m3u8,
+     * 解决 FC2 分片 ?time=&hash= 签名轮换导致的重复拉取与断流。
+     * 输出目录格式不变, finishHls 的 concat 合并零改动。
+     */
+    private static void launchHlsPull(final DlJob j) {
         j.active = true;
         j.paused = false;
         j.failed = false;
         j.state = "下载中";
-        int segN = 0;
-        try {
-            java.io.File[] fs = j.file.listFiles();
-            if (fs != null) for (java.io.File f : fs) if (f.getName().endsWith(".ts")) segN++;
-        } catch (Throwable ignored) {}
-        String[] args = { "-y", "-i", j.url, "-c", "copy",
-            "-f", "segment", "-segment_time", "10", "-reset_timestamps", "1",
-            "-segment_start_number", String.valueOf(segN),
-            new java.io.File(j.file, "seg%05d.ts").getAbsolutePath() };
-        com.arthenica.ffmpegkit.FFmpegSession st = com.arthenica.ffmpegkit.FFmpegKit.executeWithArgumentsAsync(args,
-            new com.arthenica.ffmpegkit.FFmpegSessionCompleteCallback() {
-                public void apply(com.arthenica.ffmpegkit.FFmpegSession st2) {
-                    HLS_SESS.remove(j.id);
-                    if (j.active && !j.paused) {
-                        // 自己断流：标失败
-                        if (!j.done) { j.failed = true; j.active = false; j.state = "下载中断(点开始续传)"; }
-                    }
-                    refreshBytes(j);
-                }
-            });
-        HLS_SESS.put(j.id, st);
+        HlsPuller.Task t = HLS_PULL.get(j.id);
+        if (t == null) {
+            int segN = 0;
+            try {
+                java.io.File[] fs = j.file.listFiles();
+                if (fs != null) for (java.io.File f : fs)
+                    if (f.getName().startsWith("seg") && f.getName().endsWith(".ts")) segN++;
+            } catch (Throwable ignored) {}
+            t = new HlsPuller.Task(j, j.url, j.file, segN);
+            HLS_PULL.put(j.id, t);
+        }
+        t.start();   // 复用 seen/segNo: 暂停后继续不重复下载
     }
 
     public static void pauseHls(int id) {
@@ -174,6 +174,8 @@ public class DlManager {
         if (j == null || !j.hls) return;
         com.arthenica.ffmpegkit.FFmpegSession st = HLS_SESS.remove(id);
         if (st != null) { try { com.arthenica.ffmpegkit.FFmpegKit.cancel(st.getSessionId()); } catch (Throwable ignored) {} }
+        HlsPuller.Task t = HLS_PULL.get(id);
+        if (t != null) t.stop();          // 保留 seen/segNo, 续录接续
         j.paused = true;
         j.active = false;
         j.state = "已暂停";
@@ -184,7 +186,7 @@ public class DlManager {
         DlJob j = JOBS.get(id);
         if (j == null || !j.hls) return;
         DlKeepService.ensure(sCtx);
-        launchSegmentFfmpeg(j);
+        launchHlsPull(j);
     }
 
     /** 结束：停采集 + 合并成 MP4 入相册/历史，卡片转入"视频" */
@@ -193,6 +195,11 @@ public class DlManager {
         if (j == null || !j.hls) return;
         com.arthenica.ffmpegkit.FFmpegSession st = HLS_SESS.remove(id);
         if (st != null) { try { com.arthenica.ffmpegkit.FFmpegKit.cancel(st.getSessionId()); } catch (Throwable ignored) {} }
+        HlsPuller.Task t = HLS_PULL.remove(id);
+        if (t != null) {
+            t.stop();
+            try { if (t.thread != null) t.thread.join(2000); } catch (Throwable ignored) {}  // 等最后一片写完
+        }
         j.state = "合并MP4中…";
         new Thread(new Runnable() { public void run() {
             try {
@@ -332,6 +339,8 @@ public class DlManager {
         JOBS.remove(id);
         com.arthenica.ffmpegkit.FFmpegSession hs = HLS_SESS.remove(id);
         if (hs != null) { try { com.arthenica.ffmpegkit.FFmpegKit.cancel(hs.getSessionId()); } catch (Throwable ignored) {} }
+        HlsPuller.Task ht = HLS_PULL.remove(id);
+        if (ht != null) ht.stop();
         M3u8Util.CancelToken mt = M3U8_TOKENS.remove(id);
         if (mt != null) mt.cancelled = true;   // 中止 M3U8Manger 方式的并行下载
         try { if (j.file != null) {

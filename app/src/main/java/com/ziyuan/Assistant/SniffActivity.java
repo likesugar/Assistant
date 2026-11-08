@@ -180,7 +180,7 @@ public class SniffActivity extends Activity {
                     while (mm.find()) modes.add(Integer.parseInt(mm.group(1)));
                     for (int i = 0; i < urls.size() && i < modes.size(); i++) {
                         int m = modes.get(i);
-                        if (m >= 90) continue;   // 隐藏档 90/92: 只有声音无画面, 不参与选档
+                        if (m >= 90) continue;   // 官方 sound 纯音频档(9x): 无视频轨, 不参与选档
                         if (m > bestMode) { bestMode = m; best = urls.get(i); }
                     }
                 } catch (Throwable ignored) {}
@@ -283,7 +283,7 @@ public class SniffActivity extends Activity {
                                 new java.io.ByteArrayInputStream(new byte[0]));
                 } catch (Throwable ignored) {}
                 try { maybeRecordGeneric(request.getUrl().toString(), request.getMethod()); } catch (Throwable ignored) {}
-                try { maybeAddHqCard(request.getUrl().toString()); } catch (Throwable ignored) {}  // 会话型多档位流: 反推提升一级补建最高画质(2M)卡
+                try { maybeAddHqCard(request.getUrl().toString()); } catch (Throwable ignored) {}  // 会话型多档位流: 补建官方最高视频档 52(3M)卡
                 try {
                     if (!"GET".equalsIgnoreCase(request.getMethod())) return null;
                     Uri u = request.getUrl();
@@ -297,7 +297,7 @@ public class SniffActivity extends Activity {
                             dumpFc2Debug("REQ: " + url);
                         }
                         if (isMaster) {
-                            // 从 master 按带宽选最高公开档(52) 探测可用后进记录; 隐藏档 90/92 不参与
+                            // 从 master 按带宽选最高公开档(52) 探测可用后进记录; 官方 sound 纯音频档 9x 不参与
                             final String fUrl = url;
                             final String chKey = url.substring(0, url.indexOf('?') > 0 ? url.indexOf('?') : url.length());
                             new Thread(new Runnable() { public void run() {
@@ -892,9 +892,10 @@ public class SniffActivity extends Activity {
     private final java.util.Set<String> reqTsLogged = java.util.Collections.synchronizedSet(new java.util.HashSet<String>());
 
     // 会话型多档位直播流: /stream/<room>/<mode>/playlist?<会话签名>
-    // 服务器按会话下发降一级档位; 补卡只认 master 公开最高档 52(实测 BANDWIDTH 5.4M, 视频轨正常)。
-    // 隐藏档 90/92 虽返回 200 有效清单, 但真机播放只有声音无画面(视频轨 app 解不了), 已移除;
-    // 62 为臆造档(实测 404), 同样移除。补卡失败或同流则由检测兜底, 记录页只留真实档。
+    // 官方 mode 编码: 十位=画质, 个位=延迟(low0/high1/mid2), 最高视频档 52=3Mbps+mid。
+    // 十位 9x(90/91/92) 是官方 sound 纯音频档, 无视频轨, 不参与画质补卡;
+    // 目标档不可用属官方 _get_playlist_or_best 回退行为(等待重试→回退同延迟最佳), 非"降一级"。
+    // 补卡只认 52; 62 为臆造档(实测 404), 已移除。失败或同流由检测兜底, 记录页只留真实档。
     // 站点无关: 只认 URL 形态, 不含任何域名硬编码; 不动 UA / 网页 / 播放器链路。
     private static final java.util.regex.Pattern HQ_STREAM =
         java.util.regex.Pattern.compile("(/stream/\\d+/)(\\d+)(/playlist\\?[^\\s]+)");
@@ -902,10 +903,11 @@ public class SniffActivity extends Activity {
         java.util.Collections.synchronizedSet(new java.util.HashSet<String>());
     private final java.util.Map<String, Integer> hqTries =
         java.util.Collections.synchronizedMap(new java.util.HashMap<String, Integer>());
-    private static final int[] HQ_MODES = {52};  // 仅 master 公开最高档(视频轨可正常解码); 隐藏档 90/92 只有声音无画面, 已移除
+    private static final int[] HQ_MODES = {52};  // 官方最高视频档 3Mbps+mid; 9x=sound 纯音频档已排除
 
-    /** 反推画质表(真机确认 + 服务端降一级补偿): 22=400K 32=1.2M 42/52=2M(最高档钳位)。
-     *  12 及以下未实测, 不臆造标注; 未知道位返回 null 不标注。 */
+    /** 官方 FC2 mode 编码(参考 HoloArchivists/fc2-live-dl 的 STREAM_QUALITY/LATENCY):
+     *  mode = 画质(十位) + 延迟(个位); 22=400K 32=1.2M 42=2M 52=3M(β)。
+     *  十位 9x = sound 纯音频档(无视频轨), 不属于画质档; 12 及以下未实测, 不臆造标注。 */
     static String streamQualityName(String url) {
         if (url == null) return null;
         String s = LiveProxy.unwrap(url);   // 解壳(兼容任意端口/双重外壳)
@@ -913,7 +915,8 @@ public class SniffActivity extends Activity {
             .compile("(/stream/\\d+/)(\\d+)(/playlist\\?)").matcher(s);
         if (!m.find()) return null;
         String mode = m.group(2);
-        if ("52".equals(mode) || "42".equals(mode)) return "2M";
+        if ("52".equals(mode)) return "3M(β)";
+        if ("42".equals(mode)) return "2M";
         if ("32".equals(mode)) return "1.2M";
         if ("22".equals(mode)) return "400K";
         return null;
@@ -955,7 +958,7 @@ public class SniffActivity extends Activity {
                     String fp = hqFingerprint(text);
                     int bw = hqMaxBandwidth(text);
                     if (fp.equals(baseFp) && bw <= baseBw) {
-                        dumpFc2Debug("HQ SKIP same-stream: /" + hq + "/ bw=" + bw + " base=" + baseBw);
+                        dumpFc2Debug("HQ FALLBACK (官方回退): /" + hq + "/ 与当前档同流 bw=" + bw + " base=" + baseBw + ", 保持当前最佳档");
                         continue;                              // 假档位: 同一份流, 不建卡
                     }
                     pick = cand;
@@ -963,7 +966,10 @@ public class SniffActivity extends Activity {
                     dumpFc2Debug("HQ REAL: /" + hq + "/ bw=" + bw + " base=" + baseBw);
                     break;
                 }
-                if (pick == null) return;                      // 全是同流: 不下卡, 记录页只留真实档
+                if (pick == null) {                             // 目标高档不可用/同流: 按官方回退语义保持当前档, 不造卡
+                    dumpFc2Debug("HQ FALLBACK: 目标档不可用, 保持当前档(9x=sound 纯音频档已排除, 非降一级)");
+                    return;
+                }
                 final String pickF = pick, labelF = label;
                 String proxied;
                 try { proxied = LiveProxy.relay(pickF); }
@@ -1215,7 +1221,7 @@ public class SniffActivity extends Activity {
             });
             for (int i = 0; i < idx.length; i++) {
                 String cand = urls.get(idx[i]);
-                if (cand.contains("/90/") || cand.contains("/92/")) continue;  // 隐藏档只有声音无画面
+                if (cand.contains("/90/") || cand.contains("/92/")) continue;  // 官方 sound 纯音频档: 无视频轨
                 dumpFc2Debug("候选#" + (i + 1) + " bw=" + bws.get(idx[i])[0] + " name=" + names.get(idx[i]) + " " + cand);
                 if (probeHls(cand)) {
                     int rank = i + 1;  // 1=最高带宽

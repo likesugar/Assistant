@@ -6,7 +6,7 @@ import java.security.cert.X509Certificate;
 
 /**
  * FC2 系直播控制信令客户端：连 wss 控制通道，
- * connect_complete 后发 get_hls_information 拿 HLS m3u8 地址（挑 mode 最高的画质）。
+ * connect_complete 后发 get_hls_information 拿 HLS m3u8 地址（挑 mode 最高的画质；9x=sound 音频档排除）。
  * HLS 地址交给嗅探/播放/录制现有管线。心跳 25s 保活。
  */
 public class Fc2Relay {
@@ -180,7 +180,7 @@ public class Fc2Relay {
         try {
             if (msg.contains("playlists") && msg.contains("url")) {
                 gotFlag[0] = true;
-                // _response_ 携带 HLS 信息：挑 mode 最高；隐藏档 90/92 只有声音无画面，直接排除
+                // _response_ 携带 HLS 信息：挑 mode 最高；官方 sound 纯音频档(9x)无视频轨，直接排除
                 String best = null; int bestMode = -1;
                 java.util.regex.Matcher mu = java.util.regex.Pattern.compile("\"url\"\\s*:\\s*\"([^\"]+)\"").matcher(msg);
                 java.util.regex.Matcher mm = java.util.regex.Pattern.compile("\"mode\"\\s*:\\s*(\\d+)").matcher(msg);
@@ -190,7 +190,7 @@ public class Fc2Relay {
                 while (mm.find()) modes.add(Integer.parseInt(mm.group(1)));
                 for (int i = 0; i < urls.size() && i < modes.size(); i++) {
                     int m = modes.get(i);
-                    if (m >= 90) continue;   // 隐藏档 90/92: 不参与选档
+                    if (m >= 90) continue;   // 官方 sound 纯音频档(9x): 无视频轨, 不参与选档
                     if (m > bestMode) { bestMode = m; best = urls.get(i); }
                 }
                 if (best != null) hlsUrl = best;
