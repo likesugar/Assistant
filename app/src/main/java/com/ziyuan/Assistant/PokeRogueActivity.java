@@ -3,6 +3,7 @@ package com.ziyuan.Assistant;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.res.Configuration;
+import android.content.pm.ActivityInfo;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
@@ -22,8 +23,10 @@ import android.widget.TextView;
 /**
  * 宝可梦肉鸽: 独立双页容器。
  * 「首页」= https://pokebonk.com/ (游戏)  「攻略」= https://pokebonk-moves.app.workbuddy.host/
- * 两个独立 WebView 叠放保活, 底部胶囊两页签只切可见性 —— 切走再切回不重载, 游戏进度/攻略滚动位置保留。
- * 胶囊尺寸/样式与首页 CapsuleBottomBar 对齐(去阴影); 横屏隐藏胶囊。
+ * 两个独立 WebView 叠放保活, 底部胶囊「首页/攻略」两页签只切可见性 —— 切走再切回不重载, 游戏进度/攻略滚动位置保留。
+ * 第三格「横屏」是动作按钮: 点击 setRequestedOrientation(SENSOR_LANDSCAPE) 主动切横屏玩,
+ * 配合 Manifest configChanges 不重建 WebView; 横屏胶囊隐藏(全屏游戏), 按返回键回竖屏。
+ * 胶囊尺寸/样式与首页 CapsuleBottomBar 对齐(去阴影)。
  * 与首页其它卡片完全独立, 不复用娱乐/网页转应用等逻辑。
  */
 public class PokeRogueActivity extends Activity {
@@ -40,16 +43,16 @@ public class PokeRogueActivity extends Activity {
      *  3) 中下道具格 .hud-bl(touch 模式底部居中)归 --hs(hudScale) 管, 把 --pbk 乘进它的 transform。
      *  !important 压过游戏外链/内联样式; 右上角 .tc-sm 小按钮不在放大列(保持游戏原生 zoom:1)。
      *
-     *  地图放大: 右上小地图 .minimap 是 canvas, 触摸模式基准 140px*--mm。乘 1.5 放大并左移 20px,
-     *  保留游戏内「Tamaño del minimapa」(mapScale) 设置可继续调。高度增量用等量负 margin-bottom
-     *  抵消, 避免把下方 .counters 推去压住大圆动作键。
+     *  地图放大(VC=96): 右上小地图 .minimap 是 canvas, 触摸模式基准 140px*--mm。乘 1.6 放大并左移 34px
+     *  (VC=95 是 1.5/左移 20px, 本次「往左一点再放大一点点」), 保留游戏内 mapScale 设置可继续调。
+     *  高度增量用等量负 margin-bottom 抵消, 避免把下方 .counters 推去压住大圆动作键。
      *
-     *  右上按钮与「精灵球 0」计数(VC=95, 按最初图): 撤销 VC=93/94 对「自动」.tc-aim 和「双精灵球」
-     *  .tc-pause(实为暂停键, title=Pausa)的位移, 恢复游戏原生 —— 暂停 top:12 在上、自动 top:70 在下。
-     *  「精灵球 0」计数器 .counters(JS: t.kills, 内含 poke-ball 图标与数字)是 .hud-tr 这个
-     *  flex 竖列的成员, 原位 [1083,209]。用 position:relative 视觉平移到自动按钮正下方 [1145,140]
-     *  (left:+62px / top:-69px), 保留 flex 占位, 下方 .kgoal 不上移、不压 1.5x 地图圆。
-     *  VC=94 里计数器与暂停键本就重叠(counter_pause=true), 一并消除。竖屏不改动。
+     *  右上按钮与「精灵球 0」计数(VC=96): 撤销 VC=93/94 对 .tc-aim/.tc-pause 的位移, 保持游戏原生
+     *  (暂停 top:12 在上、自动 top:70 在下)。「精灵球 0」计数器 .counters(JS: t.kills)是 .hud-tr
+     *  flex 竖列的成员。VC=95 用简化 CSS 探针算出 top:-69px 能放到自动下方, 真机却反馈重合 ——
+     *  真实 .hud-tr 带 transform:scale(.85)/scale:var(--hs) 双重缩放, 简化探针漏了, 实测 counter
+     *  反压在自动按钮内(counter_aim 重叠 24px@hs=1)。本次按真实规则复现并把 top 改 -22px 下移约 40px,
+     *  counter_aim 变 +16px@hs=1 / +44px@hs=1.2 间隙, 全部不重叠; 保留 flex 占位, .kgoal 不动。竖屏不改动。
      *
      *  紫色香炉 .tc-inc 移位: 原锚右下 right:50/bottom:232, 与一堆动作键挤在一起。按用户要求
      *  横屏移到中下道具栏「黄色挂锁格」右边的草地空白(锁格中心约屏幕 50%+120px, 视觉放大后右缘
@@ -75,16 +78,17 @@ public class PokeRogueActivity extends Activity {
       // 右上小地图再放大(基准 140px*--mm): 1.25 -> 1.5, 并整体左移 20px。
       // 高度比 1.25 多出 35px, 用 -25px 负 margin-bottom 抵消大部分: 既不让 .counters
       // (精灵球计数)被推下去压住大圆动作键, 又让它下移 10px 避开放大后地图圆的右下边缘。
-      + "html.touch .hud-tr .minimap{width:calc(140px*var(--mm,1)*1.5)!important;"
-      + "height:calc(140px*var(--mm,1)*1.5)!important;margin-right:20px!important;"
-      + "margin-bottom:calc(-25px*var(--mm,1))!important}"
+      + "html.touch .hud-tr .minimap{width:calc(140px*var(--mm,1)*1.6)!important;"
+      + "height:calc(140px*var(--mm,1)*1.6)!important;margin-right:34px!important;"
+      + "margin-bottom:calc(-39px*var(--mm,1))!important}"
       // 按最初图恢复右上两按钮原生位置 —— 不注入 .tc-aim / .tc-pause 规则即回到暂停上、自动下。
-      // 只把「精灵球 0」计数器 .counters 移到自动按钮正下方:
-      // 原位 [1083,209,51,28] -> [1145,140,51,28]; 自动 [1145,70,50,62] 底部 132, 留 8px 间隙。
-      // relative 保留 flex 占位: 下方 .kgoal 保持 [983,247] 不上移, 圆到矩形距 128 > 半径 105。
-      // 实测(CSS 1207x453): 全部 overlap=false; 计数器到圆心距 138.6 > 半径 105。
+      // 只调「精灵球 0」计数器 .counters: 相对定位往下移, 脱离「自动」按钮(VC=95 真机重合)。
+      // 用真实 CSS(.hud-tr transform:scale(.85) + scale:var(--hs) + gap:6px/top:8px)复现实测:
+      //   VC=95 top:-69px -> counter[1137,112,49,24], 自动底 136, 重叠 24px(@hs=1)。
+      //   VC=96 top:-22px -> counter[1137,152,49,24], 间隙 +16px(@hs=1) / +44px(@hs=1.2), 全不重叠。
+      // relative 保留 flex 占位: 下方 .kgoal 不上移; 计数器到地图圆心距 137 > 半径 95。
       + "html.touch .hud-tr .counters{position:relative!important;"
-      + "left:62px!important;top:calc(-69px + var(--st))!important}"
+      + "left:62px!important;top:calc(-22px + var(--st))!important}"
       // 紫色香炉移到黄色挂锁格右边的草地空白。
       // 锁格位置 = 视口中心 + 120px(slots 半宽) * --hs * --pbk; 把香炉绑到同一表达式,
       // 游戏内改 UI 缩放时两者同步, 不会漂移。独立 scale 属性只缩放自身、不改 left/bottom 定位基准,
@@ -97,7 +101,8 @@ public class PokeRogueActivity extends Activity {
     private WebView webHome, webGuide;
     private FrameLayout capsule;
     private View pill;
-    private TextView tabHome, tabGuide;
+    private TextView tabHome, tabGuide, tabLand;
+    private boolean landscapeLocked = false;   // 「横屏」页签主动锁横屏, 按返回键解除
     private int itemW;
     private boolean guideLoaded = false;
     private int current = 0;              // 0=首页 1=攻略
@@ -154,14 +159,25 @@ public class PokeRogueActivity extends Activity {
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         tabHome = makeTab("首页");
         tabGuide = makeTab("攻略");
+        tabLand = makeTab("横屏");
+        tabLand.setTextColor(dark ? 0xFF8FB4FF : 0xFF1677FF);   // 动作按钮用蓝色区分页面页签
+        tabLand.setTypeface(Typeface.DEFAULT_BOLD);
         tabHome.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { selectTab(0); }
         });
         tabGuide.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { selectTab(1); }
         });
+        tabLand.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                // 主动切横屏玩: configChanges 保证 WebView 不重建, 游戏进度不丢; 不锁死竖屏
+                landscapeLocked = true;
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+            }
+        });
         row.addView(tabHome, new LinearLayout.LayoutParams(itemW, dp(42)));
         row.addView(tabGuide, new LinearLayout.LayoutParams(itemW, dp(42)));
+        row.addView(tabLand, new LinearLayout.LayoutParams(itemW, dp(42)));
 
         FrameLayout.LayoutParams clp = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -293,6 +309,7 @@ public class PokeRogueActivity extends Activity {
 
     @Override public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
+        if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT) landscapeLocked = false;
         applyOrientation();
     }
 
@@ -310,6 +327,12 @@ public class PokeRogueActivity extends Activity {
 
     @Override public boolean onKeyDown(int keyCode, KeyEvent e) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
+            // 「横屏」主动锁定态: 返回键先解除锁定回竖屏(胶囊重新出现), 不直接退出/WebView 回退
+            if (landscapeLocked) {
+                landscapeLocked = false;
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                return true;
+            }
             WebView w = current == 0 ? webHome : webGuide;
             if (w != null && w.canGoBack()) { w.goBack(); return true; }
         }
