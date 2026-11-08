@@ -44,9 +44,11 @@ public class PokeRogueActivity extends Activity {
      *  保留游戏内「Tamaño del minimapa」(mapScale) 设置可继续调。高度增量用等量负 margin-bottom
      *  抵消, 避免把下方 .counters 推去压住大圆动作键。
      *
-     *  右上「精灵球」按钮移位: 该圆形按钮图标是两颗精灵球, 实际是暂停键 .tc-pause(title=Pausa),
-     *  原生位置 top:12px 在「自动」.tc-aim 上方。按用户要求横屏移到自动按钮下方(top:142px),
-     *  与已隐藏的 .tc-fs 原位置一致; 竖屏不改动。
+     *  右上两按钮分开(VC=94): 「自动」.tc-aim 和「双精灵球」.tc-pause(实为暂停键, title=Pausa)
+     *  原本同挤在右侧一竖列(right:12px; top:70 / 12)。按用户标注把它们分开到小地图右上、
+     *  右下两处空白: .tc-aim 上移到 top:12px(右上蓝色圈处), .tc-pause 左移到 right:105px、
+     *  下移到 top:235px(小地图 1.5x 后底缘 224px 之下, .counters 计数条 [1102,209] 左侧),
+     *  形成对角, 互不遮挡。竖屏不改动。
      *
      *  紫色香炉 .tc-inc 移位: 原锚右下 right:50/bottom:232, 与一堆动作键挤在一起。按用户要求
      *  横屏移到中下道具栏「黄色挂锁格」右边的草地空白(锁格中心约屏幕 50%+120px, 视觉放大后右缘
@@ -75,9 +77,11 @@ public class PokeRogueActivity extends Activity {
       + "html.touch .hud-tr .minimap{width:calc(140px*var(--mm,1)*1.5)!important;"
       + "height:calc(140px*var(--mm,1)*1.5)!important;margin-right:20px!important;"
       + "margin-bottom:calc(-25px*var(--mm,1))!important}"
-      // 右上圆形「精灵球」按钮(实为暂停键 .tc-pause)移到「自动」.tc-aim 下方。
-      // .tc-aim: top:70px / height:62px -> 底部 132px, 留 10px 间隙取 142px(原 .tc-fs 位置)。
-      + ".tc-pause{top:calc(142px + var(--st))!important}"
+      // 按用户标注把右上两按钮分开: 「自动」上移到蓝色圈空白(top:12px),
+      // 「双精灵球」(暂停键)左下移到 right:105px / top:235px(小地图底缘 224 之下、计数条左侧)。
+      // 实测(CSS 1207x453): aim[1145,12,50,62] pause[1052,235,50,50], 圆到矩形最近距 124>105, 全不重叠。
+      + ".tc-aim{top:calc(12px + var(--st))!important}"
+      + ".tc-pause{top:calc(235px + var(--st))!important;right:calc(105px + var(--sr))!important}"
       // 紫色香炉移到黄色挂锁格右边的草地空白。
       // 锁格位置 = 视口中心 + 120px(slots 半宽) * --hs * --pbk; 把香炉绑到同一表达式,
       // 游戏内改 UI 缩放时两者同步, 不会漂移。独立 scale 属性只缩放自身、不改 left/bottom 定位基准,
