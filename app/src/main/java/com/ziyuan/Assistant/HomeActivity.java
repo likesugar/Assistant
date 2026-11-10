@@ -170,7 +170,7 @@ public class HomeActivity extends Activity {
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         pageHost.addView(mediaScroll, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
-        // 排盘页(第2页): 三张排盘卡片
+        // 排盘页(第2页): API 设置 / 奇门遁甲 / 小六壬 / 六爻 / 梅花易数 / 八字命理
         ScrollView panScroll = new ScrollView(this);
         panScroll.setFillViewport(true);
         panScroll.setVerticalScrollBarEnabled(false);
@@ -178,7 +178,7 @@ public class HomeActivity extends Activity {
         panBox.setOrientation(LinearLayout.VERTICAL);
         panBox.setPadding((int) (18 * den), (int) (20 * den), (int) (18 * den), (int) (50 * den));
         panBox.addView(panCard("我的api设置", "🔑", "api"));
-        panBox.addView(panCard("小六壬排盘", "🔮", "mystic-six-ren"));
+        panBox.addView(panCard("江氏小六壬", "🧮", "jiang-liuren"));
         panBox.addView(panCard("六爻排盘", "☯️", "liu-yao"));
         panBox.addView(panCard("梅花易数", "⚡", "meihua"));
         panBox.addView(panCard("奇门遁甲", "🌀", "qimen"));
@@ -259,6 +259,7 @@ public class HomeActivity extends Activity {
         row.addView(t, tlp);
         card.addView(row);
         card.setClickable(true);
+        // 小六壬/六爻/梅花易数/八字命理 4 张卡: 小六壬已接入 H5, 其余 3 张暂未放入(点击静默)
         if ("api".equals(key)) {
             TapGuard.guard(card);
             card.setOnClickListener(new View.OnClickListener() {
@@ -274,30 +275,39 @@ public class HomeActivity extends Activity {
             card.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) { pickLocal(); }
             });
-        } else if ("mystic-six-ren".equals(key) || "liu-yao".equals(key) || "meihua".equals(key)) {
-            TapGuard.guard(card);
-            card.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    Intent it = new Intent(HomeActivity.this, PanViewerActivity.class);
-                    it.putExtra("key", key); it.putExtra("title", title);
-                    startActivity(it);
-                }
-            });
-        } else if ("bazi".equals(key)) {
-            TapGuard.guard(card);
-            card.setOnClickListener(new View.OnClickListener() {
-                public void onClick(View v) {
-                    Intent it = new Intent(HomeActivity.this, PanViewerActivity.class);
-                    it.putExtra("key", "bazi"); it.putExtra("title", title);
-                    startActivity(it);
-                }
-            });
         } else if ("qimen".equals(key)) {
             TapGuard.guard(card);
             card.setOnClickListener(new View.OnClickListener() {
                 public void onClick(View v) {
                     Intent it = new Intent(HomeActivity.this, PanViewerActivity.class);
                     it.putExtra("key", "qimen"); it.putExtra("title", title);
+                    startActivity(it);
+                }
+            });
+        } else if ("jiang-liuren".equals(key)) {
+            TapGuard.guard(card);
+            card.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    Intent it = new Intent(HomeActivity.this, PanViewerActivity.class);
+                    it.putExtra("key", "jiang-liuren"); it.putExtra("title", title);
+                    startActivity(it);
+                }
+            });
+        } else if ("liu-yao".equals(key)) {
+            TapGuard.guard(card);
+            card.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    Intent it = new Intent(HomeActivity.this, PanViewerActivity.class);
+                    it.putExtra("key", "liu-yao"); it.putExtra("title", title);
+                    startActivity(it);
+                }
+            });
+        } else if ("meihua".equals(key)) {
+            TapGuard.guard(card);
+            card.setOnClickListener(new View.OnClickListener() {
+                public void onClick(View v) {
+                    Intent it = new Intent(HomeActivity.this, PanViewerActivity.class);
+                    it.putExtra("key", "meihua"); it.putExtra("title", title);
                     startActivity(it);
                 }
             });
@@ -350,11 +360,16 @@ public class HomeActivity extends Activity {
         return info != null ? info[1] : "📌";
     }
 
-    /** 收藏列表解析成集合: 去空项/去空格/去重, 避免脏数据让某张卡误判成"未收藏" */
+    /** 已下线的排盘卡: 升级后自动从收藏中剔除, 避免残留卡点击无反应(小六壬排盘已移除) */
+    private static final java.util.HashSet<String> DEAD_PAN_KEYS = new java.util.HashSet<String>() {{
+        add("mystic-six-ren");
+    }};
+
+    /** 收藏列表解析成集合: 去空项/去空格/去重/剔已下线卡, 避免脏数据让某张卡误判成"未收藏" */
     private java.util.LinkedHashSet<String> favSet() {
         java.util.LinkedHashSet<String> set = new java.util.LinkedHashSet<>();
         String s = getSharedPreferences("settings", MODE_PRIVATE).getString("favCards", "");
-        for (String k : s.split(",")) { k = k.trim(); if (!k.isEmpty()) set.add(k); }
+        for (String k : s.split(",")) { k = k.trim(); if (!k.isEmpty() && !DEAD_PAN_KEYS.contains(k)) set.add(k); }
         return set;
     }
 
@@ -373,7 +388,7 @@ public class HomeActivity extends Activity {
     private void toggleFav(String key) {
         android.content.SharedPreferences sp = getSharedPreferences("settings", MODE_PRIVATE);
         java.util.LinkedHashSet<String> set = new java.util.LinkedHashSet<>();
-        for (String k : sp.getString("favCards", "").split(",")) { k = k.trim(); if (!k.isEmpty()) set.add(k); }
+        for (String k : sp.getString("favCards", "").split(",")) { k = k.trim(); if (!k.isEmpty() && !DEAD_PAN_KEYS.contains(k)) set.add(k); }
         boolean nowFav;
         if (set.contains(key)) { set.remove(key); nowFav = false; }
         else { set.add(key); nowFav = true; }
@@ -476,7 +491,7 @@ public class HomeActivity extends Activity {
             String[][] sec = {
                 {"🏠 首页", "聊天室 / 日历 / 用药提醒 / 娱乐中心 / 网页转应用 等工具卡；每张卡右侧 🤍 可收藏到 💖 页。"},
                 {"📺 媒体页", "播放器 / 下载器 / 视频下载 / 资源嗅探(剪贴板链接直进抖音B站YouTube) / 小红书 / 动态 / 直播；网络流(输入链接)与本地文件(选择视频)直接进播放器。"},
-                {"🔮 排盘页", "我的api设置(AI配置+GitHub配置备份) / 小六壬(时间·时刻·数字·随机四种起课，道家/江氏双流派，六宫含空亡，地支/x星/六神/六亲与原版逐宫对齐，AI解析调用你的AI配置) / 六爻 / 梅花易数 / 奇门遁甲 / 八字命理——全部离线可收藏。"},
+                {"🔮 排盘页", "我的api设置(AI配置+GitHub配置备份) / 江氏小六壬 / 六爻 / 梅花易数 / 奇门遁甲 / 八字命理——全部离线可收藏。"},
                 {"💖 收藏页", "所有页面卡片右侧 🤍 一键收藏/取消；点收藏卡直接触发原功能。"},
                 {"⚙️ 设置页", "平台账号登录(哔哩哔哩/抖音/YouTube/自定义，超4行卡内滚动) / 明暗模式切换 / 配置文件上传与下载(AI配置+收藏+下载历史+胶囊显示开关，独立卡片) / 剪贴板开关 / 下载通知 / 清除全部记录 / 关于。"},
                 {"🌍 主题", "右上角 🌙/☀️ 切换纯黑/浅蓝两套主题，全页面跟随。"},
@@ -815,12 +830,13 @@ public class HomeActivity extends Activity {
         put("cardLive", "直播"); put("cardCalendar", "日历"); put("cardChat", "聊天室");
         put("cardMedicine", "用药提醒"); put("cardTapper", "点击器"); put("cardShortcut", "创建快捷键");
         put("cardWebShell", "网页转应用"); put("cardFun", "娱乐中心"); put("cardBili", "B站登录");
-        put("cardPokeBonk", "宝可梦肉鸽"); put("cardPokeCatch", "宝可梦Poke'Catch");
+        put("cardPokeBonk", "宝可梦幸存者"); put("cardPokeCatch", "宝可梦Poke'Catch"); put("cardPokeRogue", "宝可梦肉鸽");
+        put("cardSimpleRead", "简单阅读");
     }};
 
     private static final java.util.HashMap<String, String[]> CARD_INFO = new java.util.HashMap<String, String[]>() {{
         put("api", new String[]{"我的api设置", "🔑"});
-        put("mystic-six-ren", new String[]{"小六壬排盘", "🔮"});
+        put("jiang-liuren", new String[]{"江氏小六壬", "🧮"});
         put("liu-yao", new String[]{"六爻排盘", "☯️"});
         put("meihua", new String[]{"梅花易数", "⚡"});
         put("qimen", new String[]{"奇门遁甲", "🌀"});
@@ -834,11 +850,11 @@ public class HomeActivity extends Activity {
     private final java.util.HashMap<String, Integer> EMOJI_RES = new java.util.HashMap<String, Integer>() {{
         // 排盘页 / 媒体页动态卡
         put("🔑", R.drawable.ic_cute_1f511);   // 我的api设置
-        put("🔮", R.drawable.ic_cute_1f52e);   // 小六壬
+        put("🧮", R.drawable.ic_cute_1f4d5);   // 江氏小六壬 -> 书卷(典籍)
         put("☯️", R.drawable.ic_cute_262f);    // 六爻
-        put("⚡", R.drawable.ic_cute_26a1);     // 梅花易数 / 创建快捷键
+        put("⚡", R.drawable.ic_cute_26a1);     // 梅花易数 / 创建快捷键(共用, 勿删)
         put("🌀", R.drawable.ic_cute_1f300);   // 奇门遁甲
-        put("🌟", R.drawable.ic_cute_1f31f);   // 八字
+        put("🌟", R.drawable.ic_cute_1f31f);   // 八字命理
         put("🌐", R.drawable.ic_cute_1f310);   // 网络流
         put("📁", R.drawable.ic_cute_1f4c1);   // 本地文件
         put("📺", R.drawable.ic_cute_1f4fa);   // 媒体类(m:)
@@ -1147,6 +1163,14 @@ public class HomeActivity extends Activity {
         TapGuard.guard(findViewById(R.id.cardPokeCatch));
         findViewById(R.id.cardPokeCatch).setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) { startActivity(new Intent(HomeActivity.this, PokeCatchActivity.class)); }
+        });
+        TapGuard.guard(findViewById(R.id.cardPokeRogue));
+        findViewById(R.id.cardPokeRogue).setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) { startActivity(new Intent(HomeActivity.this, PokeRogueWebActivity.class)); }
+        });
+        TapGuard.guard(findViewById(R.id.cardSimpleRead));
+        findViewById(R.id.cardSimpleRead).setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) { startActivity(new Intent(HomeActivity.this, SimpleReadActivity.class)); }
         });
 
         TapGuard.guard(findViewById(R.id.cardShortcut));

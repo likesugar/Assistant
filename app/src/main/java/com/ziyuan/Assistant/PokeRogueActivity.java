@@ -21,7 +21,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 /**
- * 宝可梦肉鸽: 独立双页容器。
+ * 宝可梦幸存者: 独立双页容器。
  * 「首页」= https://pokebonk.com/ (游戏)  「攻略」= https://pokebonk-moves.app.workbuddy.host/
  * 两个独立 WebView 叠放保活, 底部胶囊「首页/攻略」两页签只切可见性 —— 切走再切回不重载, 游戏进度/攻略滚动位置保留。
  * 第三格「横屏」是动作按钮: 点击 setRequestedOrientation(SENSOR_LANDSCAPE) 主动切横屏玩,
@@ -58,9 +58,15 @@ public class PokeRogueActivity extends Activity {
      *  横屏移到中下道具栏「黄色挂锁格」右边的草地空白(锁格中心约屏幕 50%+120px, 视觉放大后右缘
      *  约 50%+156px, 故 left 取 50%+175px)。此处不能用 zoom —— zoom 会把 left/bottom 一起放大导致
      *  坐标漂移; 改用独立 scale 属性(只缩放自身、不改定位基准, 且与 game 的 transform:.88 按下态
-     *  叠加而非冲突)。竖屏不应用(保持游戏原生右下位置)。不碰 display: 游戏每秒写内联显隐照常生效。 */
+     *  叠加而非冲突)。竖屏不应用(保持游戏原生右下位置)。不碰 display: 游戏每秒写内联显隐照常生效。
+     *
+     *  VC=103: ①「精灵球 0」右缘没和 .tc-pause/.tc-aim 对齐 —— left:62px 的补偿会被 .hud-tr 的
+     *  transform:scale(.85) × scale:var(--hs) 缩掉, 实测偏左 9px; 改 62px*--tcs/.85/--hs 精确补偿,
+     *  5 组缩放组合下右缘差 0px。②地图圆右上红圈处加「放大」按钮, 点击把 minimap 居中放大成实时大图,
+     *  点任意处收起复位; 见 MAP_JS。 */
     private static final String BTN_CSS =
-        ".tc-jump,.tc-dash,.tc-lock,.tc-bag,.tc-pot,.tc-ultb,.tc-act"
+        "#pbk-mapbtn{display:none!important}"
+      + ".tc-jump,.tc-dash,.tc-lock,.tc-bag,.tc-pot,.tc-ultb,.tc-act"
       + "{zoom:calc(var(--tcs,1)*var(--pbk,1))!important}"
       + ".tc-stick{width:calc(128px*var(--tcs,1)*var(--pbk,1))!important;"
       + "height:calc(128px*var(--tcs,1)*var(--pbk,1))!important;"
@@ -88,7 +94,8 @@ public class PokeRogueActivity extends Activity {
       //   VC=96 top:-22px -> counter[1137,152,49,24], 间隙 +16px(@hs=1) / +44px(@hs=1.2), 全不重叠。
       // relative 保留 flex 占位: 下方 .kgoal 不上移; 计数器到地图圆心距 137 > 半径 95。
       + "html.touch .hud-tr .counters{position:relative!important;"
-      + "left:62px!important;top:calc(-22px + var(--st))!important}"
+      + "left:calc(62px * var(--tcs,1) / .85 / var(--hs,1))!important;"
+      + "top:calc(-22px + var(--st))!important}"
       // 紫色香炉移到黄色挂锁格右边的草地空白。
       // 锁格位置 = 视口中心 + 120px(slots 半宽) * --hs * --pbk; 把香炉绑到同一表达式,
       // 游戏内改 UI 缩放时两者同步, 不会漂移。独立 scale 属性只缩放自身、不改 left/bottom 定位基准,
@@ -96,7 +103,81 @@ public class PokeRogueActivity extends Activity {
       + ".tc-inc{zoom:1!important;"
       + "scale:calc(var(--hs,1)*var(--pbk,1))!important;"
       + "right:auto!important;left:calc(50% + 120px*var(--hs,1)*var(--pbk,1) + 28px)!important;"
-      + "bottom:calc(14px*var(--hs,1)*var(--pbk,1) + var(--sb))!important;top:auto!important}}";
+      + "bottom:calc(14px*var(--hs,1)*var(--pbk,1) + var(--sb))!important;top:auto!important}"
+      // 放大地图按钮(VC=103): 落在 .hud-tr 右上角 = 地图圆右上、右上按钮组左侧的红圈草地。
+      // 默认隐藏, 仅横屏 media 内放开; pointer-events:auto 防 HUD 父级拦截触摸。
+      // VC=104 修复: 按钮必须挂 body + fixed + 极高 z-index。之前挂 .hud-tr 内,
+      // 而 .hud-tr 带 transform:scale(.85)/scale:var(--hs) 会创建「局部层叠上下文」,
+      // 子元素 z-index 再大也压不过盖在 HUD 上的游戏画布; 且 #hud *{pointer-events:none}。
+      // 真实触摸 elementFromPoint 命中的是游戏层, 点击被吞 => 「点了没放大」。
+      + "#pbk-mapbtn{display:grid!important;pointer-events:auto!important;position:fixed;z-index:999999;"
+      + "right:calc(62px * var(--tcs,1) + 14px + var(--sr));top:calc(16px + var(--st));"
+      + "width:44px;height:44px;border-radius:14px;background:#22243aee;color:#fff;"
+      + "box-shadow:0 0 0 2px #ffffff66,0 3px 10px #0008;place-items:center;"
+      + "font:900 12px/1.1 system-ui,sans-serif;touch-action:manipulation;user-select:none;cursor:pointer}"
+      + "#pbk-mapbtn.on{background:#2f6bd8}"
+      // 放大态: minimap 节点临时移进全屏遮罩并居中放大。canvas 内部分辨率固定 400x400,
+      // 游戏仍持有同一节点每帧重绘 => 实时地图; pointer-events:none 避开游戏原有 minimap
+      // click / mapTap 逻辑。点遮罩任意处收起, 节点原样插回 .hud-tr 首位。
+      // 尺寸由 JS 按「当前实际视觉尺寸」写入 --pbk-mm-big: 现状*1.35 与 86% 短边取大,
+      // 再夹到 96% 短边; 末尾兜底绝不 < 现状(地图被调到超大时至少居中占满)。
+      // 之前写死 min(86vmin,560px), 用户把地图调到很大(--mm≈2, 实测约 452px)时反而更小。
+      + "#pbk-mapwrap{position:fixed;inset:0;z-index:999998;background:#0b0d18cc}"
+      // 绝对定位强制居中: grid/flex 的 place-items:center 在元素比容器还大时会退化为贴边(start),
+      // 用户把地图调到超大(457px > 屏短边 412px)时就不会居中。transform 只做平移, 动画只淡入不再碰 transform。
+      + "#pbk-mapwrap .minimap.pbk-mm-big{position:absolute!important;left:50%!important;top:50%!important;"
+      + "transform:translate(-50%,-50%)!important;"
+      + "width:var(--pbk-mm-big,min(86vmin,560px))!important;"
+      + "height:var(--pbk-mm-big,min(86vmin,560px))!important;margin:0!important;pointer-events:none!important;"
+      + "box-shadow:0 0 0 5px #fff,0 0 0 11px #e8243a,0 0 0 15px #ffffff22,0 24px 80px #000c!important;"
+      + "animation:pbkmmpop .18s ease-out}"
+      + "@keyframes pbkmmpop{from{opacity:.4}to{opacity:1}}"
+      + "#pbk-maptip{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);"
+      + "color:#fff;font:700 14px system-ui,sans-serif;text-shadow:0 2px 6px #000}"
+      + "}";
+
+    /** 放大地图按钮: 幂等创建; minimap 未就绪(游戏 HUD 异步生成)时每 300ms 重试, 最多 12s。
+     *  VC=104: 按钮挂 document.body 而非 .hud-tr —— 后者 transform 造层叠上下文且 #hud *
+     *  pointer-events:none, 真实触摸点不到。放大尺寸按当前视觉尺寸动态算, 保证一定变大。
+     *  竖屏由 applyButtonScale 调 window.__pbkMapClose 自动收起, 避免遮罩残留。 */
+    private static final String MAP_JS =
+        "(function init(n){"
+      + "if(document.getElementById('pbk-mapbtn'))return;"
+      + "var mm=document.querySelector('.minimap');"
+      + "if(!mm){if(n<40)setTimeout(function(){init(n+1)},300);return;}"
+      + "var btn=document.createElement('div');btn.id='pbk-mapbtn';btn.textContent='放大';"
+      + "document.body.appendChild(btn);"
+      + "var wrap=null,big=false,home=null,next=null;"
+      + "function open(){"
+      + "if(big)return;"
+      + "var m=document.querySelector('.minimap');if(!m)return;"
+      + "var r=m.getBoundingClientRect();"
+      + "var cur=Math.max(r.width,r.height);"
+      + "var side=Math.min(innerWidth,innerHeight);"
+      // 现状*1.35 与 86% 短边取大(一定变大), 上限 96% 短边; 兜底绝不 < 现状
+      + "var t=Math.min(Math.max(cur*1.35,side*0.86),side*0.96);"
+      + "if(t<cur)t=cur;"
+      + "m.style.setProperty('--pbk-mm-big',Math.round(t)+'px');"
+      + "home=m.parentNode;next=m.nextSibling;"
+      + "wrap=document.createElement('div');wrap.id='pbk-mapwrap';"
+      + "var tip=document.createElement('div');tip.id='pbk-maptip';tip.textContent='点击任意处收起';"
+      + "wrap.appendChild(m);wrap.appendChild(tip);document.body.appendChild(wrap);"
+      + "m.classList.add('pbk-mm-big');"
+      + "btn.classList.add('on');btn.textContent='收起';big=true;"
+      + "wrap.addEventListener('click',function(e){e.stopPropagation();close();});}"
+      + "function close(){"
+      + "if(!big)return;big=false;"
+      + "var m=document.querySelector('.minimap');"
+      + "if(m){m.classList.remove('pbk-mm-big');m.style.removeProperty('--pbk-mm-big');"
+      + "if(home&&home.isConnected)"
+      + "{if(next&&next.parentNode===home)home.insertBefore(m,next);else home.insertBefore(m,home.firstChild);}"
+      + "else{var tr=document.querySelector('.hud-tr')||document.body;tr.appendChild(m);}}"
+      + "if(wrap&&wrap.parentNode)wrap.parentNode.removeChild(wrap);"
+      + "wrap=null;btn.classList.remove('on');btn.textContent='放大';}"
+      + "btn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();"
+      + "big?close():open();});"
+      + "window.__pbkMapClose=close;"
+      + "})(0);";
 
     private WebView webHome, webGuide;
     private FrameLayout capsule;
@@ -292,7 +373,8 @@ public class PokeRogueActivity extends Activity {
     }
 
     /** app 级按键放大: 横屏放大游戏触摸摇杆与全部动作键, 竖屏原样。
-     *  只改独立 CSS 变量 --pbk, 首次注入样式后切档无需重载, 游戏进度不丢。 */
+     *  只改独立 CSS 变量 --pbk, 首次注入样式后切档无需重载, 游戏进度不丢。
+     *  同时幂等挂载放大地图按钮(MAP_JS); 切竖屏时先收起放大态遮罩。 */
     private void applyButtonScale() {
         if (webHome == null) return;
         boolean landscape = getResources().getConfiguration().orientation
@@ -300,9 +382,11 @@ public class PokeRogueActivity extends Activity {
         String k = landscape ? String.valueOf(BTN_SCALE_LANDSCAPE) : "1.0";
         String js = "(function(){try{"
               + "document.documentElement.style.setProperty('--pbk'," + k + ");"
+              + (landscape ? "" : "try{if(window.__pbkMapClose)window.__pbkMapClose()}catch(e){}")
               + "var s=document.getElementById('pbk-zoom');"
               + "if(!s){s=document.createElement('style');s.id='pbk-zoom';"
               + "s.textContent='" + BTN_CSS + "';document.head.appendChild(s);}"
+              + MAP_JS
               + "}catch(e){}})()";
         try { webHome.evaluateJavascript(js, null); } catch (Throwable ignored) {}
     }

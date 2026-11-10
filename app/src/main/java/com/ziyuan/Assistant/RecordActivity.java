@@ -193,14 +193,19 @@ public class RecordActivity extends Activity {
 
     /**
      * 自适应轮询间隔:
-     *  - 有任务正在跑(下载中/录制中): 1s  —— 速度与进度(含 mm:ss 计时)既实时又不抖
+     *  - 有任务正在跑(下载中/录制中): 跟随录制时长整秒同步 —— 刷新对齐到 mm:ss 的秒边界, 大小与计时同拍跳动
      *  - 只有暂停/等待中的任务:        3s  —— 状态不再变化, 慢速兜底
      *  - 全部空闲(仅历史/已完成):      5s  —— 几乎只做一次无变化的 diff, 省电省 CPU
      */
     private long nextDelay() {
         boolean live = false, waiting = false, merging = false;
+        long liveRef = 0;   // 跟随录制时长同步刷新的基准 startTs
         for (RecManager.RecJob j : RecManager.recJobs.values()) {
-            if (j.active) { live = true; break; }
+            if (j.active) {
+                live = true;
+                if (j.startTs > 0) liveRef = j.startTs;
+                break;
+            }
             if (j.state != null && j.state.startsWith("合并视频")) merging = true;
         }
         if (!live) {
@@ -209,7 +214,12 @@ public class RecordActivity extends Activity {
                 if (j.paused) waiting = true;
             }
         }
-        if (live) return 1000;
+        if (live) {
+            // 对齐到录制时长的整秒边界, 让"录制大小"与 mm:ss 计时同拍跳动, 不再与计时漂移
+            long now = System.currentTimeMillis();
+            long into = (liveRef > 0) ? ((now - liveRef) % 1000) : (now % 1000);
+            return Math.max(60, 1000 - into);
+        }
         if (merging) return 500;     // 合并阶段快刷, 才能看到 0→100 的推进
         if (waiting) return 3000;
         return 5000;

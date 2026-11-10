@@ -37,7 +37,11 @@ public class EntertainmentActivity extends Activity {
     private int dip2(int v) { return Math.round(v * getResources().getDisplayMetrics().density); }
 
     @Override
-    public void onBackPressed() { finish(); }
+    public void onBackPressed() {
+        // 娱乐卡内各小游戏用 location.href 跳转：先回退到娱乐卡主页，再退出
+        if (web != null && web.canGoBack()) { web.goBack(); return; }
+        finish();
+    }
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {

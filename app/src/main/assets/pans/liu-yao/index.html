@@ -1,92 +1,324 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>六爻神课</title>
-    <script src="tailwind.js"></script>
-    
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              serif: ['"Noto Serif SC"', 'serif'],
-              calligraphy: ['"Ma Shan Zheng"', 'cursive'],
-              ink: ['"Zhi Mang Xing"', 'cursive'],
-            },
-            colors: {
-              // Dark Theme Palette
-              ink: {
-                950: '#050505', // Deep Black
-                900: '#121212', // Main Background (Dark Charcoal)
-                850: '#1a1a1a', // Component Background (Obsidian)
-                800: '#262626', // Lighter Surface
-                700: '#404040', // Borders/Separators
-                500: '#737373', // Muted Text
-              },
-              paper: {
-                50: '#ffffff',
-                100: '#e5e5e5', // Primary Text (Off-white)
-                200: '#d4d4d4', // Secondary Text
-                300: '#a3a3a3',
-              },
-              gold: {
-                100: '#fbf5e6',
-                200: '#f1e2c1',
-                300: '#e6c88a', // Primary Gold Text
-                400: '#dba857',
-                500: '#cca352', // Muted Gold Icon
-                600: '#aa8233',
-                900: '#4a3610',
-              },
-              tea: {
-                // Remapped to muted bronzes/browns for dark theme
-                100: '#3d342b',
-                300: '#5c4e40',
-                500: '#8c7662', 
-                800: '#1f1a16',
-              },
-              jade: {
-                300: '#8bd6bb',
-                500: '#34d399', // Bright Jade Glow
-                700: '#059669',
-                900: '#064e3b',
-              },
-              cinnabar: '#ef4444', // Brighter red for dark background contrast
-            },
-            animation: {
-              'spin-slow': 'spin 8s linear infinite',
-              'float': 'float 6s ease-in-out infinite',
-              'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-            },
-            boxShadow: {
-              'glow': '0 0 15px rgba(230, 200, 138, 0.1)',
-            }
-          }
-        }
-      }
-    </script>
-    <style>
-      /* Hide scrollbar for Chrome, Safari and Opera */
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
-      /* Hide scrollbar for IE, Edge and Firefox */
-      .no-scrollbar {
-        -ms-overflow-style: none;  /* IE and Edge */
-        scrollbar-width: none;  /* Firefox */
-      }
-      body {
-        background-color: #121212;
-        color: #e5e5e5;
-        overscroll-behavior: none;
-      }
-    </style>
-  <link rel="stylesheet" href="/index.css">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>六爻排盘</title>
+<style>
+  :root {
+    --bg: #000000;      /* 背景 */
+    --fg: #f2f2f2;      /* 主文字 */
+    --card: #141414;    /* 卡片底 */
+    --gold: #d4af37;    /* 高亮金 */
+    --line: #2b2b2b;    /* 分隔线 */
+    --sub: #9a9a9a;     /* 次要文字 */
+    --blue: #4aa3ff;    /* 六神 */
+    --green: #6cc06c;   /* 地支 */
+    --red: #ff5a5a;     /* 世应/动爻 */
+    --purple: #b98cff;  /* 六亲 */
+    --brown: #7a4e28;   /* 官方棕按钮 */
+    --orange: #e0a458;  /* 变爻/旺 */
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--fg);
+    font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+    font-size: 15px; line-height: 1.5; padding: 0 0 40px;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 0 16px; }
+  .hidden { display: none !important; }
+
+  /* 顶栏 */
+  .topbar { display: flex; align-items: center; padding: 16px 0 8px; min-height: 46px; }
+  .topbar .back { width: 38px; color: var(--gold); font-size: 14px; cursor: pointer; background: none; border: none; text-align: left; padding: 6px 0; flex: none; }
+  .topbar .title { flex: 1; text-align: center; font-size: 16px; font-weight: 700; letter-spacing: 0; color: var(--fg); white-space: nowrap; }
+  .topbar .spacer { width: 38px; flex: none; }
+
+  /* 首页 */
+  .brand { text-align: center; padding: 26px 0 8px; }
+  .brand .seal {
+    width: 66px; height: 66px; margin: 0 auto 14px; border-radius: 14px;
+    background: linear-gradient(135deg, var(--gold), #a8842a);
+    color: #1a1206; font-size: 38px; font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Songti SC", "SimSun", serif;
+    box-shadow: 0 4px 20px rgba(212,175,55,.25);
+  }
+  .brand h1 { font-size: 24px; margin: 0 0 6px; letter-spacing: 3px; color: var(--fg); }
+  .brand .sub { color: var(--sub); font-size: 13px; letter-spacing: 1px; }
+  .entries { margin-top: 26px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .entry { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px 14px; cursor: pointer; text-align: center; transition: border-color .15s, transform .1s; }
+  .entry:active { transform: scale(.97); border-color: var(--gold); }
+  .entry .ico { font-size: 26px; color: var(--gold); margin-bottom: 8px; }
+  .entry .nm { font-size: 16px; font-weight: 700; letter-spacing: 1px; }
+  .entry .ds { font-size: 11px; color: var(--sub); margin-top: 5px; }
+
+  /* 表单 */
+  .course-card { padding: 18px 18px 28px; }
+  .frow { display: flex; align-items: center; gap: 10px; min-height: 58px; }
+  .fk { width: 56px; flex: none; font-size: 16px; font-weight: 700; color: var(--fg); }
+  .fv { flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: var(--fg); font-size: 16px; font-family: inherit; padding: 8px 0; }
+  .fv::placeholder { color: #6f6f6f; font-weight: 400; }
+  .fv[readonly] { cursor: pointer; }
+  .fv-lunar { font-weight: 700; letter-spacing: .5px; }
+  .now { flex: none; background: var(--brown); color: #fff; border: none; border-radius: 20px; padding: 9px 15px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
+  .now:active { opacity: .85; }
+  .frow-reason { margin-top: 4px; }
+  .course-btns { text-align: center; margin-top: 36px; }
+  .btn-ok { width: 140px; padding: 12px 0; border: none; border-radius: 24px; background: var(--brown); color: #fff; font-size: 16px; font-weight: 700; letter-spacing: 2px; font-family: inherit; cursor: pointer; }
+  .btn-ok:active { opacity: .85; }
+  .reselect { margin-top: 16px; color: var(--sub); font-size: 14px; cursor: pointer; letter-spacing: 1px; }
+
+  /* 手工摇卦: 6 爻 */
+  .yao-pick { margin-top: 6px; }
+  .yp { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .yp:last-child { border-bottom: none; }
+  .yp .pos { width: 46px; flex: none; color: var(--sub); font-size: 13px; }
+  .yp .sym { width: 40px; flex: none; text-align: center; font-size: 18px; color: var(--fg); }
+  .yp .nm { width: 54px; flex: none; font-size: 14px; color: var(--gold); font-weight: 700; }
+  .yp .btn6 { flex: 1; background: #0a0a0a; border: 1px solid var(--line); border-radius: 9px; color: var(--fg); padding: 9px 0; font-size: 14px; font-family: inherit; cursor: pointer; }
+  .yp .btn6:active { border-color: var(--gold); }
+  .tool-row { display: flex; gap: 10px; margin: 14px 0 4px; }
+  .tool-row .tbtn { flex: 1; background: transparent; border: 1px solid var(--gold); color: var(--gold); border-radius: 9px; padding: 10px 0; font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer; }
+
+  /* 结果页 */
+  .info { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; }
+  .info .ir { display: flex; padding: 3px 0; font-size: 13.5px; }
+  .info .ir .ik { width: 62px; color: var(--sub); flex: none; }
+  .info .ir .iv { flex: 1; color: var(--fg); }
+  .gz { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+  .gz .g { background: #0a0a0a; border: 1px solid var(--line); border-radius: 9px; text-align: center; padding: 8px 2px; }
+  .gz .g small { display: block; color: var(--sub); font-size: 11px; margin-bottom: 3px; }
+  .gz .g b { font-size: 15px; font-weight: 600; letter-spacing: 1px; }
+
+  .sec-title { color: var(--gold); font-size: 14px; font-weight: 700; letter-spacing: 2px; margin: 18px 0 10px; text-align: center; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+  .lab { color: var(--gold); font-size: 13px; font-weight: 600; margin: 0 0 10px; letter-spacing: 1px; }
+  .gua3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .gc { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 8px; text-align: center; }
+  .gc .gt { color: var(--sub); font-size: 12px; margin-bottom: 6px; }
+  .gc .gs { font-size: 22px; letter-spacing: 2px; color: var(--gold); line-height: 1.15; }
+  .gc .gn { font-size: 15px; font-weight: 700; margin-top: 6px; }
+  .gc .gu { color: var(--sub); font-size: 12px; margin-top: 2px; }
+
+  /* 六爻表 */
+  .yaotable { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .yaotable th { color: var(--sub); font-weight: 600; padding: 6px 4px; border-bottom: 1px solid var(--line); font-size: 12px; }
+  .yaotable td { padding: 7px 4px; border-bottom: 1px solid #1d1d1d; text-align: center; }
+  .yaotable tr:last-child td { border-bottom: none; }
+  .yaotable .pos { color: var(--sub); }
+  .yaotable .sym { font-size: 16px; color: var(--fg); }
+  .yaotable .dz { color: var(--green); }
+  .yaotable .wx { color: var(--orange); }
+  .yaotable .lq { color: var(--purple); }
+  .yaotable .ls { color: var(--blue); }
+  .yaotable .sy { color: var(--red); font-weight: 800; }
+  .yaotable .mv { color: var(--red); font-weight: 700; }
+  .yaotable .void { color: var(--sub); }
+  .yaotable .tag { display: inline-block; font-size: 11px; padding: 1px 5px; border-radius: 6px; border: 1px solid var(--line); color: var(--sub); }
+  .yaotable .tag.sheng { color: var(--green); border-color: var(--green); }
+  .yaotable .tag.wang { color: var(--orange); border-color: var(--orange); }
+
+  .tagline { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+  .tagline .t { background: #0a0a0a; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 13px; }
+  .tagline .t b { color: var(--gold); }
+
+  textarea { resize: vertical; min-height: 64px; background: #0a0a0a; color: var(--fg); border: 1px solid var(--line); border-radius: 9px; padding: 10px 11px; font-size: 15px; font-family: inherit; width: 100%; outline: none; }
+  .act { display: flex; gap: 10px; margin-top: 20px; }
+  .act .btn { flex: 1; }
+  .act .btn.sec { background: transparent; color: var(--gold); border: 1px solid var(--gold); font-weight: 600; }
+  .btn { display: block; width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; letter-spacing: 2px; cursor: pointer; color: #1a1206; background: linear-gradient(135deg, #ecd489, #c9a45c); }
+  .btn:active { opacity: .88; }
+  .btn-ghost { background: transparent; color: var(--sub); border: 1px solid var(--line); font-weight: 500; letter-spacing: 1px; margin-top: 10px; }
+
+  /* 弹窗 */
+  .mask { position: fixed; inset: 0; background: rgba(0,0,0,.72); display: flex; align-items: center; justify-content: center; z-index: 99; padding: 24px; }
+  .modal { background: var(--card); border: 1px solid var(--gold); border-radius: 16px; width: 100%; max-width: 420px; max-height: 80vh; overflow-y: auto; padding: 20px; }
+  .modal h3 { color: var(--gold); margin: 0 0 14px; font-size: 18px; text-align: center; letter-spacing: 2px; }
+  .modal .mb { border-top: 1px solid var(--line); padding: 10px 0; }
+  .modal .mt { color: var(--gold); font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .modal .mc { color: var(--fg); font-size: 13px; line-height: 1.7; white-space: pre-line; }
+  .modal .btn { margin-top: 12px; }
+  .toast { position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%); background: #333; color: #fff; padding: 9px 18px; border-radius: 20px; font-size: 13px; z-index: 200; }
+
+  /* 官方同款时间选择器 */
+  .tp-mask { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 150; display: none; align-items: center; justify-content: center; }
+  .tp-mask.open { display: flex; }
+  .tp-card { width: 288px; max-width: calc(100vw - 48px); background: #fff; border-radius: 2px; box-shadow: 0 12px 40px rgba(0,0,0,.4); color: #212121; overflow: hidden; }
+  .tp-head { height: 100px; background: #009688; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 58px; font-weight: 400; letter-spacing: 1px; font-variant-numeric: tabular-nums; user-select: none; }
+  .tp-head span { cursor: pointer; }
+  .tp-head .dim { color: rgba(255,255,255,.55); }
+  .tp-colon { padding: 0 2px; color: rgba(255,255,255,.8); cursor: default; }
+  .tp-body { height: 292px; display: flex; align-items: center; justify-content: center; background: #fff; }
+  .tp-dial { position: relative; width: 224px; height: 224px; border-radius: 50%; background: #efefef; touch-action: none; }
+  .tp-dial .tp-num { position: absolute; transform: translate(-50%,-50%); width: 36px; height: 36px; line-height: 36px; text-align: center; font-size: 17px; color: #333; border-radius: 50%; }
+  .tp-dial .tp-num.inner { font-size: 12px; color: #8a8a8a; width: 30px; height: 30px; line-height: 30px; }
+  .tp-dial .tp-num.near { opacity: .28; }
+  .tp-hand { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+  .tp-sel { position: absolute; transform: translate(-50%,-50%); width: 40px; height: 40px; line-height: 40px; text-align: center; border-radius: 50%; background: #009688; color: #fff; font-size: 18px; z-index: 2; pointer-events: none; }
+  .tp-text { display: flex; align-items: baseline; justify-content: center; gap: 8px; }
+  .tp-input { width: 62px; height: 52px; border: none; border-bottom: 2px solid #009688; background: transparent; text-align: center; font-size: 34px; color: #212121; outline: none; font-family: inherit; }
+  .tp-tcolon { font-size: 30px; color: #666; }
+  .tp-foot { height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; }
+  .tp-kb { width: 28px; height: 28px; border: none; background: transparent; padding: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .tp-kb svg { width: 24px; height: 24px; fill: #5f6368; }
+  .tp-acts { display: flex; gap: 22px; }
+  .tp-btn { border: none; background: transparent; color: #009688; font-size: 15px; font-weight: 700; letter-spacing: 1px; padding: 8px 4px; cursor: pointer; font-family: inherit; }
+  .tp-btn:active { opacity: .6; }
+
+  /* 随机三钱法 · 逐爻投掷动画 */
+  .coin-wrap { text-align: center; }
+  .coins { display: flex; justify-content: center; gap: 20px; padding: 8px 0 2px; }
+  .coin { width: 60px; height: 60px; border-radius: 50%; position: relative; perspective: 400px; transform-style: preserve-3d; transition: transform .62s cubic-bezier(.25,.8,.25,1); }
+  .coin .face { position: absolute; inset: 0; border-radius: 50%; backface-visibility: hidden; -webkit-backface-visibility: hidden; background-size: 100% 100%; background-position: center; background-repeat: no-repeat; box-shadow: 0 2px 6px rgba(0,0,0,.5); }
+  .coin .face.back { background-image: url('coin_back.png'); transform: rotateY(0deg); }
+  .coin .face.front { background-image: url('coin_front.png'); transform: rotateY(180deg); }
+  .coin-hint { color: var(--sub); font-size: 13px; margin-top: 8px; min-height: 18px; }
+  .coin-slots { margin-top: 14px; }
+  .cs { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .cs:last-child { border-bottom: none; }
+  .cs .pos { width: 46px; flex: none; color: var(--sub); font-size: 13px; }
+  .cs .sym { width: 40px; flex: none; text-align: center; font-size: 18px; color: var(--sub); }
+  .cs .nm { width: 56px; flex: none; font-size: 14px; color: var(--sub); font-weight: 700; }
+  .cs .st { flex: 1; color: var(--sub); font-size: 13px; text-align: right; }
+  .cs.filled .sym, .cs.filled .pos { color: var(--fg); }
+  .cs.filled .nm { color: var(--gold); }
+  .cs.next .pos { color: var(--gold); }
+  .cs.next .st { color: var(--gold); }
+  .ctoss { width: 100%; padding: 13px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; letter-spacing: 2px; background: linear-gradient(135deg, #ecd489, #c9a45c); color: #1a1206; cursor: pointer; margin-top: 18px; }
+  .ctoss:active { opacity: .88; }
+  .ctoss-all { margin-top: 10px; background: transparent; border: 1px solid var(--gold); color: var(--gold); font-weight: 600; letter-spacing: 1px; }
+  .ctoss-all:active { opacity: .7; }
+</style>
 </head>
-  <body>
-    <div id="root"></div>
-  <script type="module" src="bundle.js"></script>
+<body>
+<div class="wrap">
+
+  <!-- 首页 -->
+  <div id="viewHome">
+    <div class="brand">
+      <div class="seal">爻</div>
+      <h1>六爻排盘</h1>
+      <div class="sub">京房八宫纳甲法</div>
+    </div>
+    <div class="entries">
+      <div class="entry" data-method="time"><div class="ico">⏳</div><div class="nm">时间起卦</div><div class="ds">按当前时间</div></div>
+      <div class="entry" data-method="coin"><div class="ico">🪙</div><div class="nm">随机三钱法</div><div class="ds">三枚铜钱掷</div></div>
+      <div class="entry" data-method="manual"><div class="ico">🎲</div><div class="nm">手工摇卦</div><div class="ds">逐爻手动</div></div>
+    </div>
+  </div>
+
+  <!-- 起卦页 -->
+  <div id="viewCourse" class="hidden">
+    <div class="topbar">
+      <button class="back" id="courseBack">‹ 返回</button>
+      <div class="title"></div>
+      <div class="spacer"></div>
+    </div>
+
+    <div class="card course-card">
+      <!-- 时间起卦字段 -->
+      <div id="timeFields">
+        <div class="frow" id="rowDate">
+          <div class="fk">日期：</div>
+          <input id="date" class="fv" inputmode="numeric" aria-label="日期">
+        </div>
+        <div class="frow" id="rowTime">
+          <div class="fk">时间：</div>
+          <input id="time" class="fv" inputmode="numeric" readonly aria-label="时间">
+          <button class="now" id="now">获取当前时间</button>
+        </div>
+        <div class="frow" id="rowLunar">
+          <div class="fk">农历：</div>
+          <div class="fv fv-lunar" id="lunarText">—</div>
+        </div>
+      </div>
+
+      <!-- 手工摇卦字段 -->
+      <div id="manualFields" class="hidden">
+        <div class="yao-pick" id="yaoPick"></div>
+        <div class="tool-row">
+          <button class="tbtn" id="randomFill">随机摇一卦</button>
+          <button class="tbtn" id="clearYao">全部置静</button>
+        </div>
+      </div>
+
+      <!-- 随机三钱法字段: 逐爻投掷 -->
+      <div id="coinFields" class="hidden">
+        <div class="coin-wrap">
+          <div class="coins" id="coinCoins">
+            <div class="coin"><div class="face back"></div><div class="face front"></div></div>
+            <div class="coin"><div class="face back"></div><div class="face front"></div></div>
+            <div class="coin"><div class="face back"></div><div class="face front"></div></div>
+          </div>
+          <div class="coin-hint" id="coinHint">点击一次抛出三枚铜钱</div>
+        </div>
+        <div class="coin-slots" id="coinSlots"></div>
+        <button class="ctoss" id="tossBtn">抛第一爻（初爻）</button>
+        <button class="ctoss ctoss-all" id="tossAllBtn">一键全抛（六爻连掷）</button>
+      </div>
+
+      <div class="frow frow-reason">
+        <div class="fk">事由：</div>
+        <input id="reason" class="fv" maxlength="60" placeholder="请输入占事（非必填）" aria-label="事由">
+      </div>
+      <div class="course-btns">
+        <button class="btn-ok" id="go">确定</button>
+        <div class="reselect" id="reselect">重新选择</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 结果页 -->
+  <div id="viewResult" class="hidden">
+    <div class="topbar">
+      <button class="back" id="resultBack">‹ 返回</button>
+      <div class="title">排盘结果</div>
+      <div class="spacer"></div>
+    </div>
+    <div id="resultBody"></div>
+  </div>
+
+</div>
+
+<div id="modalMask" class="mask hidden">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<!-- 官方同款 24 小时制时钟时间选择器 -->
+<div id="timePickerMask" class="tp-mask">
+  <div class="tp-card">
+    <div class="tp-head">
+      <span class="tp-hh" id="tpHeadH">07</span><span class="tp-colon">:</span><span class="tp-mm dim" id="tpHeadM">46</span>
+    </div>
+    <div class="tp-body">
+      <div class="tp-dial" id="tpDial">
+        <svg class="tp-hand" viewBox="0 0 240 240" aria-hidden="true">
+          <line id="tpLine" x1="120" y1="120" x2="120" y2="29" stroke="#009688" stroke-width="2"/>
+          <circle cx="120" cy="120" r="4" fill="#009688"/>
+        </svg>
+        <div class="tp-sel" id="tpSel">7</div>
+      </div>
+      <div class="tp-text hidden" id="tpText">
+        <input id="tpH" class="tp-input" type="text" inputmode="numeric" maxlength="2" aria-label="小时">
+        <span class="tp-tcolon">:</span>
+        <input id="tpM" class="tp-input" type="text" inputmode="numeric" maxlength="2" aria-label="分钟">
+      </div>
+    </div>
+    <div class="tp-foot">
+      <button class="tp-kb" id="tpKb" type="button" aria-label="切换为键盘输入"></button>
+      <div class="tp-acts">
+        <button class="tp-btn" id="tpCancel" type="button">取消</button>
+        <button class="tp-btn" id="tpOk" type="button">确定</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="lunar.js"></script>
+<script src="engine.js"></script>
+<script src="timepicker.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

@@ -35,7 +35,7 @@ final class HlsPuller {
 
     private static final String UA = "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 "
             + "(KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
-    private static final int THREADS = 4;
+    private static final int THREADS = 8;
     private static final long NO_FRAG_TIMEOUT_MS = 30000L;
     private static final int MAX_RETRY = 5;
 
@@ -179,7 +179,7 @@ final class HlsPuller {
                     if (System.currentTimeMillis() - lastFragAt > NO_FRAG_TIMEOUT_MS) {
                         t.endReason = "清单持续不可用"; break;
                     }
-                    Thread.sleep(1000);
+                    Thread.sleep(800);
                     continue;
                 }
 
@@ -234,7 +234,7 @@ final class HlsPuller {
                     t.endReason = "30s 无新分片(流结束)";
                     break;
                 }
-                Thread.sleep(1000);   // hls.py 同款轮询间隔
+                Thread.sleep(800);   // hls.py 同款轮询间隔
             }
         } catch (InterruptedException ie) {
             // 暂停 / 取消：正常退出

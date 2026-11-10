@@ -98,7 +98,7 @@ public class RecManager {
             java.util.Map<String, String> map = new java.util.HashMap<String, String>();
             map.put(job.file.getAbsolutePath(), o.toString());
             android.content.SharedPreferences.Editor ed = sp.edit();
-            for (String k : sp.getAll().keySet()) if (k.startsWith("job:")) ed.remove(k);
+            // 多录制可并存: 不能清空其它 job:* 登记, 否则同房间/并行录制会互相抹掉恢复信息
             ed.putString("job:" + job.file.getAbsolutePath(), o.toString());
             ed.putStringSet("jobs_set", set);
             ed.apply();
@@ -108,8 +108,12 @@ public class RecManager {
     static void removeLiveRec(final RecJob job) {
         try {
             if (job == null || job.file == null) return;
+            String key = job.file.getAbsolutePath();
             android.content.SharedPreferences sp = sCtx.getSharedPreferences("rec_live", 0);
-            sp.edit().remove("job:" + job.file.getAbsolutePath()).apply();
+            java.util.Set<String> set = new java.util.HashSet<String>(
+                    sp.getStringSet("jobs_set", new java.util.HashSet<String>()));
+            set.remove(key);   // 同步移除, 否则重启会把已完成的录制当成"遗留暂停任务"复活
+            sp.edit().remove("job:" + key).putStringSet("jobs_set", set).apply();
         } catch (Throwable ignored) {}
     }
     public static volatile String lastStreamUrl = null;
@@ -236,7 +240,7 @@ public class RecManager {
             job.id = ++recSeq;
             job.notifId = 9000 + job.id;
             job.url = url;
-            job.name = "直播·原画_" + System.currentTimeMillis() / 1000 + ".ts";
+            job.name = "直播·原画_" + System.currentTimeMillis() + ".ts";
             job.startTs = System.currentTimeMillis();
             java.io.File dir = new java.io.File(sCtx.getExternalFilesDir(null), "录制");
             dir.mkdirs();
@@ -570,17 +574,23 @@ public class RecManager {
             job.id = ++recSeq;
             job.notifId = 9000 + job.id;
             job.url = url;
-            String ct = cleanTitle(title);
-            job.name = (ct != null ? ct : "直播·原画_" + System.currentTimeMillis() / 1000) + ".ts";
-            try { SniffActivity.registerLanLink(url, (url != null && url.contains("douyin") ? "抖音·原画" : "直播") + " " + job.name.replace(".ts", "")); } catch (Throwable ignored) {}
             job.startTs = System.currentTimeMillis();
-            String title2 = job.name.endsWith(".ts") ? job.name.substring(0, job.name.length() - 3) : job.name;
-            // 录制大小异常修复①: 目录必须用清洗后的标题(title2)。之前误用原始title,
-            // 未命名录制全挤进"录制合并/null"同一目录——新录制大小从一开始就带着旧任务残留的分片(如50MB)
-            final java.io.File dir = new java.io.File(sCtx.getExternalFilesDir(null), "录制合并/" + title2);
+            String ct = cleanTitle(title);
+            String base = ct != null ? ct : "直播·原画";
+            // 同房间重复录制防覆盖: 房间名作前缀 + 可读时间戳; 同一秒内再开录补序号直到目录不存在。
+            // job.name 是唯一根 —— 工作目录、成片名、相册 DISPLAY_NAME、历史路径全部由它派生。
+            String stamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US)
+                    .format(new java.util.Date(job.startTs));
+            final java.io.File rootDir = new java.io.File(sCtx.getExternalFilesDir(null), "录制合并");
+            java.io.File tmpDir = new java.io.File(rootDir, base + "_" + stamp);
+            int dup = 2;
+            while (tmpDir.exists()) tmpDir = new java.io.File(rootDir, base + "_" + stamp + "_" + (dup++));
+            final java.io.File dir = tmpDir;
+            job.name = dir.getName() + ".ts";
+            try { SniffActivity.registerLanLink(url, (url != null && url.contains("douyin") ? "抖音·原画" : "直播") + " " + job.name.replace(".ts", "")); } catch (Throwable ignored) {}
             dir.mkdirs();
-            // 录制大小异常修复②: 同名目录复用时清掉上次残留的中间文件(分片/拼接产物),
-            // 只保留上次已合并出的 .mp4 成片, 确保新录制大小从 0 开始
+            // 目录已唯一, 新录制大小天然从 0 开始; 下方清理仅作历史同名目录复用的兜底,
+            // 且只删中间产物, 绝不动已合并出的成片 .mp4。
             try {
                 java.io.File[] olds = dir.listFiles();
                 if (olds != null) for (java.io.File f : olds) {

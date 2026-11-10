@@ -17,17 +17,22 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.HashMap;
 
-/** 排盘查看器: 界面直接内置在 assets/pans/<key>/, 经虚拟域 https://pan.local/ 伺服(ES module/CORS 正常) */
+/** 奇门遁甲查看器: 界面内置在 assets/pans/qimen/, 经虚拟域 https://pan.local/ 伺服(ES module/CORS 正常) */
 public class PanViewerActivity extends Activity {
 
     private WebView web;
     private static int dp2(int v) { return (int) (v * android.content.res.Resources.getSystem().getDisplayMetrics().density); }
     private String key;
+    // H5 单页视图层级上报(仅作状态记录/调试): 返回退出决策已改由 __jlBack() 的同步返回值决定,
+    // 见 onBackPressed()。保留接口以免 H5 侧上报时因异步层级产生竞态。
+    private volatile int navDepth = 0;
 
     @Override protected void onCreate(Bundle b) {
             sanitizeIntPrefs(this);
         super.onCreate(b);
         key = getIntent().getStringExtra("key");
+        // 排盘页白名单: 奇门遁甲 + 江氏小六壬 + 六爻排盘 + 梅花易数(其余旧版本残留 key 直接返回, 不加载空资源白屏)
+        if (!"qimen".equals(key) && !"jiang-liuren".equals(key) && !"liu-yao".equals(key) && !"meihua".equals(key)) { finish(); return; }
         String title = getIntent().getStringExtra("title");
         boolean dark = getSharedPreferences("settings", MODE_PRIVATE).getBoolean("dark", false);
 
@@ -137,8 +142,8 @@ public class PanViewerActivity extends Activity {
                 }
             }
         });
-        // qimen 排盘页: 注入原生剪贴板(WebView Clipboard API 不可用)
-        if ("qimen".equals(key) || "bazi".equals(key)) {
+        // 奇门遁甲页: 注入原生剪贴板(WebView Clipboard API 不可用)
+        if ("qimen".equals(key)) {
             web.addJavascriptInterface(new Object() {
                 @android.webkit.JavascriptInterface
                 public void set(String text) {
@@ -150,7 +155,7 @@ public class PanViewerActivity extends Activity {
         web.setVerticalScrollBarEnabled(true);
         web.setBackgroundColor(Color.TRANSPARENT);
         root.addView(web, new LinearLayout.LayoutParams(-1, 0, 1f));
-        // 常驻"复制"按钮: 复制当前排盘页全文 (小六壬/梅花/六爻/奇门/八字通用)
+        // 排盘页复制能力: 注入 __copy JS 接口, 由 H5 页内"复制排盘结果"按钮调用(原生底部复制条已移除)
         web.addJavascriptInterface(new Object() {
             @android.webkit.JavascriptInterface
             public void done(String text) {
@@ -159,19 +164,11 @@ public class PanViewerActivity extends Activity {
                 runOnUiThread(() -> android.widget.Toast.makeText(PanViewerActivity.this, "已复制排盘内容", android.widget.Toast.LENGTH_SHORT).show());
             }
         }, "__copy");
-        android.widget.Button cpBtn = new android.widget.Button(this);
-        cpBtn.setText("复制排盘");
-        cpBtn.setTextSize(14);
-        cpBtn.setTextColor(0xFFFFFFFF);
-        cpBtn.setBackground(new android.graphics.drawable.GradientDrawable() {{
-            setColor(0xCC2A3142); setCornerRadius(dp2(14));
-        }});
-        LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(-2, dp2(40));
-        ((android.graphics.drawable.GradientDrawable) cpBtn.getBackground()).setAlpha(230);
-        clp.setMargins(dp2(16), dp2(8), dp2(16), dp2(12));
-        cpBtn.setOnClickListener(v -> web.evaluateJavascript(
-            "(function(){var t=document.body?document.body.innerText:'';__copy.done(t);})()", null));
-        root.addView(cpBtn, clp);
+        // 江氏小六壬单页 H5 上报视图层级(0首页/1起课页/2结果页), 供系统返回键逐层回退
+        web.addJavascriptInterface(new Object() {
+            @android.webkit.JavascriptInterface
+            public void setDepth(int d) { navDepth = d; }
+        }, "__nav");
         setContentView(root);
         Immersive.hide(this);
         web.loadUrl("https://pan.local/index.html");
@@ -197,8 +194,42 @@ public class PanViewerActivity extends Activity {
         return out.toByteArray();
     }
 
+    // WebView 初始 about:blank 会让 canGoBack() 为 true, 直接 goBack() 只是退到空白页(白屏),
+    // 用户需再右滑一次才 finish —— 即"右滑两次才能退出"。只把真实的排盘页面算作可回退历史。
+    private boolean hasRealBackHistory() {
+        if (web == null || !web.canGoBack()) return false;
+        try {
+            android.webkit.WebBackForwardList list = web.copyBackForwardList();
+            for (int i = list.getCurrentIndex() - 1; i >= 0; i--) {
+                String u = list.getItemAtIndex(i).getUrl();
+                if (u != null && u.startsWith("https://pan.local/")) return true;
+            }
+        } catch (Throwable ignored) { return true; }
+        return false;
+    }
+
     @Override public void onBackPressed() {
-        if (web != null && web.canGoBack()) web.goBack(); else finish();
+        if (web == null) { finish(); return; }
+        if ("jiang-liuren".equals(key) || "liu-yao".equals(key) || "meihua".equals(key)) {
+            // 单页 H5 是视图切换(无浏览历史): 返回动作交给 H5 __jlBack() 逐层回退,
+            // 由 H5 同步返回 'stay'(已回退一层, 留在页面) 或 'exit'(已在首页, 退出 Activity)。
+            // 不再依赖 __nav.setDepth 的异步回写: 快速连续右滑时它会读到旧层级而吞掉一次返回。
+            web.evaluateJavascript(
+                "(function(){try{return window.__jlBack?window.__jlBack():'exit'}catch(e){return 'exit'}})()",
+                value -> {
+                    if (value == null || !value.contains("stay")) {
+                        if (!isFinishing()) finish();
+                    }
+                });
+            return;
+        }
+        if (hasRealBackHistory()) web.goBack(); else finish();
+    }
+
+    // 交互后系统导航栏可能重新弹出, 重新应用沉浸式隐藏(隐藏底部导航栏)
+    @Override public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) Immersive.hide(this);
     }
 
     @Override protected void onDestroy() {

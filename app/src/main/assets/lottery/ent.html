@@ -29,6 +29,8 @@
   .tab{flex:0 0 auto;min-width:76px;text-align:center;padding:10px 0;border-radius:20px;background:#1c1f26;font-size:15px;cursor:pointer}
   .tab{flex:1;text-align:center;padding:10px 0;border-radius:20px;background:#1c1f26;font-size:15px;cursor:pointer}
   .tab.on{background:#315CDE;font-weight:bold}
+  .tab.hot{background:linear-gradient(135deg,#f6c85a,#ff9a3c);color:#3a1d00;font-weight:bold;
+       box-shadow:0 0 10px #f6c85a55;min-width:132px}
   .page{display:none}.page.on{display:block}
   #slotGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:360px;margin:16px auto}
   .cell{background:#1c1f26;border-radius:10px;font-size:34px;line-height:70px;height:70px;text-align:center}
@@ -40,6 +42,7 @@
 <body>
 <div id="pts">💰 积分: 100</div>
 <div class="tabscroll"><div class="tabs">
+  <div class="tab hot" id="tab11" onclick="location.href='casino.html'">玉虹市游戏城</div>
   <div class="tab on" id="tab3" onclick="tab(3)">🎫 刮刮乐</div>
   <div class="tab" id="tab7" onclick="location.href='mine.html'">💣 扫雷</div>
   <div class="tab" id="tab8" onclick="location.href='tetris.html'">🧱 方块</div>
@@ -451,6 +454,7 @@ function getList(){
 function getCost(){var c=parseInt(localStorage.ent_cost);return (c>=1&&c<=30000)?c:50}
 function getSlotCost(){var c=parseInt(localStorage.ent_slot_cost);return (c>=1&&c<=30000)?c:50}
 function getPts(){return parseInt(localStorage.ent_pts)||100}
+function refreshCostLabel(){/* 消耗值直接读 localStorage，保留此入口兼容旧调用，避免DOMContentLoaded中断 */}
 function setPts(p){localStorage.ent_pts=p;document.getElementById('pts').textContent='💰 积分: '+p}
 function settle(txt){var m=txt.match(/([+-]?\d+)/);if(m)addPts(parseInt(m[1]));return txt}
 function addPts(d){setPts(getPts()+d)}

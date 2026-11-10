@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>玉虹市游戏城</title>
+<style>
+  :root{
+    --bg:#120e1e; --panel:#1d1730; --panel2:#2a2044; --line:#40315f;
+    --gold:#f6c85a; --gold2:#ff9a3c; --purple:#a878ff; --pink:#ff6bd6;
+    --txt:#f2ecff; --dim:#a99bc6; --ok:#4ade80; --no:#ff6b6b;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:radial-gradient(120% 60% at 50% 0%,#2a1a4a 0%,var(--bg) 60%) fixed;
+       color:var(--txt);font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;
+       padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+  .wrap{max-width:440px;margin:0 auto;padding:0 12px}
+  /* ---------- 顶部 ---------- */
+  .topbar{display:flex;align-items:center;gap:8px;padding:12px 2px 8px}
+  .topbar .back{background:#2a2044;border:1px solid var(--line);color:var(--txt);
+       border-radius:20px;padding:8px 14px;font-size:13px;font-weight:bold;white-space:nowrap}
+  .brand{flex:1;text-align:center;line-height:1.15}
+  .brand h1{margin:0;font-size:19px;letter-spacing:2px;color:var(--gold);
+       text-shadow:0 0 8px #f6c85a88,0 0 20px #ff9a3c55}
+  .brand small{font-size:9px;letter-spacing:3px;color:var(--dim)}
+  .iconbtn{width:34px;height:34px;border-radius:50%;background:#2a2044;border:1px solid var(--line);
+       color:var(--txt);padding:0;display:flex;align-items:center;justify-content:center}
+  .iconbtn svg{width:17px;height:17px}
+  /* ---------- 钱包 ---------- */
+  .wallet{display:flex;gap:8px;margin:6px 0 12px}
+  .wal{flex:1;background:linear-gradient(160deg,#2c2148,#1b1530);border:1px solid var(--line);
+       border-radius:14px;padding:9px 6px;text-align:center;position:relative;overflow:hidden}
+  .wal:after{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+       background:linear-gradient(90deg,transparent,#f6c85a66,transparent)}
+  .wal .k{font-size:10px;color:var(--dim);letter-spacing:1px}
+  .wal .v{font-size:19px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;
+       text-shadow:0 0 10px #f6c85a44}
+  .wal.coin .v{color:#8fe3ff;text-shadow:0 0 10px #8fe3ff44}
+  .wal.ball .v{color:#ffc1ec;text-shadow:0 0 10px #ffc1ec44}
+  /* ---------- 分段 ---------- */
+  .seg{display:flex;gap:6px;background:#1b1530;border:1px solid var(--line);
+       border-radius:24px;padding:5px;margin-bottom:12px}
+  .seg button{flex:1;border:0;background:transparent;color:var(--dim);font-size:14px;
+       font-weight:bold;padding:10px 0;border-radius:19px;transition:.18s}
+  .seg button.on{background:linear-gradient(135deg,var(--gold),var(--gold2));
+       color:#2a1600;box-shadow:0 3px 12px #f6c85a44}
+  .seg button:before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;
+       background:currentColor;opacity:.55;margin-right:7px;vertical-align:2px}
+  .pg{display:none}.pg.on{display:block;animation:fade .22s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  /* ---------- 老虎机 ---------- */
+  .machine{background:linear-gradient(170deg,#332152,#1a1230);border:2px solid #7b5a2a;
+       border-radius:20px;padding:12px;box-shadow:0 0 0 3px #1a1230,0 0 30px #a878ff22,inset 0 0 30px #0006}
+  .marquee{text-align:center;font-size:24px;font-weight:900;letter-spacing:8px;color:var(--pink);
+       text-shadow:0 0 8px var(--pink),0 0 22px #ff6bd688;margin:2px 0 10px}
+  .marquee small{display:block;font-size:9px;letter-spacing:4px;color:var(--gold);
+       text-shadow:0 0 8px var(--gold);margin-top:2px}
+  .glass{position:relative;background:#0b0814;border:2px solid #6a4f22;border-radius:12px;
+       padding:8px;box-shadow:inset 0 0 22px #000}
+  .reels{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .cell{height:76px;background:linear-gradient(180deg,#fdf6e3,#d9cbb0);border-radius:8px;
+       display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;
+       box-shadow:inset 0 3px 6px #0003,inset 0 -3px 6px #0002}
+  .cell img{width:66px;height:66px;image-rendering:pixelated;object-fit:contain}
+  .cell.spinning{filter:blur(1.2px) brightness(.9)}
+  .cell.win{background:linear-gradient(180deg,#fff3b0,#ffd35c);
+       box-shadow:0 0 0 2px var(--gold),0 0 16px var(--gold);animation:pop .45s ease}
+  @keyframes pop{50%{transform:scale(1.09)}}
+  .s7{font-size:52px;font-weight:900;font-style:italic;
+       background:linear-gradient(180deg,#ffe89a,#f0932b);-webkit-background-clip:text;
+       background-clip:text;color:transparent;text-shadow:0 2px 0 #a85c00}
+  .sbar{font-size:26px;font-weight:900;letter-spacing:1px;color:#d5344a;
+       text-shadow:0 2px 0 #7d1226}
+  .sberry{width:58px;height:58px}
+  .lines{position:absolute;inset:8px;pointer-events:none}
+  .ctl{display:flex;gap:8px;align-items:stretch;margin-top:12px}
+  .mult{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+  .mult button{background:#2a2044;border:1px solid var(--line);color:var(--dim);
+       border-radius:10px;font-size:14px;font-weight:bold;padding:0}
+  .mult button.on{background:var(--purple);color:#1a0f2e;border-color:var(--purple)}
+  .lever{width:88px;min-height:64px;border:0;border-radius:14px;
+       background:linear-gradient(160deg,#ffd76b,#f0932b);color:#3a1d00;font-size:15px;
+       font-weight:900;box-shadow:0 4px 0 #a85c00,0 6px 14px #0006;display:flex;
+       flex-direction:column;align-items:center;justify-content:center;line-height:1.2}
+  .lever:active{transform:translateY(3px);box-shadow:0 1px 0 #a85c00}
+  .lever small{font-size:10px;font-weight:700;opacity:.8}
+  .lever[disabled]{filter:grayscale(.7);opacity:.6}
+  .subrow{display:flex;gap:8px;margin-top:8px}
+  .subrow button{flex:1;background:#2a2044;border:1px solid var(--line);color:var(--txt);
+       border-radius:12px;padding:9px 0;font-size:13px;font-weight:bold}
+  .subrow button.on{background:var(--ok);color:#08331a;border-color:var(--ok)}
+  .msg{min-height:42px;margin:10px 0 2px;text-align:center;font-size:14px;font-weight:bold;
+       color:var(--gold);line-height:1.45}
+  .msg .lose{color:var(--dim)}
+  .msg .big{font-size:19px;color:var(--pink);text-shadow:0 0 12px var(--pink)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+       padding:12px;margin-top:12px}
+  .panel h3{margin:0;font-size:16px;color:var(--gold);letter-spacing:1px}
+  .pt-head{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+  .pt-sub{font-size:12px;color:var(--dim);font-weight:normal;letter-spacing:0}
+  .pt-help{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);
+       background:#2a2044;color:var(--dim);font-size:13px;font-weight:bold;padding:0;cursor:pointer}
+  .pt-help.on{background:var(--gold);color:#3a1d00;border-color:var(--gold)}
+  .pt-tip{display:none;background:#0f0b1c;border:1px solid var(--line);border-radius:10px;
+       padding:10px 12px;font-size:12px;line-height:1.75;color:#cfc2e8;margin:0 0 10px}
+  .pt-tip.on{display:block}
+  .pt-tip b{color:var(--gold)}
+  .paytable{display:flex;flex-direction:column;gap:5px}
+  .ptrow{display:flex;align-items:center;gap:6px;background:#1a1530;border-radius:10px;padding:6px 8px}
+  .ptrow.hi{background:#2c2312}
+  .ptcells{display:flex;gap:5px}
+  .ptcell{width:44px;height:44px;flex:0 0 auto;border-radius:9px;background:#272040;
+       border:1.5px solid transparent;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .ptcell.gold{border-color:#d9a62a;background:#241a10}
+  .ptcell.blank{background:#1e1834}
+  .ptcell img{width:41px;height:41px;image-rendering:pixelated}
+  .ptcell .s7{font-size:28px}
+  .ptcell .sbar{font-size:13px}
+  .ptcell .sberry{width:36px;height:36px}
+  .ptpay{margin-left:auto;display:flex;align-items:center;gap:5px;font-size:19px;
+       font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
+  .ptpay svg{width:19px;height:19px;flex:0 0 auto}
+  .hint{font-size:11px;color:var(--dim);line-height:1.6;margin-top:10px}
+  /* ---------- 弹珠台 ---------- */
+  .pachi{background:linear-gradient(170deg,#241a3c,#120d20);border:2px solid #7b5a2a;
+       border-radius:20px;padding:10px}
+  #board{width:100%;aspect-ratio:360/440;display:block;border-radius:12px;
+       background:#0c0818;border:2px solid #5b4420}
+  .pctl{display:flex;gap:8px;margin-top:10px}
+  .pctl button{flex:1;border:0;border-radius:12px;padding:12px 0;font-size:14px;font-weight:bold}
+  #launch1{background:linear-gradient(160deg,#8fe3ff,#3b9ad6);color:#062335}
+  #launch10{background:linear-gradient(160deg,#ffd76b,#f0932b);color:#3a1d00}
+  .pctl button[disabled]{filter:grayscale(.7);opacity:.55}
+  .legend{display:flex;justify-content:space-between;gap:2px;margin-top:8px}
+  .legend div{flex:1;text-align:center;font-size:10px;color:var(--dim)}
+  .legend b{display:block;font-size:13px;color:var(--gold)}
+  .gauge{position:relative;height:16px;margin-top:10px;border-radius:9px;background:#0f0b1c;
+       border:1px solid var(--line);overflow:hidden}
+  .gauge i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:9px;
+       background:linear-gradient(90deg,#7b5ad0,#f6c85a);transition:width .35s}
+  .gauge span{position:absolute;inset:0;text-align:center;line-height:14px;font-size:10px;
+       color:#fff;text-shadow:0 1px 2px #000;font-variant-numeric:tabular-nums}
+  .gaugeprizes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+  .gp{background:linear-gradient(165deg,#2c2148,#1a1330);border:1px solid var(--line);
+      border-radius:12px;padding:8px 4px;text-align:center;opacity:.55}
+  .gp.got{opacity:1;border-color:var(--gold);box-shadow:0 0 0 1px #f6c85a55 inset}
+  .gp .pic{height:56px;display:flex;align-items:center;justify-content:center}
+  .gp .pic img{width:56px;height:56px;image-rendering:pixelated}
+  .gp .nm{font-size:11px;color:var(--txt);margin-top:2px}
+  .gp .at{font-size:10px;color:var(--gold);margin-top:2px}
+  /* ---------- 兑奖 ---------- */
+  .prizes{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .prize{background:linear-gradient(165deg,#2c2148,#1a1330);border:1px solid var(--line);
+       border-radius:16px;padding:10px;text-align:center;position:relative}
+  .prize.got{border-color:var(--ok);box-shadow:0 0 0 1px #4ade8055 inset}
+  .prize .pic{height:76px;display:flex;align-items:center;justify-content:center}
+  .prize .pic img{width:76px;height:76px;image-rendering:pixelated;object-fit:contain;
+       filter:drop-shadow(0 4px 6px #0008)}
+  .prize .nm{font-size:14px;font-weight:bold;margin-top:2px}
+  .prize .lv{font-size:10px;color:var(--dim)}
+  .prize .buy{margin-top:8px;width:100%;border:0;border-radius:20px;padding:8px 0;
+       font-size:13px;font-weight:bold;background:linear-gradient(135deg,var(--gold),var(--gold2));
+       color:#3a1d00}
+  .prize .buy[disabled]{background:#3a2f52;color:#8d7fa8}
+  .prize .stamp{position:absolute;top:8px;right:8px;font-size:10px;font-weight:bold;
+       color:var(--ok);border:1px solid var(--ok);border-radius:10px;padding:2px 6px;
+       transform:rotate(12deg);background:#0d2417}
+  .collect{text-align:center;font-size:12px;color:var(--dim);margin:6px 0 12px}
+  .collect b{color:var(--gold)}
+  /* ---------- 底部 ---------- */
+  .foot{display:flex;gap:8px;margin-top:14px}
+  .foot button{flex:1;background:#241b3c;border:1px solid var(--line);color:var(--dim);
+       border-radius:12px;padding:10px 0;font-size:12px}
+  #toast{position:fixed;left:50%;bottom:70px;transform:translateX(-50%) translateY(20px);
+       background:#000c;border:1px solid var(--gold);color:var(--gold);font-size:13px;
+       font-weight:bold;padding:10px 20px;border-radius:24px;opacity:0;pointer-events:none;
+       transition:.25s;z-index:99;max-width:86%;text-align:center}
+  #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <button class="back" onclick="goBack()">← 娱乐卡</button>
+    <div class="brand"><h1>玉虹市游戏城</h1><small>CELADON GAME CORNER</small></div>
+    <button class="iconbtn" id="sndBtn" onclick="toggleSnd()"></button>
+  </div>
+
+  <div class="wallet">
+    <div class="wal"><div class="k">游戏币</div><div class="v" id="wMoney">0</div></div>
+    <div class="wal coin"><div class="k">代币</div><div class="v" id="wCoin">0</div></div>
+    <div class="wal ball"><div class="k">弹珠</div><div class="v" id="wBall">0</div></div>
+  </div>
+
+  <div class="seg">
+    <button id="segSlot" class="on" onclick="go('slot')">老虎机</button>
+    <button id="segPachi" onclick="go('pachi')">弹珠台</button>
+    <button id="segPrize" onclick="go('prize')">兑奖处</button>
+  </div>
+
+  <!-- ============ 老虎机 ============ -->
+  <section class="pg on" id="pgSlot">
+    <div class="machine">
+      <div class="marquee">CASINO<small>★ CÉLADOPOLE ★</small></div>
+      <div class="glass">
+        <div class="reels" id="reels"></div>
+        <svg class="lines" id="lines" viewBox="0 0 300 252" preserveAspectRatio="none"></svg>
+      </div>
+      <div class="ctl">
+        <div class="mult" id="mults"></div>
+        <button class="lever" id="lever" onclick="spin()">LANCER<small id="betv">100 币</small></button>
+      </div>
+      <div class="subrow">
+        <button id="autoBtn" onclick="toggleAuto()">自动：关</button>
+        <button onclick="cash()">取款 +500,000</button>
+      </div>
+      <div class="msg" id="slotMsg">拉下拉杆，5 条线同时开奖</div>
+    </div>
+
+    <div class="panel">
+      <div class="pt-head">
+        <h3>奖励</h3>
+        <button class="pt-help on" id="ptHelpBtn" onclick="togglePayTip()">?</button>
+        <span class="pt-sub">老虎机</span>
+      </div>
+      <div class="pt-tip on" id="ptTip">
+        在有效线上连成三个相同图案即可获得代币，一条线开头出现两个蔓莓果或两个大舌贝也可以。每局都会押注全部 5 条线。
+      </div>
+      <div class="paytable" id="paytable"></div>
+      <div class="hint">
+        · 每局扣 <b id="hintBet">100</b> 游戏币 × 倍率，5 条线（3 横 + 2 斜）同时结算，奖金为<b>代币</b>。<br>
+        · 每条线<b>最左两格</b>出现两个蔓莓果 +2、两个大舌贝 +1（均 × 倍率）；<b>两条斜线同样判定</b>。<br>
+        · 代币可换弹珠玩弹珠台，或在兑奖处换宝可梦。
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 弹珠台 ============ -->
+  <section class="pg" id="pgPachi">
+    <div class="pachi">
+      <canvas id="board" width="360" height="440"></canvas>
+      <div class="pctl">
+        <button id="launch1" onclick="launch(1)">发射 ×1 <small>(5 代币)</small></button>
+        <button id="launch10" onclick="launch(10)">连发 ×10 <small>(50 代币)</small></button>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div class="msg" id="pachiMsg">花代币投球，落洞得奖</div>
+      <div class="gauge"><i id="gaugeBar"></i><span id="gaugeTxt">0 / 25,000</span></div>
+      <div class="msg" id="gaugeMsg" style="margin-top:4px">累计投入代币，达标送闪光宝可梦</div>
+    </div>
+    <div class="panel">
+      <div class="hint" style="margin:0">
+        · 官方 5 洞：<b>游戏币</b> / 空 / <b>稀有</b> / 空 / <b>游戏币</b>，中间稀有洞最窄最难进。<br>
+        · 游戏币洞 <b>+300 游戏币</b>（官方 <code>Xs()=round(bet×0.3/10)×10</code>）；稀有洞给稀有奖励；空洞无奖。<br>
+        · 每颗球 <b>5 代币</b>（官方 <code>Z</code> 表）；累计投入达 <b>25,000 / 50,000 / 100,000</b> 代币，依次送闪光多边兽 / 多边兽2 / 多边兽Z。<br>
+        · 老虎机花游戏币赢代币，弹珠台花代币赢游戏币，形成官方的货币闭环。
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 兑奖 ============ -->
+  <section class="pg" id="pgPrize">
+    <div class="collect" id="collect"></div>
+    <div class="prizes" id="prizeList"></div>
+    <div class="panel">
+      <div class="pt-head"><h3>累计大奖</h3><span class="pt-sub">弹珠台</span></div>
+      <div class="gaugeprizes" id="gaugePrizes"></div>
+      <div class="hint" style="margin:8px 0 0">
+        在弹珠台累计投入代币，达到门槛自动获得闪光宝可梦并收录。用老虎机 / 弹珠台赢来的代币也可在此兑换奖品。
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <button onclick="goBack()">← 返回娱乐卡</button>
+    <button onclick="resetAll()">重置存档</button>
+    <button onclick="closeApp()">✕ 关闭</button>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* ================= 存档 ================= */
+var KEY = 'celadon_casino_v1';
+var BET = 1000;                // 官方 CASINOS[0].bet，每局扣 BET × 倍率 游戏币
+var MULTS = [1, 5, 10, 50];   // 官方 ut
+var S = { money: 5000000, coin: 1000, ball: 0, owned: [], gaugeOwned: [], spins: 0, balls: 0,
+          paid: 0, gauge: 0, stage: 0, snd: 1 };
+
+function load() {
+  try {
+    var o = JSON.parse(localStorage.getItem(KEY));
+    if (o && typeof o.money === 'number') {
+      S.money = o.money; S.coin = o.coin; S.ball = o.ball;
+      S.owned = o.owned || []; S.gaugeOwned = o.gaugeOwned || [];
+      S.spins = o.spins || 0;
+      S.balls = o.balls || 0;
+      S.paid = o.paid || 0; S.gauge = o.gauge || 0; S.stage = o.stage || 0;
+      if (typeof o.snd === 'number') S.snd = o.snd;
+    }
+  } catch (e) {}
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function fmt(n) { return String(Math.floor(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+function renderWallet() {
+  document.getElementById('wMoney').textContent = fmt(S.money);
+  document.getElementById('wCoin').textContent = fmt(S.coin);
+  document.getElementById('wBall').textContent = fmt(balls ? balls.length : 0);   // 台面球数
+}
+var toastTimer = null;
+function toast(t) {
+  var el = document.getElementById('toast');
+  el.textContent = t; el.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { el.classList.remove('on'); }, 1600);
+}
+/* ================= 音效(WebAudio, 无外部文件) ================= */
+var AC = null;
+function beep(freq, dur, type, vol) {
+  if (!S.snd) return;
+  try {
+    if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === 'suspended') AC.resume();
+    var o = AC.createOscillator(), g = AC.createGain();
+    o.type = type || 'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol || 0.05, AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + dur);
+    o.connect(g); g.connect(AC.destination);
+    o.start(); o.stop(AC.currentTime + dur);
+  } catch (e) {}
+}
+function toggleSnd() {
+  S.snd = S.snd ? 0 : 1; save();
+  document.getElementById('sndBtn').innerHTML = sndIcon(S.snd);
+  if (S.snd) beep(660, .08, 'sine', .04);
+}
+/* ================= 导航 ================= */
+function go(p) {
+  var ids = ['slot', 'pachi', 'prize'];
+  for (var i = 0; i < ids.length; i++) {
+    var k = ids[i], on = k === p;
+    document.getElementById('pg' + k.charAt(0).toUpperCase() + k.slice(1)).classList.toggle('on', on);
+    document.getElementById('seg' + k.charAt(0).toUpperCase() + k.slice(1)).classList.toggle('on', on);
+  }
+  if (p === 'prize') renderPrizes();
+  if (p === 'pachi') drawBoard();
+}
+function goBack() { location.href = 'ent.html'; }
+function closeApp() { try { if (window.app && app.close) app.close(); } catch (e) {} }
+function cash() {
+  S.money += 500000; save(); renderWallet();
+  beep(880, .09, 'triangle', .05); toast('取到 500,000 游戏币');
+}
+function resetAll() {
+  if (!confirm('重置游戏城存档？游戏币 / 代币 / 已兑换奖品都会清空。')) return;
+  S = { money: 5000000, coin: 1000, ball: 0, owned: [], gaugeOwned: [], spins: 0, balls: 0,
+        paid: 0, gauge: 0, stage: 0, snd: S.snd };
+  save(); renderWallet(); renderPrizes();
+  document.getElementById('slotMsg').textContent = '拉下拉杆，5 条线同时开奖';
+  toast('存档已重置');
+}
+
+/* ================= 符号 ================= */
+// 官方蔓莓果：橙色三果粒 + 绿叶
+function berrySvg(cls) {
+  return '<svg class="' + cls + '" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">'
+    + '<path d="M20 14 C16 5 7 5 7 10 C12 9 16 11 18 16 Z" fill="#5aa736"/>'
+    + '<path d="M20 14 C24 5 33 5 33 10 C28 9 24 11 22 16 Z" fill="#77c74c"/>'
+    + '<circle cx="14" cy="24" r="6.6" fill="#e2631c"/>'
+    + '<circle cx="26" cy="24" r="6.6" fill="#e2631c"/>'
+    + '<circle cx="20" cy="30" r="7.2" fill="#f4811f"/>'
+    + '<circle cx="11.8" cy="21.5" r="1.9" fill="#ffc169" opacity=".85"/>'
+    + '<circle cx="23.8" cy="21.5" r="1.9" fill="#ffc169" opacity=".85"/>'
+    + '<circle cx="17.6" cy="27.6" r="2" fill="#ffc169" opacity=".8"/>'
+    + '</svg>';
+}
+var BERRY_SVG = berrySvg('sberry');
+var BERRY_SM = berrySvg('sberry');
+// 赔付数字后的代币图标（官方为一枚斜置金币）
+var COIN_SVG = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">'
+  + '<ellipse cx="12" cy="15.5" rx="8" ry="4.6" fill="#c98a1c"/>'
+  + '<ellipse cx="12" cy="13.4" rx="8" ry="4.6" fill="#f6c85a"/>'
+  + '<ellipse cx="12" cy="12.4" rx="5.4" ry="2.7" fill="#ffe9a8"/>'
+  + '<path d="M7.5 8.5 Q12 4.5 16.5 8.5" fill="none" stroke="#d94a4a" stroke-width="2.4" stroke-linecap="round"/>'
+  + '</svg>';
+function sndIcon(on) {
+  return '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" '
+    + 'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+    + '<path d="M4 9v6h4l5 4V5L8 9H4z"/>'
+    + (on ? '<path d="M17 8a5 5 0 0 1 0 8"/><path d="M19.5 5.5a9 9 0 0 1 0 13"/>'
+          : '<path d="M17 9l5 6M22 9l-5 6"/>')
+    + '</svg>';
+}
+// 原版赔付: 7=220, BAR=66, 皮卡丘=15, 小磁怪=12, 可达鸭=10, 大舌贝=8, 树果=6
+var SYMS = [
+  { k: 'seven', pay: 220, w: 2,  name: '7',        html: '<span class="s7">7</span>',        ic: '<span class="t7">7</span>' },
+  { k: 'bar',   pay: 66,  w: 4,  name: 'BAR',      html: '<span class="sbar">BAR</span>',    ic: '<span class="tbar">BAR</span>' },
+  { k: 'pika',  pay: 15,  w: 10, name: '皮卡丘',   html: '<img src="casino_img/25.png" alt="">', ic: '<img src="casino_img/25.png" alt="">' },
+  { k: 'magneti', pay: 12, w: 12, name: '小磁怪', html: '<img src="casino_img/81.png" alt="">', ic: '<img src="casino_img/81.png" alt="">' },
+  { k: 'psy',   pay: 10,  w: 13, name: '可达鸭',   html: '<img src="casino_img/54.png" alt="">', ic: '<img src="casino_img/54.png" alt="">' },
+  { k: 'koki',  pay: 8,   w: 14, name: '大舌贝',   html: '<img src="casino_img/90.png" alt="">', ic: '<img src="casino_img/90.png" alt="">' },
+  { k: 'berry', pay: 6,   w: 15, name: '蔓莓果',   html: BERRY_SVG,                            ic: BERRY_SM }
+];
+var BYK = {}; for (var i = 0; i < SYMS.length; i++) BYK[SYMS[i].k] = SYMS[i];
+// 官方「奖励」页 9 行：前 7 行三连图案，后 2 行「行首双图案 + 空格」
+var PAYROWS = [
+  { keys: ['seven',   'seven',   'seven'],   pay: 220, hi: true },
+  { keys: ['bar',     'bar',     'bar'],     pay: 66 },
+  { keys: ['pika',    'pika',    'pika'],    pay: 15 },
+  { keys: ['magneti', 'magneti', 'magneti'], pay: 12 },
+  { keys: ['psy',     'psy',     'psy'],     pay: 10 },
+  { keys: ['koki',    'koki',    'koki'],    pay: 8 },
+  { keys: ['berry',   'berry',   'berry'],   pay: 6 },
+  { keys: ['berry',   'berry',   null],      pay: 2 },
+  { keys: ['koki',    'koki',    null],      pay: 1 }
+];
+function symCell(k) {
+  if (!k) return '<span class="ptcell blank"></span>';
+  var gold = (k === 'seven' || k === 'bar') ? ' gold' : '';
+  return '<span class="ptcell' + gold + '">' + BYK[k].html + '</span>';
+}
+function buildPayTable() {
+  var h = '';
+  for (var r = 0; r < PAYROWS.length; r++) {
+    var row = PAYROWS[r];
+    h += '<div class="ptrow' + (row.hi ? ' hi' : '') + '"><span class="ptcells">'
+       + symCell(row.keys[0]) + symCell(row.keys[1]) + symCell(row.keys[2])
+       + '</span><span class="ptpay">' + row.pay + COIN_SVG + '</span></div>';
+  }
+  document.getElementById('paytable').innerHTML = h;
+}
+function togglePayTip() {
+  document.getElementById('ptTip').classList.toggle('on');
+  document.getElementById('ptHelpBtn').classList.toggle('on');
+}
+/* ===== 官方内核移植（pc_app.js: Me / mn / rn / v / fn）=====
+   官方不是 9 格独立随机，而是 3 条固定卷轴带，每列随机一个起点后连续取 3 格，
+   列内符号强相关，中奖率与独立随机完全不同。逐字还原如下。 */
+var REELS = [
+  ('seven berry psy koki pika bar magneti berry psy koki seven pika magneti berry koki psy bar pika magneti berry').split(' '),
+  ('bar psy seven koki berry magneti pika koki psy bar berry magneti seven pika koki psy berry magneti pika koki').split(' '),
+  ('koki seven psy berry magneti pika bar koki psy berry magneti psy pika koki bar berry magneti psy pika koki').split(' ')
+];
+var REEL_LEN = 20;
+function imod(n, m) { return ((n % m) + m) % m; }              // 官方 re
+function mn() {                                                 // 官方 mn() 常规分支
+  return [Math.floor(Math.random() * REEL_LEN),
+          Math.floor(Math.random() * REEL_LEN),
+          Math.floor(Math.random() * REEL_LEN)];
+}
+// 官方 rn() 的 grid：grid[行*3+列] = REELS[列][(起点[列]+行) % 20]
+function rn(stops) {
+  var g = [], col, row;
+  for (row = 0; row < 3; row++)
+    for (col = 0; col < 3; col++)
+      g[row * 3 + col] = BYK[REELS[col][imod(stops[col] + row, REEL_LEN)]];
+  return g;
+}
+// 官方 Ie：rows 是「该列取第几行」，顺序 中横/上横/下横/主对角/反斜线
+var LINE_ROWS = [[1,1,1],[0,0,0],[2,2,2],[0,1,2],[2,1,0]];
+// 转成 9 格索引（行*3+列）：反斜线为 [6,4,2]，不是 [2,4,6]
+var LINES = LINE_ROWS.map(function (rows) {
+  return [rows[0] * 3 + 0, rows[1] * 3 + 1, rows[2] * 3 + 2];
+});
+// 官方 st 赔付（pay 未乘倍率）；双符号小奖 Re=2 / ce=1
+var PAY = { seven: 220, bar: 66, pika: 15, magneti: 12, psy: 10, koki: 8, berry: 6 };
+var RE = 2, CE = 1;
+// 官方 rn() 判定：三连 > 行首双蔓莓果 > 行首双大舌贝
+function evalWins(g) {
+  var wins = [], total = 0;
+  for (var i = 0; i < LINES.length; i++) {
+    var L = LINES[i], a = g[L[0]].k, b = g[L[1]].k, c = g[L[2]].k;
+    var pay = 0, n = 0, label = '', sym = '';
+    if (a === b && b === c) { pay = PAY[a]; n = 3; sym = a; label = BYK[a].name + ' ×3'; }
+    else if (a === 'berry' && b === 'berry') { pay = RE; n = 2; sym = 'berry'; label = '双蔓莓果'; }
+    else if (a === 'koki' && b === 'koki') { pay = CE; n = 2; sym = 'koki'; label = '双大舌贝'; }
+    if (pay > 0) { total += pay; wins.push({ idx: L, n: n, pay: pay, sym: sym, label: label, line: i + 1, rows: LINE_ROWS[i] }); }
+  }
+  return { wins: wins, total: total };
+}
+// 官方 v()：任意线前两列同为 7/BAR 且没中三连 → 差点赢，触发第三列慢转
+function nearMiss(stops) {
+  for (var i = 0; i < LINE_ROWS.length; i++) {
+    var r = LINE_ROWS[i];
+    var a = REELS[0][imod(stops[0] + r[0], REEL_LEN)];
+    var b = REELS[1][imod(stops[1] + r[1], REEL_LEN)];
+    if (a === b && (a === 'seven' || a === 'bar')) return a;
+  }
+  return null;
+}
+// 官方 fn() 派彩分级（按未乘倍率的 total）
+function grade(total) { return total >= 220 ? 'jackpot' : total >= 66 ? 'big' : total >= 15 ? 'good' : 'small'; }
+
+/* ================= 老虎机 ================= */
+var mult = 1, busy = false, autoMode = false, autoTimer = null, grid = [];
+var reelTimers = [];
+
+function buildSlot() {
+  var r = document.getElementById('reels'), h = '';
+  for (var n = 0; n < 9; n++) h += '<div class="cell" id="c' + n + '"></div>';
+  r.innerHTML = h;
+  var m = document.getElementById('mults'), mh = '';
+  for (var q = 0; q < MULTS.length; q++)
+    mh += '<button data-m="' + MULTS[q] + '" class="' + (MULTS[q] === 1 ? 'on' : '') + '" onclick="setMult(' + MULTS[q] + ')">×' + MULTS[q] + '</button>';
+  m.innerHTML = mh;
+  buildPayTable();
+  document.getElementById('hintBet').textContent = BET;
+  // 初始静态盘面也走官方卷轴带
+  grid = rn(mn());
+  paint();
+  updBet();
+}
+function setMult(v) {
+  mult = v;
+  var bs = document.querySelectorAll('#mults button');
+  for (var i = 0; i < bs.length; i++) bs[i].classList.toggle('on', +bs[i].dataset.m === v);
+  updBet(); beep(520, .05, 'square', .02);
+}
+function updBet() { document.getElementById('betv').textContent = fmt(BET * mult) + ' 币'; }
+function paint(wins) {
+  // 官方 bn()：三连亮 3 格，双符号只亮前 2 格
+  var set = {};
+  if (wins) for (var i = 0; i < wins.length; i++) {
+    var cnt = wins[i].n || wins[i].idx.length;
+    for (var j = 0; j < cnt; j++) set[wins[i].idx[j]] = 1;
+  }
+  for (var n = 0; n < 9; n++) {
+    var c = document.getElementById('c' + n);
+    if (!c) continue;
+    c.innerHTML = grid[n].html;
+    c.classList.toggle('win', !!set[n]);
+  }
+  drawLines(wins);
+}
+function drawLines(wins) {
+  var svg = document.getElementById('lines'), s = '';
+  // viewBox 300x252: 3 列中心 x=50,150,250; 3 行中心 y=42,126,210
+  var CX = [50, 150, 250], CY = [42, 126, 210];
+  if (wins) for (var i = 0; i < wins.length; i++) {
+    var idx = wins[i].idx, cnt = wins[i].n || 3, pts = [];
+    for (var j = 0; j < cnt; j++) pts.push(CX[idx[j] % 3] + ',' + CY[Math.floor(idx[j] / 3)]);
+    s += '<polyline points="' + pts.join(' ') + '" fill="none" stroke="#f6c85a" '
+       + 'stroke-width="2" stroke-linecap="round" opacity=".85" '
+       + 'style="filter:drop-shadow(0 0 4px #f6c85a)"/>';
+  }
+  svg.innerHTML = s;
+}
+function toggleAuto() {
+  autoMode = !autoMode;
+  var b = document.getElementById('autoBtn');
+  b.textContent = '自动：' + (autoMode ? '开' : '关');
+  b.classList.toggle('on', autoMode);
+  if (autoMode) { toast('自动模式已开启'); if (!busy) spin(); }
+  else { clearTimeout(autoTimer); toast('自动模式已关闭'); }
+}
+var curStops = null, curNear = null;
+function spin() {
+  if (busy) return;
+  var cost = BET * mult;                       // 官方 It()*se
+  if (S.money < cost) {
+    document.getElementById('slotMsg').innerHTML = '<span class="lose">游戏币不够，点「取款」补充</span>';
+    autoMode = false; document.getElementById('autoBtn').textContent = '自动：关';
+    document.getElementById('autoBtn').classList.remove('on');
+    return;
+  }
+  busy = true;
+  S.money -= cost; S.spins++; save(); renderWallet();
+  document.getElementById('lever').disabled = true;
+  document.getElementById('slotMsg').innerHTML = '<span class="lose">转动中…</span>';
+  for (var i = 0; i < reelTimers.length; i++) clearInterval(reelTimers[i]);
+  reelTimers = [];
+  // 官方：先定 3 个卷轴起点 → 整盘一次性确定 → 逐列转出；前两列同为 7/BAR 时第三列慢转
+  curStops = mn(); curNear = nearMiss(curStops);
+  var finalGrid = rn(curStops);
+  var tensionMsg = curNear === 'seven' ? '7 … 7 …' : 'BAR … BAR …';
+  if (curNear) document.getElementById('slotMsg').innerHTML = '<span style="color:#f6c85a">' + tensionMsg + '</span>';
+  for (var col = 0; col < 3; col++) (function (col) {
+    var cells = [col, col + 3, col + 6];
+    for (var k = 0; k < cells.length; k++) document.getElementById('c' + cells[k]).classList.add('spinning');
+    var iv = setInterval(function () {
+      for (var k = 0; k < cells.length; k++) {
+        // 滚动时从该列卷轴带取符号，与官方卷轴一致
+        var sym = BYK[REELS[col][Math.floor(Math.random() * REEL_LEN)]];
+        document.getElementById('c' + cells[k]).innerHTML = sym.html;
+        if (S.snd && Math.random() < .35) beep(300 + Math.random() * 120, .02, 'square', .012);
+      }
+    }, 60);
+    reelTimers.push(iv);
+    // 官方第三列在差点赢时慢转（1700/Wt），普通 330/Wt
+    var delay = 420 + col * 320 + (col === 2 && curNear ? 900 : 0);
+    setTimeout(function () {
+      clearInterval(iv);
+      for (var k = 0; k < cells.length; k++) {
+        grid[cells[k]] = finalGrid[cells[k]];
+        document.getElementById('c' + cells[k]).classList.remove('spinning');
+      }
+      beep(180, .06, 'triangle', .04);
+      if (col === 2) setTimeout(settle, 90);
+    }, delay);
+  })(col);
+}
+function settle() {
+  var r = evalWins(grid), total = r.total, wins = r.wins;
+  var pay = total * mult;                      // 官方 Vt.pay = Vt.total * se
+  S.coin += pay; save(); renderWallet();
+  paint(wins);
+  var msg = document.getElementById('slotMsg');
+  if (total > 0) {
+    var g = grade(total), head = '';
+    if (g === 'jackpot') head = '<span class="big">JACKPOT！</span><br>';
+    else if (g === 'big') head = '<span class="big">大奖！</span><br>';
+    else if (g === 'good') head = '<span style="color:#f6c85a">中奖！</span><br>';
+    var texts = [];
+    for (var i = 0; i < wins.length; i++)
+      texts.push('第' + wins[i].line + '线 ' + wins[i].label + ' +' + fmt(wins[i].pay * mult));
+    msg.innerHTML = head + texts.join('　·　')
+      + '<br><span style="color:#8fe3ff">共赢得 ' + fmt(pay) + ' 枚代币</span>';
+    beep(g === 'jackpot' || g === 'big' ? 880 : 660, .12, 'triangle', .05);
+    if (g === 'jackpot' || g === 'big') setTimeout(function () { beep(1180, .18, 'triangle', .05); }, 130);
+  } else if (curNear) {
+    // 官方 "Presque !"（差点！）
+    msg.innerHTML = '<span class="lose">差点！' + (curNear === 'seven' ? '7 … 7 …' : 'BAR … BAR …') + ' 只差一个</span>';
+  } else {
+    msg.innerHTML = '<span class="lose">再接再厉，这一局没有中奖</span>';
+  }
+  busy = false;
+  document.getElementById('lever').disabled = false;
+  if (autoMode) autoTimer = setTimeout(spin, 620);
+}
+
+/* ================= 弹珠台（官方 _s / Z / Xs / St 移植） ================= */
+var cv, ctx, pegs = [], balls = [], raf = null, launchTimer = null;
+var roundStat = { money: 0, coin: 0, rare: 0 };   // 整轮累计，避免逐帧重置把战果覆盖成「未中奖」
+// 官方 _s：5 洞，宽 30/28/10/28/30，类型 钱/空/稀有/空/钱
+var POCKETS = [
+  { w: 30, t: 'money', label: '游戏币',  c: '#f6c85a' },
+  { w: 28, t: 'miss',  label: '空',      c: '#5c4d7d' },
+  { w: 10, t: 'rare',  label: '稀有',    c: '#ff7ad9' },
+  { w: 28, t: 'miss',  label: '空',      c: '#5c4d7d' },
+  { w: 30, t: 'money', label: '游戏币',  c: '#f6c85a' }
+];
+var PW_TOTAL = 126;
+var COST_PER_BALL = 5;                         // 官方 Z：{1:5,5:25,10:50,50:250} → 每颗 5 代币
+var MONEY_WIN = Math.round(BET * .3 / 10) * 10;  // 官方 Xs() = 300 游戏币
+var RARE_COIN = 40;                            // 稀有洞给代币（官方掉道具，本地折代币）
+// 官方 St：累计投入代币达标送闪光宝可梦
+var GAUGE_STAGES = [
+  { at: 25000,  id: 137, name: '多边兽' },
+  { at: 50000,  id: 233, name: '多边兽2' },
+  { at: 100000, id: 474, name: '多边兽Z' }
+];
+var gaugeGot = [];                              // 本次会话已达成的里程碑
+function pocketBounds() {
+  var acc = 0, out = [];
+  for (var i = 0; i < POCKETS.length; i++) {
+    out.push({ x0: acc / PW_TOTAL * 360, x1: (acc + POCKETS[i].w) / PW_TOTAL * 360, p: POCKETS[i] });
+    acc += POCKETS[i].w;
+  }
+  return out;
+}
+function pocketAt(x) {
+  var bs = pocketBounds();
+  for (var i = 0; i < bs.length; i++) if (x < bs[i].x1) return bs[i].p;
+  return bs[bs.length - 1].p;
+}
+function renderGauge() {
+  var st = GAUGE_STAGES[S.stage % GAUGE_STAGES.length];
+  var pct = Math.min(100, S.gauge / st.at * 100);
+  document.getElementById('gaugeBar').style.width = pct + '%';
+  document.getElementById('gaugeTxt').textContent = fmt(S.gauge) + ' / ' + fmt(st.at);
+  document.getElementById('gaugeMsg').innerHTML = '累计投入代币，下一档 <b style="color:#f6c85a">'
+    + fmt(st.at) + '</b> 送闪光' + st.name
+    + (gaugeGot.length ? '　·　<b style="color:#8fe3ff">本局已达成 ' + gaugeGot.join('、') + '</b>' : '');
+}
+function initPachi() {
+  cv = document.getElementById('board'); ctx = cv.getContext('2d');
+  pegs = [];
+  for (var row = 0; row < 8; row++) {
+    var y = 82 + row * 40, n = row % 2 === 0 ? 8 : 9;
+    for (var col = 0; col < n; col++) {
+      var x = row % 2 === 0 ? 22 + col * 45 : 2 + col * 45;
+      if (x > 6 && x < 354) pegs.push({ x: x, y: y });
+    }
+  }
+  var lg = document.getElementById('legend'), h = '';
+  for (var i = 0; i < POCKETS.length; i++) {
+    var p = POCKETS[i];
+    h += '<div style="flex:' + p.w + '">' + p.label
+       + '<b style="color:' + p.c + '">' + (p.t === 'money' ? '+' + MONEY_WIN : p.t === 'rare' ? '+' + RARE_COIN : '—') + '</b></div>';
+  }
+  lg.innerHTML = h;
+  renderGauge();
+  drawBoard();
+}
+function newBall() {
+  return { x: 180 + (Math.random() - .5) * 54, y: 24, vx: (Math.random() - .5) * 1.1,
+           vy: 0, life: 0, r: 5 };
+}
+function launch(n) {
+  // 官方 gn()：coinOut(Z[Ae])，即每颗 5 代币；gauge 累计投入并判定里程碑
+  var cost = COST_PER_BALL * n;
+  if (S.coin < cost) { toast('代币不够（需 ' + fmt(cost) + '），去老虎机赢一点吧'); return; }
+  S.coin -= cost; S.paid += cost; S.gauge += cost; S.balls += n;
+  var got = [];
+  var st = GAUGE_STAGES[S.stage % GAUGE_STAGES.length];
+  while (S.gauge >= st.at) {
+    S.gauge -= st.at; got.push(st.name);
+    if (S.gaugeOwned.indexOf(st.id) < 0) S.gaugeOwned.push(st.id);   // 闪光收录，独立于兑奖
+    S.stage++; st = GAUGE_STAGES[S.stage % GAUGE_STAGES.length];
+  }
+  gaugeGot = gaugeGot.concat(got);
+  if (got.length) { toast('闪光 ' + got.join('、') + ' 已送达！'); beep(1180, .2, 'triangle', .06); }
+  save(); renderWallet(); renderGauge();
+  roundStat = { money: 0, coin: 0, rare: 0 };
+  document.getElementById('pachiMsg').innerHTML = '<span class="lose">发射 ' + n + ' 颗…（-' + fmt(cost) + ' 代币）</span>';
+  clearInterval(launchTimer);
+  var left = n;
+  launchTimer = setInterval(function () {
+    if (left <= 0) { clearInterval(launchTimer); return; }
+    balls.push(newBall()); left--;
+    beep(420 + Math.random() * 160, .04, 'sine', .025);
+    if (!raf) raf = requestAnimationFrame(tick);
+  }, 130);
+}
+function tick() {
+  var g = 0.19;
+  for (var i = balls.length - 1; i >= 0; i--) {
+    var b = balls[i]; b.life++;
+    b.vy += g; if (b.vy > 7) b.vy = 7;
+    b.x += b.vx; b.y += b.vy;
+    if (b.x < b.r + 2) { b.x = b.r + 2; b.vx = Math.abs(b.vx) * .7; }
+    if (b.x > 360 - b.r - 2) { b.x = 360 - b.r - 2; b.vx = -Math.abs(b.vx) * .7; }
+    for (var p = 0; p < pegs.length; p++) {
+      var pg = pegs[p], dx = b.x - pg.x, dy = b.y - pg.y, d2 = dx * dx + dy * dy;
+      if (d2 < 81 && d2 > 0.01) {
+        var d = Math.sqrt(d2);
+        b.vy = (b.vy > 2.6 ? -0.9 : 0.55) + Math.abs(b.vy) * .28;
+        b.vx += (dx / d) * 1.25 + (Math.random() - .5) * 1.1;
+        if (b.vx > 3.2) b.vx = 3.2; if (b.vx < -3.2) b.vx = -3.2;
+        b.y = pg.y + Math.sqrt(Math.max(0, 81 - dx * dx));
+        beep(700 + Math.random() * 300, .015, 'sine', .008);
+        break;
+      }
+    }
+    if (b.y >= 400 || b.life > 420) {
+      var pk = pocketAt(b.x);
+      if (pk.t === 'money') { S.money += MONEY_WIN; roundStat.money += MONEY_WIN; }
+      else if (pk.t === 'rare') { S.coin += RARE_COIN; roundStat.coin += RARE_COIN; roundStat.rare++; }
+      balls.splice(i, 1);
+      beep(pk.t === 'miss' ? 200 : 760, pk.t === 'miss' ? .06 : .13, pk.t === 'miss' ? 'sine' : 'triangle', .04);
+      save(); renderWallet();
+    }
+  }
+  // 整轮结束后一次性汇总，不被逐帧覆盖
+  if (balls.length === 0) {
+    var parts = [];
+    if (roundStat.money) parts.push('<span style="color:#f6c85a">+' + fmt(roundStat.money) + ' 游戏币</span>');
+    if (roundStat.coin) parts.push('<span style="color:#8fe3ff">+' + fmt(roundStat.coin) + ' 代币</span>');
+    document.getElementById('pachiMsg').innerHTML = parts.length
+      ? (roundStat.rare ? '<span class="big">稀有洞！</span> ' : '') + '本轮结算：' + parts.join('　·　')
+      : '<span class="lose">本轮未中奖，再试一次？</span>';
+  }
+  drawBoard();
+  if (balls.length > 0) raf = requestAnimationFrame(tick);
+  else { raf = null; drawBoard(); }
+}
+function drawBoard() {
+  if (!ctx) return;
+  var W = 360, H = 440;
+  var bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#1b1233'); bg.addColorStop(1, '#0a0714');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+  // 官方 5 洞，宽度按 w 比例
+  var bs = pocketBounds();
+  for (var i = 0; i < bs.length; i++) {
+    var b = bs[i], p = b.p;
+    ctx.fillStyle = p.t === 'money' ? '#3a2a12' : p.t === 'rare' ? '#3a1230' : '#161022';
+    ctx.fillRect(b.x0 + 2, 402, b.x1 - b.x0 - 4, 34);
+    ctx.strokeStyle = p.c; ctx.lineWidth = 1;
+    ctx.strokeRect(b.x0 + 2, 402, b.x1 - b.x0 - 4, 34);
+    ctx.fillStyle = p.c;
+    ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(p.t === 'money' ? '+' + MONEY_WIN : p.t === 'rare' ? '稀有' : '—',
+                 (b.x0 + b.x1) / 2, 423);
+  }
+  for (var p2 = 0; p2 < pegs.length; p2++) {
+    var g2 = ctx.createRadialGradient(pegs[p2].x, pegs[p2].y, 0, pegs[p2].x, pegs[p2].y, 5);
+    g2.addColorStop(0, '#fff2c8'); g2.addColorStop(1, '#8a6a2a');
+    ctx.fillStyle = g2; ctx.beginPath();
+    ctx.arc(pegs[p2].x, pegs[p2].y, 3.4, 0, 6.283); ctx.fill();
+  }
+  ctx.fillStyle = '#f6c85a'; ctx.fillRect(160, 8, 40, 4);
+  for (var q = 0; q < balls.length; q++) {
+    var bb = balls[q];
+    var gb = ctx.createRadialGradient(bb.x - 1.5, bb.y - 1.5, 0, bb.x, bb.y, bb.r + 2);
+    gb.addColorStop(0, '#fff'); gb.addColorStop(.5, '#ffd76b'); gb.addColorStop(1, '#d97706');
+    ctx.fillStyle = gb; ctx.beginPath(); ctx.arc(bb.x, bb.y, bb.r, 0, 6.283); ctx.fill();
+  }
+}
+
+/* ================= 兑奖 ================= */
+// 原版玉虹市奖品：id / 等级 / 代币价
+var PRIZES = [
+  { id: 63,  name: '凯西',     lv: 9,  price: 60 },
+  { id: 35,  name: '皮皮',     lv: 8,  price: 120 },
+  { id: 30,  name: '尼多娜',   lv: 17, price: 250 },
+  { id: 147, name: '迷你龙',   lv: 18, price: 600 },
+  { id: 123, name: '飞天螳螂', lv: 25, price: 900 },
+  { id: 137, name: '多边兽',   lv: 26, price: 1500 }
+];
+function renderPrizes() {
+  var el = document.getElementById('prizeList'), h = '';
+  for (var i = 0; i < PRIZES.length; i++) {
+    var p = PRIZES[i], got = S.owned.indexOf(p.id) >= 0;
+    h += '<div class="prize ' + (got ? 'got' : '') + '">'
+      + (got ? '<div class="stamp">已获得</div>' : '')
+      + '<div class="pic"><img src="casino_img/' + p.id + '.png" alt="' + p.name + '"></div>'
+      + '<div class="nm">' + p.name + '</div>'
+      + '<div class="lv">Lv.' + p.lv + ' · #' + p.id + '</div>'
+      + '<button class="buy" ' + (got ? 'disabled' : '') + ' onclick="redeem(' + p.id + ')">'
+      + (got ? '✓ 已收录' : fmt(p.price) + ' 代币兑换') + '</button></div>';
+  }
+  el.innerHTML = h;
+  var c = document.getElementById('collect');
+  c.innerHTML = '奖品柜台 <b>' + S.owned.length + ' / ' + PRIZES.length + '</b> 只宝可梦'
+    + (S.owned.length === PRIZES.length ? '　全部奖品达成！' : '')
+    + '　·　累计大奖 <b>' + S.gaugeOwned.length + ' / ' + GAUGE_STAGES.length + '</b>';
+  var gh = '';
+  for (var k = 0; k < GAUGE_STAGES.length; k++) {
+    var s = GAUGE_STAGES[k], own = S.gaugeOwned.indexOf(s.id) >= 0;
+    gh += '<div class="gp ' + (own ? 'got' : '') + '">'
+      + '<div class="pic"><img src="casino_img/' + s.id + '.png" alt="' + s.name + '"></div>'
+      + '<div class="nm">' + (own ? '闪光' : '？') + s.name + '</div>'
+      + '<div class="at">' + fmt(s.at) + ' 代币</div></div>';
+  }
+  document.getElementById('gaugePrizes').innerHTML = gh;
+}
+function redeem(id) {
+  var p = null;
+  for (var i = 0; i < PRIZES.length; i++) if (PRIZES[i].id === id) p = PRIZES[i];
+  if (!p || S.owned.indexOf(id) >= 0) return;
+  if (S.coin < p.price) { toast('代币不够，还差 ' + fmt(p.price - S.coin) + ' 枚'); return; }
+  S.coin -= p.price; S.owned.push(id);
+  save(); renderWallet(); renderPrizes();
+  beep(660, .1, 'triangle', .05);
+  setTimeout(function () { beep(880, .14, 'triangle', .05); }, 110);
+  setTimeout(function () { beep(1180, .2, 'triangle', .05); }, 240);
+  toast('获得 ' + p.name + '！');
+}
+
+/* ================= 启动 ================= */
+load();
+renderWallet();
+buildSlot();
+initPachi();
+renderPrizes();
+document.getElementById('sndBtn').innerHTML = sndIcon(S.snd);
+</script>
+</body>
+</html>
