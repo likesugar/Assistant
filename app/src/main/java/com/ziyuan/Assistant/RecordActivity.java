@@ -529,7 +529,7 @@ public class RecordActivity extends Activity {
                         else if (t.equals("打开下载页")) openSourcePage(cur);
                         else if (t.equals("查看文件位置")) openFileList(cur.path, false);
                         else if (t.equals("复制下载地址") || t.equals("复制文件路径")) copySourceUrl(cur);
-                        else if (t.equals("打开所在目录")) openFileList(cur.path, false);
+                        else if (t.equals("打开所在目录")) openDirExternal(cur.path);
                         return true;
                     }
                 });
@@ -1451,43 +1451,78 @@ public class RecordActivity extends Activity {
         } catch (Throwable e) { return null; }
     }
 
-    private void openDir() {
-        // 1) MT 管理器 OpenFileActivity（data+type 都给）
+    /**
+     * 打开所在目录(1.0.62): 交给外部应用(任意文件管理器)打开成片目录 Movies/录制。
+     * 之前只硬编码 MT 管理器两个 Activity, 没装 MT 就只能自己去找目录。
+     * 先用 ACTION_VIEW + 分享选择器列出所有可处理目录的外部应用,
+     * 再依次回退 DocumentsUI / MT / 系统目录选择器, 保证总有可用入口。
+     */
+    private void openDir() { openDirExternal(null); }
+
+    private void openDirExternal(String path) {
+        java.io.File pub = new java.io.File(
+                android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_MOVIES), "录制");
+        String target = pub.getAbsolutePath();
+        java.io.File picked = null;
+        try { if (path != null) picked = fileOf(path); } catch (Throwable ignored) {}
+        if (picked != null && picked.exists() && picked.getAbsolutePath().indexOf("/Android/data/") < 0) {
+            java.io.File d = picked.isDirectory() ? picked : picked.getParentFile();
+            if (d != null) target = d.getAbsolutePath();
+        }
+        final String dir = target;
+        // 外部应用可读的 content:// URI(FileProvider), 同时带绝对路径给 MT/类 MT 管理器
+        android.net.Uri dirUri;
         try {
-            Intent i = new Intent(Intent.ACTION_VIEW);
-            i.setClassName("bin.mt.plus", "bin.mt.plus.OpenFileActivity");
-            i.setDataAndType(android.net.Uri.parse("file:///storage/emulated/0/Movies/录制"), "resource/folder");
-            i.putExtra("path", "/storage/emulated/0/Movies/录制");
-            i.putExtra("com.bin.mt.plus.path", "/storage/emulated/0/Movies/录制");
-            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(i);
+            dirUri = androidx.core.content.FileProvider.getUriForFile(this, getPackageName() + ".fp", new java.io.File(dir));
+        } catch (Throwable e) { dirUri = android.net.Uri.parse("file://" + dir); }
+        android.net.Uri docUri = null;
+        try {
+            String rel = dir.startsWith("/storage/emulated/0/") ? dir.substring("/storage/emulated/0/".length()) : "Movies/录制";
+            docUri = android.provider.DocumentsContract.buildDocumentUri("com.android.externalstorage.documents", "primary:" + rel);
+        } catch (Throwable ignored) {}
+        Intent view = new Intent(Intent.ACTION_VIEW);
+        view.setDataAndType(dirUri, "resource/folder");
+        view.putExtra("path", dir);
+        view.putExtra("com.bin.mt.plus.path", dir);
+        if (docUri != null) view.putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI, docUri);
+        view.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            startActivity(Intent.createChooser(view, "打开所在目录（外部应用）"));
             return;
         } catch (Throwable ignored) {}
-        // 2) MT MainLightIcon
+        // 回退 1: 系统文件管理器(DocumentsUI)直接定位
+        for (String pkg : new String[]{"com.google.android.documentsui", "com.android.documentsui"}) {
+            try {
+                Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setClassName(pkg, pkg + ".files.FilesActivity");
+                if (docUri != null) i.setData(docUri);
+                i.putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI, docUri);
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(i);
+                return;
+            } catch (Throwable ignored) {}
+        }
+        // 回退 2: MT 管理器
+        for (String cls : new String[]{"bin.mt.plus.OpenFileActivity", "bin.mt.plus.MainLightIcon"}) {
+            try {
+                Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setClassName("bin.mt.plus", cls);
+                i.setDataAndType(android.net.Uri.parse("file://" + dir), "resource/folder");
+                i.putExtra("path", dir);
+                i.putExtra("com.bin.mt.plus.path", dir);
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                startActivity(i);
+                return;
+            } catch (Throwable ignored) {}
+        }
+        // 回退 3: 系统目录选择器(可选中/查看该目录)
         try {
-            Intent i = new Intent(Intent.ACTION_VIEW);
-            i.setClassName("bin.mt.plus", "bin.mt.plus.MainLightIcon");
-            i.setDataAndType(android.net.Uri.parse("file:///storage/emulated/0/Movies/录制"), "resource/folder");
-            i.putExtra("path", "/storage/emulated/0/Movies/录制");
-            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivity(i);
-            return;
-        } catch (Throwable ignored) {}
-        // 3) 系统目录选择器，直接定位到 Movies/录制
-        try {
-            android.net.Uri dir = android.net.Uri.parse(
-                "content://com.android.externalstorage.documents/document/primary:Movies/录制");
             Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
-            i.putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI, dir);
+            if (docUri != null) i.putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI, docUri);
             startActivity(i);
             return;
         } catch (Throwable ignored) {}
-        // 兜底：拉起 MT 主界面
-        try {
-            Intent i = getPackageManager().getLaunchIntentForPackage("bin.mt.plus");
-            if (i != null) { startActivity(i); Toast.makeText(this, "进 Movies/录制 目录", Toast.LENGTH_LONG).show(); return; }
-        } catch (Throwable ignored) {}
-        Toast.makeText(this, "请到 Movies/录制 目录查看", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "没有可用的外部文件管理器，目录: " + dir, Toast.LENGTH_LONG).show();
     }
 
     private void play(RecManager.RecJob j) {
