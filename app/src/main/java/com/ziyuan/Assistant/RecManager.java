@@ -130,6 +130,7 @@ public class RecManager {
             android.content.Intent ni = new android.content.Intent(sCtx, RecKeepService.class);
             if (android.os.Build.VERSION.SDK_INT >= 26) sCtx.startForegroundService(ni); else sCtx.startService(ni);
         } catch (Throwable ignored) {}
+        BgKeep.renew(sCtx);   // 1.0.61: Wi-Fi 锁也续上(前台服务持有主引用), 息屏拉流不断
         try {
             if (recWake == null && sCtx != null) {
                 android.os.PowerManager pm = (android.os.PowerManager) sCtx.getSystemService(Context.POWER_SERVICE);
@@ -657,10 +658,11 @@ public class RecManager {
         new Thread(new Runnable() { public void run() {  // 流量看门狗：1s刷大小(与列表刷新同频)，无增长自动重试
             long last = -1;
             int idle = 0, retry = 0;
-            long grace = System.currentTimeMillis() + 10000;  // 启动前10s宽限(ffmpeg缓冲/等原画), 不计无流量
+            long grace = System.currentTimeMillis() + (BgKeep.screenOff(sCtx) ? 30000 : 10000);  // 1.0.61: 息屏放宽首片宽限
             while (job.active) {
                 try { Thread.sleep(1000); } catch (Throwable e) { break; }
                 if (!job.active) break;
+                BgKeep.renew(sCtx);   // 1.0.61: 每秒续 CPU + Wi-Fi 锁, 长录制不因超时掉锁
                 // 录制大小: 目录求和(分段 .ts 文件). 分段封装下 ffmpeg getSize 恒为0/逐段重置, 目录求和是稳定真实的实时大小
                 long d = dirTotal(job);
                 if (d >= 0) {
@@ -683,7 +685,10 @@ public class RecManager {
                 if (total == last) {
                     if (now < grace) { last = total; continue; }
                     idle++;
-                    if (idle >= 5) {            // 连续5s无增长 → 自动重试抓流
+                    // 1.0.61: 息屏时 HLS 分片可能隔十几秒才到, 5s 就重连会误判断流并暂停;
+                    // 息屏放宽到 20s, 亮屏仍保持 5s 快速重连。
+                    int idleLimit = BgKeep.screenOff(sCtx) ? 20 : 5;
+                    if (idle >= idleLimit) {    // 连续无增长 → 自动重试抓流
                         idle = 0;
                         retry++;
                         if (retry > 2) {        // 两轮重试都拉不到 → 自动结束并合并MP4
@@ -696,7 +701,7 @@ public class RecManager {
                         stopBgPlayer(job);
                         try { Thread.sleep(3000); } catch (Throwable e) { break; }
                         if (!job.active) break;
-                        grace = System.currentTimeMillis() + 10000;   // 重启后重新宽限
+                        grace = System.currentTimeMillis() + (BgKeep.screenOff(sCtx) ? 30000 : 10000);   // 重启后重新宽限
                         job.state = null;
                         startBgPlayer(job);
                         startBgSession(job);

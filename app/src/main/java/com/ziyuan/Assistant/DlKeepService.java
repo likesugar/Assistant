@@ -38,6 +38,7 @@ public class DlKeepService extends Service {
             wl.setReferenceCounted(false);
             wl.acquire(6L * 60 * 60 * 1000);   // 最长 6 小时, 空闲自停时释放
         } catch (Throwable ignored) {}
+        BgKeep.acquire(this);   // 1.0.61: CPU + Wi-Fi 双锁, 息屏下载不休眠/不断流
         startForeground(20001, buildNote("下载进行中…"));
         h.postDelayed(tick, 1500);
     }
@@ -45,6 +46,7 @@ public class DlKeepService extends Service {
     private final Runnable tick = new Runnable() { public void run() {
         boolean busy = false;
         try {
+            BgKeep.renew(DlKeepService.this);   // 每拍续期, 避免长任务超时掉锁
             NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             for (DlManager.DlJob j : DlManager.jobs()) {
                 if (j.active || j.paused) busy = true;
@@ -115,7 +117,7 @@ public class DlKeepService extends Service {
                 : new Notification.Builder(this);
         b.setContentTitle("资源嗅探").setContentText(s).setSmallIcon(android.R.drawable.stat_sys_download)
          .setOngoing(true);
-        return b.build();
+        return BgKeep.withBatteryAction(this, b).build();
     }
 
     private Notification progNote(String title, String text, int p, int max, boolean ongoing, boolean fin) {
@@ -127,11 +129,11 @@ public class DlKeepService extends Service {
          .setOngoing(ongoing).setOnlyAlertOnce(true).setAutoCancel(fin);
         if (max > 0) b.setProgress(max, p, false);
         else if (ongoing) b.setProgress(0, 0, true);
-        return b.build();
+        return BgKeep.withBatteryAction(this, b).build();
     }
 
     @Override
-    public int onStartCommand(Intent i, int f, int id) { return START_STICKY; }
+    public int onStartCommand(Intent i, int f, int id) { BgKeep.renew(this); return START_STICKY; }
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
@@ -141,6 +143,7 @@ public class DlKeepService extends Service {
     @Override
     public void onDestroy() {
         try { if (wl != null && wl.isHeld()) wl.release(); } catch (Throwable ignored) {}
+        BgKeep.release();
         super.onDestroy();
     }
 

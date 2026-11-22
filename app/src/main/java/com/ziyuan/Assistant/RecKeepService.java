@@ -30,13 +30,21 @@ public class RecKeepService extends Service {
             pc.enableVibration(false);
             ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).createNotificationChannel(pc);
         } catch (Throwable ignored) {}
+        BgKeep.acquire(this);   // CPU + Wi-Fi 锁: 息屏后录制不断流
         startForeground(21001, noteBuilder("录制进行中", null, null).build());
         h.postDelayed(tick, 1000);
+    }
+
+    @Override
+    public int onStartCommand(Intent i, int f, int id) {
+        BgKeep.renew(this);   // 服务被重建/重申时续期(onCreate 统一持锁)
+        return START_STICKY;
     }
 
     private final Runnable tick = new Runnable() { public void run() {
         boolean busy = false;
         try {
+            BgKeep.renew(RecKeepService.this);   // 每拍续期, 长录制不因 12h 超时掉锁
             // 只取第一条任务（id 最小的那一路）展示
             RecManager.RecJob first = null;
             for (RecManager.RecJob j : RecManager.recJobs.values()) {
@@ -56,7 +64,7 @@ public class RecKeepService extends Service {
         if (busy) {
             h.postDelayed(tick, 1000);
         } else {
-            stopSelf();   // 无录制任务: 自动停服务、撤通知
+            stopSelf();   // 无录制任务: 自动停服务、撤通知(onDestroy 统一释放锁)
         }
     } };
 
@@ -109,14 +117,15 @@ public class RecKeepService extends Service {
             it = new Intent(this, HomeActivity.class);
             it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         }
-        b.setContentIntent(android.app.PendingIntent.getActivity(this, 0, it,
-             android.app.PendingIntent.FLAG_UPDATE_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE));
-        return b;
+        int fl = android.app.PendingIntent.FLAG_UPDATE_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE;
+        b.setContentIntent(android.app.PendingIntent.getActivity(this, 0, it, fl));
+        return BgKeep.withBatteryAction(this, b);
     }
 
     @Override
     public void onDestroy() {
         try { h.removeCallbacks(tick); } catch (Throwable ignored) {}
+        BgKeep.release();
         super.onDestroy();
     }
 }
